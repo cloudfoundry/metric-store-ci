@@ -1,0 +1,63 @@
+#!/bin/bash
+
+function set_globals {
+    pipeline=$1
+    TARGET="${TARGET:-log-cache}"
+}
+
+function validate {
+    if [ "$pipeline" = "-h" ] || [ "$pipeline" = "--help" ] || [ -z "$pipeline" ]; then
+        print_usage
+        exit 1
+    fi
+}
+
+function set_pipeline {
+    # TODO - this is an obviously nasty way of parsing and injecting
+    # credentials. Replace by modifying task yamls to accept deployment
+    # vars files directly ASAP.
+    CF_ADMIN_PASSWORD=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .cf_admin_password`
+    BLACKBOX_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .blackbox_client_secret`
+    LCATS_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .lcats_client_secret`
+    DATADOG_FORWARDER_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .datadog_forwarder_client_secret`
+    lpass show --note "Shared-Loggregator (Pivotal Only)/pipeline-secrets.yml" > shared-secrets.yml
+
+    echo setting pipeline for "$1"
+    fly -t $TARGET set-pipeline -p "$1" \
+        -c "pipelines/$1.yml" \
+        -l  ./shared-secrets.yml \
+        -v "cf_admin_password=$CF_ADMIN_PASSWORD" \
+        -v "blackbox_client_secret=$BLACKBOX_SECRET" \
+        -v "lcats_client_secret=$LCATS_SECRET" \
+        -v "datadog_forwarder_client_secret=$DATADOG_FORWARDER_SECRET" \
+        -l ~/workspace/log-cache-ci/scripts.yml
+
+    rm shared-secrets.yml
+}
+
+function sync_fly {
+    fly -t $TARGET sync
+}
+
+function set_pipelines {
+    if [ "$pipeline" = all ]; then
+        for pipeline_file in $(ls "pipelines/"); do
+            set_pipeline "${pipeline_file%.yml}"
+        done
+        exit 0
+    fi
+
+    set_pipeline "$pipeline"
+}
+
+function print_usage {
+    echo "usage: $0 <pipeline | all>"
+}
+
+function main {
+    set_globals $1
+    validate
+    sync_fly
+    set_pipelines
+}
+main $1 $2
