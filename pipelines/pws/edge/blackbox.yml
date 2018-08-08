@@ -1,0 +1,91 @@
+resources:
+- name: deployments-loggregator
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/deployments-loggregator
+    private_key: {{deployments-loggregator-key}}
+
+- name: log-cache-deployments
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-deployments
+    private_key: {{log_cache_github_key}}
+
+- name: log-cache-release
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/log-cache-release
+    branch: develop
+
+jobs:
+- name: log-cache-blackbox-deploy
+  serial: true
+  plan:
+  - aggregate:
+    - get: deployments-loggregator
+    - get: log-cache-release
+      trigger: true
+    - get: log-cache-deployments
+
+  - aggregate:
+    - task: upload-log-cache
+      config:
+        image_resource:
+          type: docker-image
+          source:
+            repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+        platform: linux
+        inputs:
+        - name: log-cache-release
+        params:
+          BOSH_CLIENT: ((bosh-admin-client.username))
+          BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+          BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+          BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            #!/bin/bash
+            set -eux
+
+            pushd log-cache-release
+              bosh create-release
+              bosh upload-release --rebase
+            popd
+
+  - task: log-cache-blackbox-deploy
+    config:
+      image_resource:
+        type: docker-image
+        source:
+          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+      platform: linux
+      inputs:
+      - name: log-cache-release
+      - name: deployments-loggregator
+      - name: log-cache-deployments
+      params:
+        DEPLOYMENT_NAME: log-cache-edge-blackbox
+        MANIFEST_FILE: manifests/log-cache-blackbox.yml
+        SECRETS_FILE: shared-secrets.yml
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        DATADOG_API_KEY: {{datadog_api_key}}
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          bosh \
+            deploy "log-cache-release/$MANIFEST_FILE" \
+            --deployment "$DEPLOYMENT_NAME" \
+            --non-interactive \
+            --ops-file "log-cache-deployments/pws/edge/blackbox-ops-file.yml" \
+            --var=datadog_api_key=$DATADOG_API_KEY

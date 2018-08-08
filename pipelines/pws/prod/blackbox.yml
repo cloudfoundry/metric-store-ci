@@ -31,10 +31,10 @@ jobs:
         inputs:
         - name: log-cache-release
         params:
-          BOSH_CLIENT: ((prod_bosh_client_id))
-          BOSH_CLIENT_SECRET: ((prod_bosh_client_secret))
-          BOSH_CA_CERT: ((prod_bosh_ca_cert))
-          BOSH_ENVIRONMENT: ((prod_bosh_target))
+          BOSH_CLIENT: ((bosh-admin-client.username))
+          BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+          BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+          BOSH_ENVIRONMENT: bosh.run.pivotal.io
         run:
           path: bash
           args:
@@ -62,10 +62,10 @@ jobs:
         DEPLOYMENT_NAME: log-cache-blackbox
         MANIFEST_FILE: manifests/log-cache-blackbox.yml
         SECRETS_FILE: shared-secrets.yml
-        BOSH_CLIENT: ((prod_bosh_client_id))
-        BOSH_CLIENT_SECRET: ((prod_bosh_client_secret))
-        BOSH_CA_CERT: ((prod_bosh_ca_cert))
-        BOSH_ENVIRONMENT: ((prod_bosh_target))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
       run:
         path: bash
         args:
