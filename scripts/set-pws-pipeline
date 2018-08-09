@@ -13,20 +13,18 @@ function validate {
 }
 
 function set_pipeline {
-    lpass show --note "Shared-Loggregator (Pivotal Only)/pipeline-secrets.yml" > shared-secrets.yml
-    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/hdub-github-key.yml" > github-key.yml
+    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/datadog-api-key-pws.yml" > datadog-api-key.yml
 
     PIPELINE_NAME=$(echo $1 | sed 's/\//-/g')
     echo setting pipeline for "$PIPELINE_NAME"
     fly -t $TARGET set-pipeline -p "$PIPELINE_NAME" \
         -c "pipelines/$1.yml" \
-        -l ./shared-secrets.yml \
         -l ./github-key.yml \
         -l ./datadog-api-key.yml \
         -l ~/workspace/log-cache-ci/scripts.yml
 
-    rm shared-secrets.yml github-key.yml datadog-api-key.yml
+    rm github-key.yml datadog-api-key.yml
 }
 
 function sync_fly {

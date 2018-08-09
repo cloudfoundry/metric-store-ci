@@ -1,15 +1,9 @@
 resources:
-- name: deployments-loggregator
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/deployments-loggregator
-    private_key: {{deployments-loggregator-key}}
-
 - name: log-cache-deployments
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-deployments
-    private_key: {{log_cache_github_key}}
+    private_key: {{github_key}}
 
 - name: log-cache-release
   type: git
@@ -22,9 +16,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: deployments-loggregator
     - get: log-cache-release
-      trigger: true
     - get: log-cache-deployments
 
   - aggregate:
@@ -64,7 +56,6 @@ jobs:
       platform: linux
       inputs:
       - name: log-cache-release
-      - name: deployments-loggregator
       - name: log-cache-deployments
       params:
         DEPLOYMENT_NAME: log-cache-edge-blackbox

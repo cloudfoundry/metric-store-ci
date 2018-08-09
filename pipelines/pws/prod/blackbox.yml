@@ -1,9 +1,9 @@
 resources:
-- name: deployments-loggregator
+- name: log-cache-deployments
   type: git
   source:
-    uri: git@github.com:cloudfoundry/deployments-loggregator
-    private_key: ((deployments_loggregator_key.private_key))
+    uri: git@github.com:cloudfoundry/log-cache-deployments
+    private_key: {{github_key}}
 
 - name: log-cache-release
   type: git
@@ -16,9 +16,8 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: deployments-loggregator
     - get: log-cache-release
-      trigger: true
+    - get: log-cache-deployments
 
   - aggregate:
     - task: upload-log-cache
@@ -57,7 +56,7 @@ jobs:
       platform: linux
       inputs:
       - name: log-cache-release
-      - name: deployments-loggregator
+      - name: log-cache-deployments
       params:
         DEPLOYMENT_NAME: log-cache-blackbox
         MANIFEST_FILE: manifests/log-cache-blackbox.yml
@@ -66,6 +65,7 @@ jobs:
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        DATADOG_API_KEY: {{datadog_api_key}}
       run:
         path: bash
         args:
@@ -74,25 +74,9 @@ jobs:
           #!/bin/bash
           set -eux
 
-          cat <<EOF >pws.yml
-          - type: replace
-            path: /instance_groups/name=log-cache-blackbox/azs
-            value: [z2, z3, z4]
-          - type: replace
-            path: /instance_groups/name=log-cache-blackbox/jobs/name=log-cache-blackbox/properties/log_cache_host?
-            value: doppler.service.cf.internal
-          - type: remove
-            path: /addons/name=bosh-dns
-          - type: remove
-            path: /releases/name=bosh-dns
-          - type: replace
-            path: /instance_groups/name=log-cache-blackbox/jobs/name=log-cache-blackbox/properties/datadog/api_key
-            value: ((datadog-prod-api-key))
-          EOF
-
           bosh \
             deploy "log-cache-release/$MANIFEST_FILE" \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive \
-            --vars-file "deployments-loggregator/$SECRETS_FILE" \
-            --ops-file pws.yml
+            --ops-file "log-cache-deployments/pws/prod/blackbox-ops-file.yml" \
+            --var=datadog_api_key=$DATADOG_API_KEY
