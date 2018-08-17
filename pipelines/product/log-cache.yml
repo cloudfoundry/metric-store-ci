@@ -840,11 +840,6 @@ jobs:
             path: /instance_groups/name=doppler/vm_type
             value: small-highmem
           - type: replace
-            path: /instance_groups/name=scheduler/jobs/-
-            value:
-              name: log-cache-scheduler
-              release: log-cache
-          - type: replace
             path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader/provides?
             value:
                 log-cache-group-reader: {shared: true}
