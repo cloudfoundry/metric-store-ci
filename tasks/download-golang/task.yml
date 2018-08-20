@@ -1,0 +1,24 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v3.19.0
+
+inputs:
+# - The repo that contains run-release-script.sh.
+- name: loggregator-ci
+
+outputs:
+# - The directory where the result of running the script is copied. This will
+#   include all the files from the input bosh release.
+- name: golang-blobs
+
+params:
+  # - Required
+  # - The version of Go to bump to.
+  VERSION:
+
+run:
+  path: loggregator-ci/tasks/download-golang/task

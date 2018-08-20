@@ -1,0 +1,65 @@
+image_resource:
+  type: docker-image
+  source:
+    repository: loggregator/base
+platform: linux
+inputs:
+  # - Required
+  # - The repo to which the final releases will be merged
+- name: to-repo
+
+  # - Required
+  # - The repo from which the final release will be created
+- name: from-repo
+
+  # - Required
+  # - The task repository
+- name: loggregator-ci
+
+outputs:
+  # - The artifacts used to create the github release
+- name: github-release
+
+  # - The modified repos that need to be pushed back to github
+- name: repos
+
+run:
+  path: loggregator-ci/tasks/create-final-release/task
+
+params:
+  # - Required
+  # - The S3 access key for release blobstore
+  S3_ACCESS_KEY:
+
+  # - Required
+  # - The S3 secret key for release blobstore
+  S3_SECRET_KEY:
+
+  # - Required
+  # - The bucket name of the S3 release blobstore
+  BLOBSTORE_BUCKET:
+
+  # - Required
+  # - The ssh key used to talk to github to pull latest branch version
+  SSH_KEY:
+
+  # - Required
+  # - The version to create. This is used to:
+  #   - Set the bosh release version
+  #   - Tag the commit that contains the final release artifacts
+  #   - Name the github release
+  NEW_VERSION:
+
+  # - Required
+  # - Human readable name of the created release (e.g. Loggregator)
+  RELEASE_NAME:
+
+  # - Required
+  # - Branch from which the final release will be created
+  FROM_BRANCH:
+
+  # - Required
+  # - Branch to which the final release will be merged
+  TO_BRANCH:
+
+

@@ -1,0 +1,45 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v3.19.0
+
+inputs:
+# - The source bosh release repo where the script resides and will be ran.
+- name: release-repo
+# - The repo that contains the task scripts.
+- name: loggregator-ci
+# - The director that contains the downloaded golang blobs.
+- name: golang-blobs
+
+outputs:
+# - The directory where the result of running the script is copied. This will
+#   include all the files from the input bosh release.
+- name: updated-release-repo
+
+params:
+  # - Required
+  # - The version of Go to bump to.
+  VERSION:
+
+  # - Required
+  # - S3 access key ID for blob storage.
+  ACCESS_KEY_ID:
+
+  # - Required
+  # - S3 secret access key for blob storage.
+  SECRET_ACCESS_KEY:
+
+  # - Required
+  # - Bucket name to store blobs in.
+  BUCKET_NAME:
+
+  # - Optional
+  # - Whether to bump windows golang version.
+  INCLUDE_WINDOWS: false
+
+run:
+  path: ../loggregator-ci/tasks/bump-golang/task
+  dir: updated-release-repo

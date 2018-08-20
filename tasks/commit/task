@@ -1,0 +1,14 @@
+#!/bin/bash
+set -ex
+
+cp -r ../release-repo/. .
+
+if [ ! "$(git status --porcelain)" = "" ]; then
+  git config user.email "cf-loggregator@pivotal.io"
+  git config user.name "Loggregator CI"
+  git add --all .
+
+  git commit -m "$COMMIT_MESSAGE"
+else
+  echo "No changes to commit"
+fi

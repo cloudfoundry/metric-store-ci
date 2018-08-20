@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# vi:syntax=sh
+
+# -------------------
+# Create a release from a repo and branch: from-repo and
+# FROM_BRANCH. Merge the result back to another repo and branch:
+# to-repo, TO_BRANCH
+
+
+set -ex
+
+# establish version/tag strings
+tag_name="v$NEW_VERSION"
+
+# write out github release files
+echo "$RELEASE_NAME $NEW_VERSION" > github-release/name
+echo $tag_name > github-release/tag
+echo "TBD" > github-release/body
+
+# setup ssh for reading from github
+eval "$(ssh-agent -s)"
+mkdir -p ~/.ssh
+echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+ssh-add <(echo "$SSH_KEY")
+
+# build final release on FROM_BRANCH
+pushd from-repo
+  # this is needed to land commits on master since the commit for
+  # master is checked out as a detatched head when the git
+  # resource clones it down
+  git checkout $FROM_BRANCH
+
+  # setup private.yml used by `create-release --final`
+  cat << EOF > config/private.yml
+---
+blobstore:
+  provider: s3
+  options:
+    bucket_name: $BLOBSTORE_BUCKET
+    access_key_id: $S3_ACCESS_KEY
+    secret_access_key: $S3_SECRET_KEY
+    credentials_source: static
+EOF
+
+  # create final release and commit artifcats
+  bosh -n create-release --sha2 --final \
+    --tarball ../github-release/release.tgz \
+    --version "$NEW_VERSION"
+  git add .
+  git commit -m "Create final release"
+
+  final_release_abbrev=$(git rev-parse --abbrev-ref HEAD)
+  final_release_sha=$(git rev-parse HEAD)
+  git tag "$tag_name" $final_release_sha
+popd
+
+# merge final release artifacts with develop
+pushd to-repo
+  # this is needed to land commits on develop since the commit for
+  # develop is checked out as a detatched head when the git
+  # resource clones it down
+  git checkout $TO_BRANCH
+
+  # pull from the default remote over the network
+  git pull
+
+  # add local remote for merge
+  git remote add -f from ../from-repo
+  git merge -v -m "Merge final release artifacts" "from/$final_release_abbrev"
+popd
+
+# copy repos into output
+cp -r to-repo from-repo repos
+
