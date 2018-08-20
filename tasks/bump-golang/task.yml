@@ -10,7 +10,7 @@ inputs:
 # - The source bosh release repo where the script resides and will be ran.
 - name: release-repo
 # - The repo that contains the task scripts.
-- name: loggregator-ci
+- name: log-cache-ci
 # - The director that contains the downloaded golang blobs.
 - name: golang-blobs
 
@@ -41,5 +41,5 @@ params:
   INCLUDE_WINDOWS: false
 
 run:
-  path: ../loggregator-ci/tasks/bump-golang/task
+  path: ../log-cache-ci/tasks/bump-golang/task
   dir: updated-release-repo

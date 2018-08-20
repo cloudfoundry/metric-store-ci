@@ -8,7 +8,7 @@ image_resource:
 
 inputs:
 # - The repo that contains run-release-script.sh.
-- name: loggregator-ci
+- name: log-cache-ci
 
 outputs:
 # - The directory where the result of running the script is copied. This will
@@ -21,4 +21,4 @@ params:
   VERSION:
 
 run:
-  path: loggregator-ci/tasks/download-golang/task
+  path: log-cache-ci/tasks/download-golang/task

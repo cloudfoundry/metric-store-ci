@@ -8,14 +8,14 @@ image_resource:
     tag: v3.19.0
 
 inputs:
-- name: loggregator-ci # - This repo
+- name: log-cache-ci
 - name: release-repo
 
 outputs:
 - name: committed-repo
 
 run:
-  path: ../loggregator-ci/tasks/commit/task
+  path: ../log-cache-ci/tasks/commit/task
   dir: committed-repo
 
 params:

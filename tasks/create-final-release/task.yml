@@ -14,7 +14,7 @@ inputs:
 
   # - Required
   # - The task repository
-- name: loggregator-ci
+- name: log-cache-ci
 
 outputs:
   # - The artifacts used to create the github release
@@ -24,7 +24,7 @@ outputs:
 - name: repos
 
 run:
-  path: loggregator-ci/tasks/create-final-release/task
+  path: log-cache-ci/tasks/create-final-release/task
 
 params:
   # - Required
@@ -51,7 +51,7 @@ params:
   NEW_VERSION:
 
   # - Required
-  # - Human readable name of the created release (e.g. Loggregator)
+  # - Human readable name of the created release (e.g. Log Cache)
   RELEASE_NAME:
 
   # - Required
