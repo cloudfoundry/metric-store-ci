@@ -1,0 +1,23 @@
+#!/bin/bash
+set -ex
+password=$(bosh int vars-store/$VARS_STORE_FILE --path=/cf_admin_password)
+
+cf api api.$SYSTEM_DOMAIN --skip-ssl-validation
+cf auth admin $password
+cf target -o system
+
+set +e
+cf org $ORG
+set -e
+if [ $? -eq 0 ]; then
+  cf create-org $ORG
+fi
+cf target -o $ORG
+
+set +e
+cf space $SPACE
+set -e
+if [ $? -eq 0 ]; then
+  cf create-space $SPACE
+fi
+cf target -s $SPACE

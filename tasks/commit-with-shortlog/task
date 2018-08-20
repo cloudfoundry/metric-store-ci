@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+class Committer
+  def initialize(paths)
+    @paths = paths.split(" ")
+  end
+
+  def run
+    copy_release_dir
+
+    if has_diff?
+      stage_paths
+      commit(build_message(find_shas))
+    end
+  end
+
+  def has_diff?
+    `git diff-index --quiet HEAD`
+    process = $?
+    !process.success?
+  end
+
+  def stage_paths
+    @paths.each { |p| `git add #{p}` }
+  end
+
+  def find_shas
+    diffs = `git diff --cached`.split('diff --git').select do |log|
+      log =~ /Subproject/
+    end
+
+    locations = {}
+    diffs.each do |diff|
+      /a\/(?<loc>.+?)\sb.*index\s(?<shas>\S+)/m.match diff do |matches|
+        locations[matches[:loc]] = matches[:shas]
+      end
+    end
+
+    locations
+  end
+
+  def build_message(locations)
+    commit_msg = ["Bump #{locations.keys.join(", ")}\n"]
+
+    locations.each do |location, shas|
+      Dir.chdir(location) do
+        commit_messages_by_author = Hash.new([])
+        `git log #{shas} --pretty=format:'%h %an: %s'`.split("\n").each do |commit|
+          _sha, rest_of_commit = commit.split(" ", 2)
+          author, message = rest_of_commit.split(":", 2)
+          commit_messages_by_author[author] += [message]
+        end
+
+        commit_messages_by_author.each do |author, messages|
+          commit_msg << "  #{author}:"
+          messages.each { |message| commit_msg << "    #{message}" }
+        end
+      end
+    end
+
+    commit_msg.join("\n")
+  end
+
+  def commit(msg)
+    `git config --global user.email "cf-log-cache@pivotal.io>"`
+    `git config --global user.name "Log Cache CI"`
+    `git commit -m "#{msg}"`
+  end
+
+  def copy_release_dir
+    `cp -r ../release-repo/. .`
+  end
+end
+
+Committer.new(ENV["PATHS"]).run

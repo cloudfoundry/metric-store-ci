@@ -1,0 +1,32 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: loggregator/base
+
+inputs:
+- name: log-cache-ci # - This repo
+- name: bumper-tool    # - The source repo for the bumper tool
+- name: source         # - The source repo to bump
+- name: dest           # - The destination repo to bump
+
+outputs:
+- name: merged-dest # - The merged destination repo
+
+run:
+  path: log-cache-ci/tasks/bumper/task
+
+params:
+  # - Required
+  # - The source branch to bump from.
+  SOURCE_BRANCH:
+
+  # - Required
+  # - The destination branch to bump to.
+  DEST_BRANCH:
+
+  # - Optional
+  # - Submodules for bumper to follow bumps of.
+  # - Relative to dest.
+  FOLLOW_BUMPS_OF:

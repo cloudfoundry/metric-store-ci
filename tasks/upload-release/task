@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -exu
+
+pushd "bbl-state/$BBL_STATE_DIR"
+  eval $(bbl print-env)
+  export BOSH_CA_CERT=$(bbl director-ca-cert)
+popd
+
+pushd bosh-release-dir
+  if [ "$FORCE" == "true" ]; then
+    bosh create-release --force
+  else
+    bosh create-release
+  fi
+
+  if [ "$NO_REBASE" = "true" ]; then
+    bosh upload-release
+  else
+    bosh upload-release --rebase
+  fi
+popd

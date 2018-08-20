@@ -1,0 +1,20 @@
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: loggregator/base
+inputs:
+# - The source bosh release repo where the script resides and will be ran.
+- name: release-repo
+# - The repo that contains run-release-script.sh.
+- name: log-cache-ci
+outputs:
+# - The directory where the result of running the script is copied. This will
+#   include all the files from the input bosh release.
+- name: updated-release-repo
+params:
+  # - Required
+  # - The script to run inside the bosh release repo.
+  SCRIPT:
+run:
+  path: log-cache-ci/tasks/run-release-script/task

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -ex
+
+pushd source-repo
+  target_sha="$(git rev-parse HEAD)"
+popd
+
+pushd "release-repo/$SUBMODULE_PATH"
+  git fetch
+  git checkout "$target_sha"
+popd
+
+cp -r release-repo/. bumped-release-repo/

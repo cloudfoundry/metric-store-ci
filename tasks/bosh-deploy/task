@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -exu
+
+pushd bbl-state/$BBL_STATE_DIR
+  eval $(bbl print-env)
+  export BOSH_CA_CERT=$(bbl director-ca-cert)
+popd
+
+arguments=""
+for o in $OPS_FILES; do
+  arguments="$arguments --ops-file ops-files/$o"
+done
+
+for v in $VARS_FILES; do
+  arguments="$arguments --vars-file vars-files/$v"
+done
+
+bosh -d "$DEPLOYMENT_NAME" -n deploy "bosh-release/$MANIFEST_FILE" \
+  --vars-store "vars-store/$VARS_STORE_FILE" \
+  $arguments
+
+set +e
+pushd vars-store
+  git config user.email "cf-log-cache@pivotal.io"
+  git config user.name "Log Cache CI"
+  git add . --all
+  git commit -m "Updated vars store for $DEPLOYMENT_NAME"
+popd
+
+rsync -ac vars-store/ updated-vars-store
+
+bosh -n clean-up --all

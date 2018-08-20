@@ -1,0 +1,15 @@
+image_resource:
+  type: docker-image
+  source:
+    repository: loggregator/base
+platform: linux
+inputs:
+  - name: vars-store
+  - name: log-cache-ci
+params:
+  VARS_STORE_FILE:
+  ORG:
+  SPACE:
+  SYSTEM_DOMAIN:
+run:
+  path: log-cache-ci/tasks/create-org-and-space/task

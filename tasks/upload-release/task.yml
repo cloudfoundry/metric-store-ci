@@ -1,0 +1,33 @@
+---
+platform: linux
+
+caches:
+- path: bosh-release-dir/blobs
+
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+
+inputs:
+- name: log-cache-ci # - This repo
+- name: bbl-state  # - The Director's `bbl-state.json`
+- name: bosh-release-dir  # - The release to upload
+
+run:
+  path: log-cache-ci/tasks/upload-release/task
+
+params:
+  # - Optional
+  # - Path to the directory containing the `bbl-state.json` file
+  # - The path is relative to root of the `bbl-state` input
+  # - Defaults to the root of the `bbl-state` input
+  BBL_STATE_DIR:
+
+  # - Optional
+  # - Ignore dirty state of release repo.
+  FORCE: false
+
+  # - Optional
+  # - Do not rebase the release after upload
+  NO_REBASE: false
