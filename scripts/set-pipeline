@@ -20,19 +20,20 @@ function set_pipeline {
     BLACKBOX_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .blackbox_client_secret`
     LCATS_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .lcats_client_secret`
     DATADOG_FORWARDER_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .datadog_forwarder_client_secret`
-    lpass show --note "Shared-Loggregator (Pivotal Only)/pipeline-secrets.yml" > shared-secrets.yml
+    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/release-credentials.yml" > release-credentials.yml
+    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
 
     echo setting pipeline for "$1"
     fly -t $TARGET set-pipeline -p "$1" \
         -c "pipelines/$1.yml" \
-        -l  ./shared-secrets.yml \
         -v "cf_admin_password=$CF_ADMIN_PASSWORD" \
         -v "blackbox_client_secret=$BLACKBOX_SECRET" \
         -v "lcats_client_secret=$LCATS_SECRET" \
         -v "datadog_forwarder_client_secret=$DATADOG_FORWARDER_SECRET" \
-        -l ~/workspace/log-cache-ci/scripts.yml
+        -l ./github-key.yml \
+        -l ./release-credentials.yml
 
-    rm shared-secrets.yml
+    rm github-key.yml release-credentials.yml
 }
 
 function sync_fly {
