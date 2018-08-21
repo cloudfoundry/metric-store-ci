@@ -63,13 +63,6 @@ resources:
     paths:
     - docker-images
 
-- name: log-cache-tools
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry-incubator/log-cache-tools.git
-    branch: master
-    private_key: {{github_key}}
-
 - name: log-cache-image
   type: docker-image
   source:
