@@ -30,6 +30,7 @@ pushd from-repo
   # master is checked out as a detatched head when the git
   # resource clones it down
   git checkout $FROM_BRANCH
+  git fetch --tags
 
   # setup private.yml used by `create-release --final`
   cat << EOF > config/private.yml
@@ -61,6 +62,7 @@ pushd to-repo
   # develop is checked out as a detatched head when the git
   # resource clones it down
   git checkout $TO_BRANCH
+  git fetch --tags
 
   # pull from the default remote over the network
   git pull
