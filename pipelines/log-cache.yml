@@ -11,8 +11,6 @@ groups:
   - log-cache-master-promotion
   - log-cache-cli-promotion
   - blackbox-deploy
-  - cf-blackbox-tests
-  - cf-blackbox-group-tests
   - deploy-datadog-forwarder
 - name: leadership-election
   jobs:
@@ -30,14 +28,7 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/cf-deployment
     branch: master
-    private_key: {{loggregator-key}}
-
-- name: deployments-loggregator
-  type: git
-  source: &deployments_loggregator
-    uri: git@github.com:cloudfoundry/deployments-loggregator.git
-    branch: master
-    private_key: {{deployments-loggregator-key}}
+    private_key: {{github_key}}
 
 - name: cf-deployment-concourse-tasks
   type: git
@@ -45,15 +36,12 @@ resources:
     uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
     branch: v6.5
 
-- name: loggregator-release
+- name: log-cache-deployments
   type: git
-  source:
-    uri: git@github.com:cloudfoundry/loggregator-release.git
-    branch: release-elect
-    private_key: {{loggregator-key}}
-    ignore_paths:
-    - .final_builds
-    - releases
+  source: &log_cache_deployments
+    uri: git@github.com:cloudfoundry/log-cache-deployments.git
+    branch: master
+    private_key: {{github_key}}
 
 - name: log-cache-acceptance-tests-release
   type: git
@@ -61,56 +49,63 @@ resources:
     uri: https://github.com/cloudfoundry/log-cache-acceptance-tests-release
     branch: master
 
-- name: loggregator-ci
+- name: log-cache-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry/loggregator-ci
+    uri: git@github.com:cloudfoundry/log-cache-ci
     branch: master
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
 
-- name: loggregator-ci-docker-images
+- name: log-cache-ci-docker-images
   type: git
   source:
-    uri: git@github.com:cloudfoundry/loggregator-ci
+    uri: git@github.com:cloudfoundry/log-cache-ci
     branch: master
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
     paths:
     - docker-images
 
-- name: loggregator-tools
+- name: log-cache-tools
   type: git
   source:
-    uri: git@github.com:cloudfoundry-incubator/loggregator-tools.git
+    uri: git@github.com:cloudfoundry-incubator/log-cache-tools.git
     branch: master
-    private_key: {{loggregator-key}}
+    private_key: {{github_key}}
+
+- name: log-cache-image
+  type: docker-image
+  source:
+    repository: logcache/log-cache
+    username: {{docker-hub-username}}
+    password: {{docker-hub-password}}
+
+- name: scheduler-image
+  type: docker-image
+  source:
+    repository: logcache/log-cache-scheduler
+    username: {{docker-hub-username}}
+    password: {{docker-hub-password}}
 
 - name: nozzle-image
   type: docker-image
   source:
-    repository: loggregator/log-cache-nozzle
+    repository: logcache/log-cache-nozzle
     username: {{docker-hub-username}}
     password: {{docker-hub-password}}
 
 - name: gateway-image
   type: docker-image
   source:
-    repository: loggregator/log-cache-gateway
+    repository: logcache/log-cache-gateway
     username: {{docker-hub-username}}
     password: {{docker-hub-password}}
-
-- name: loggregator-agent-release
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/loggregator-agent-release.git
-    branch: develop
-    private_key: {{cf-loggregator-oauth-bot-key}}
 
 - name: log-cache-release
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: develop
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
     ignore_paths:
     - .final_builds
     - releases
@@ -121,14 +116,14 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: release-elect
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
 
 - name: log-cache-release-master
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: master
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
     disable_ci_skip: true
 
 - name: log-cache
@@ -136,18 +131,12 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache
     branch: master
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
 
 - name: go-log-cache
   type: git
   source:
     uri: https://github.com/cloudfoundry/go-log-cache
-    branch: master
-
-- name: go-loggregator
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/go-loggregator
     branch: master
 
 - name: log-cache-cli
@@ -161,7 +150,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-cli
     branch: master
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
 
 - name: bumper-tool
   type: git
@@ -181,22 +170,8 @@ resources:
     ignore_paths:
     - .final_builds
     - releases
-    private_key: {{cf-loggregator-oauth-bot-key}}
+    private_key: {{github_key}}
     uri: git@github.com:cloudfoundry/leadership-election-release
-
-- name: log-cache-image
-  type: docker-image
-  source:
-    repository: loggregator/log-cache
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
-
-- name: scheduler-image
-  type: docker-image
-  source:
-    repository: loggregator/log-cache-scheduler
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
 
 jobs:
 ###############################################################################
@@ -207,11 +182,11 @@ jobs:
   public: true
   plan:
   - aggregate:
-    - get: loggregator-ci
+    - get: log-cache-ci
     - get: log-cache
       trigger: true
   - task: run-tests
-    file: loggregator-ci/tasks/go-test-with-latest-packages/task.yml
+    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
     input_mapping:
       source-repo: log-cache
     params:
@@ -222,13 +197,13 @@ jobs:
   public: true
   plan:
   - aggregate:
-    - get: loggregator-ci
+    - get: log-cache-ci
     - get: log-cache-cli
       trigger: true
     - get: 10m
       trigger: true
   - task: run-tests
-    file: loggregator-ci/tasks/go-test-with-latest-packages/task.yml
+    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
     input_mapping:
       source-repo: log-cache-cli
     params:
@@ -239,17 +214,17 @@ jobs:
   public: true
   plan:
   - aggregate:
-    - get: loggregator-ci
-    - get: loggregator-ci-docker-images
+    - get: log-cache-ci
+    - get: log-cache-ci-docker-images
       trigger: true
     - get: log-cache
       trigger: true
       passed: ["log-cache-tests"]
   - aggregate:
     - task: build-log-cache-image
-      file: loggregator-ci/tasks/build-go-docker-image/task.yml
+      file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
-        context-repo: loggregator-ci-docker-images
+        context-repo: log-cache-ci-docker-images
         source-repo: log-cache
       output_mapping:
         build-image: build-log-cache-image
@@ -257,9 +232,9 @@ jobs:
         CONTEXT_PATH: docker-images/log-cache
         BASE_PACKAGE: code.cloudfoundry.org/log-cache
     - task: build-nozzle-image
-      file: loggregator-ci/tasks/build-go-docker-image/task.yml
+      file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
-        context-repo: loggregator-ci-docker-images
+        context-repo: log-cache-ci-docker-images
         source-repo: log-cache
       output_mapping:
         build-image: build-nozzle-image
@@ -267,9 +242,9 @@ jobs:
         CONTEXT_PATH: docker-images/log-cache-nozzle
         BASE_PACKAGE: code.cloudfoundry.org/log-cache
     - task: build-gateway-image
-      file: loggregator-ci/tasks/build-go-docker-image/task.yml
+      file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
-        context-repo: loggregator-ci-docker-images
+        context-repo: log-cache-ci-docker-images
         source-repo: log-cache
       output_mapping:
         build-image: build-gateway-image
@@ -277,9 +252,9 @@ jobs:
         CONTEXT_PATH: docker-images/log-cache-gateway
         BASE_PACKAGE: code.cloudfoundry.org/log-cache
     - task: build-scheduler-image
-      file: loggregator-ci/tasks/build-go-docker-image/task.yml
+      file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
-        context-repo: loggregator-ci-docker-images
+        context-repo: log-cache-ci-docker-images
         source-repo: log-cache
       output_mapping:
         build-image: build-scheduler-image
@@ -320,7 +295,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: loggregator-ci
+    - get: log-cache-ci
     - get: log-cache-release
       trigger: true
     - get: log-cache
@@ -328,10 +303,8 @@ jobs:
       passed: ["log-cache-tests"]
     - get: go-log-cache
       trigger: true
-    - get: go-loggregator
-      trigger: true
   - task: update-log-cache-submodule
-    file: loggregator-ci/tasks/bump-submodule/task.yml
+    file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
       release-repo: log-cache-release
       source-repo: log-cache
@@ -340,7 +313,7 @@ jobs:
     params:
       SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
   - task: update-go-log-cache-submodule
-    file: loggregator-ci/tasks/bump-submodule/task.yml
+    file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
       release-repo: bumped-log-cache-release
       source-repo: go-log-cache
@@ -348,31 +321,22 @@ jobs:
       bumped-release-repo: bumped-go-log-cache-release
     params:
       SUBMODULE_PATH: src/code.cloudfoundry.org/go-log-cache
-  - task: update-go-loggregator-submodule
-    file: loggregator-ci/tasks/bump-submodule/task.yml
+  - task: sync-package-specs
+    file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
       release-repo: bumped-go-log-cache-release
-      source-repo: go-loggregator
-    output_mapping:
-      bumped-release-repo: bumped-go-loggregator-release
-    params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/go-loggregator
-  - task: sync-package-specs
-    file: loggregator-ci/tasks/run-release-script/task.yml
-    input_mapping:
-      release-repo: bumped-go-loggregator-release
     output_mapping:
       updated-release-repo: synced-log-cache-release
     params:
       SCRIPT: scripts/sync-package-specs
   - task: run-tests
-    file: loggregator-ci/tasks/run-release-script/task.yml
+    file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
       release-repo: synced-log-cache-release
     params:
       SCRIPT: scripts/test
   - task: commit
-    file: loggregator-ci/tasks/commit-with-shortlog/task.yml
+    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
     input_mapping:
       release-repo: synced-log-cache-release
     output_mapping:
@@ -381,7 +345,6 @@ jobs:
       PATHS: |
         src/code.cloudfoundry.org/log-cache
         src/code.cloudfoundry.org/go-log-cache
-        src/code.cloudfoundry.org/go-loggregator
         packages
   - put: log-cache-release
     params:
@@ -409,9 +372,9 @@ jobs:
       trigger: true
     - get: log-cache-cli-master
     - get: bumper-tool
-    - get: loggregator-ci
+    - get: log-cache-ci
   - task: bumper
-    file: loggregator-ci/tasks/bumper/task.yml
+    file: log-cache-ci/tasks/bumper/task.yml
     input_mapping:
       source: log-cache-cli
       dest: log-cache-cli-master
@@ -431,9 +394,9 @@ jobs:
       trigger: true
     - get: log-cache-release-master
     - get: bumper-tool
-    - get: loggregator-ci
+    - get: log-cache-ci
   - task: bumper
-    file: loggregator-ci/tasks/bumper/task.yml
+    file: log-cache-ci/tasks/bumper/task.yml
     input_mapping:
       source: log-cache-release-elect
       dest: log-cache-release-master
@@ -454,19 +417,19 @@ jobs:
       passed:
       - cf-deploy
       trigger: true
-    - get: deployments-loggregator
-    - get: loggregator-ci
+    - get: log-cache-deployments
+    - get: log-cache-ci
     - get: log-cache-acceptance-tests-release
       trigger: true
   - task: upload-lcats
-    file: loggregator-ci/tasks/upload-release/task.yml
+    file: log-cache-ci/tasks/upload-release/task.yml
     params:
       BBL_STATE_DIR: gcp/lime
     input_mapping:
-      bbl-state: deployments-loggregator
+      bbl-state: log-cache-deployments
       bosh-release-dir: log-cache-acceptance-tests-release
   - task: lcats-deploy
-    file: loggregator-ci/tasks/bosh-deploy/task.yml
+    file: log-cache-ci/tasks/bosh-deploy/task.yml
     params:
       BBL_STATE_DIR: gcp/lime
       DEPLOYMENT_NAME: lcats
@@ -474,31 +437,31 @@ jobs:
       VARS_FILES: gcp/lime/deployment-vars.yml
       VARS_STORE_FILE: gcp/lime/lcats-vars.yml
     input_mapping:
-      bbl-state: deployments-loggregator
+      bbl-state: log-cache-deployments
       bosh-release: log-cache-acceptance-tests-release
-      ops-files: deployments-loggregator
-      vars-files: deployments-loggregator
-      vars-store: deployments-loggregator
+      ops-files: log-cache-deployments
+      vars-files: log-cache-deployments
+      vars-store: log-cache-deployments
   - task: run-lcats
-    file: loggregator-ci/tasks/run-errand/task.yml
+    file: log-cache-ci/tasks/run-errand/task.yml
     params:
       BBL_STATE_DIR: gcp/lime
       DEPLOYMENT_NAME: lcats
       ERRAND: lcats
       KEEP_ALIVE: true
     input_mapping:
-      bbl-state: deployments-loggregator
+      bbl-state: log-cache-deployments
 
 - name: blackbox-deploy
   serial: true
   plan:
   - aggregate:
-    - get: deployments-loggregator
+    - get: log-cache-deployments
     - get: log-cache-release
       passed:
       - cf-deploy
       trigger: true
-    - get: loggregator-ci
+    - get: log-cache-ci
   - task: create-blackbox-ops-file
     config:
       platform: linux
@@ -545,7 +508,7 @@ jobs:
           EOT
 
   - task: blackbox-deploy
-    file: loggregator-ci/tasks/bosh-deploy/task.yml
+    file: log-cache-ci/tasks/bosh-deploy/task.yml
     params:
       BBL_STATE_DIR: gcp/lime
       DEPLOYMENT_NAME: blackbox
@@ -555,139 +518,21 @@ jobs:
       VARS_FILES: gcp/lime/deployment-vars.yml
       VARS_STORE_FILE: gcp/lime/blackbox-vars.yml
     input_mapping:
-      bbl-state: deployments-loggregator
+      bbl-state: log-cache-deployments
       bosh-release: log-cache-release
       ops-files: ops-files
-      vars-files: deployments-loggregator
-      vars-store: deployments-loggregator
-
-- name: cf-blackbox-tests
-  public: false
-  serial_groups: [live-tests]
-  serial: true
-  plan:
-  - aggregate:
-    - get: loggregator-tools
-    - get: loggregator-ci
-    - get: 10m
-      trigger: true
-  - aggregate:
-    - task: push-request-spinner
-      file: loggregator-ci/tasks/log-cache-request-spinner-push/task.yml
-      timeout: 15m
-      params:
-        APP_NAME: "request-spinner"
-        SYSTEM_DOMAIN: "lime.loggr.cf-app.com"
-        LOG_CACHE_ADDR: http://log-cache.lime.loggr.cf-app.com
-        ORG: test
-        SPACE: test
-        USERNAME: admin
-        PASSWORD: {{cf_admin_password}}
-        SKIP_SSL_VALIDATION: true
-        UAA_CLIENT: blackbox
-        UAA_CLIENT_SECRET: {{blackbox_client_secret}}
-    - task: push-log-cache-siege
-      file: loggregator-ci/tasks/log-cache-siege-push/task.yml
-      timeout: 15m
-      params:
-        APP_NAME: "log-cache-siege"
-        SYSTEM_DOMAIN: "lime.loggr.cf-app.com"
-        LOG_CACHE_ADDR: http://log-cache.lime.loggr.cf-app.com
-        REQUEST_SPINNER_ADDR: http://request-spinner.lime.loggr.cf-app.com
-        ORG: test
-        SPACE: test
-        USERNAME: admin
-        PASSWORD: {{cf_admin_password}}
-        SKIP_SSL_VALIDATION: true
-        UAA_CLIENT: blackbox
-        UAA_CLIENT_SECRET: {{blackbox_client_secret}}
-  # Note: all log-cache testing tasks should run serially to prevent test
-  # result pollution
-  - task: log-cache-blackbox-tests
-    file: loggregator-ci/tasks/cf-log-cache-blackbox/task.yml
-    timeout: 15m
-    params:
-      APP_NAME: "log-cache-blackbox"
-      APP_ADDR: "log-cache-blackbox.lime.loggr.cf-app.com"
-      SYSTEM_DOMAIN: "lime.loggr.cf-app.com"
-      DATADOG_API_KEY: {{datadog-loggregator-api-key}}
-      LOG_CACHE_URL: http://log-cache.lime.loggr.cf-app.com
-      ORG: test
-      SPACE: test
-      USERNAME: admin
-      PASSWORD: {{cf_admin_password}}
-      SKIP_SSL_VALIDATION: true
-      UAA_CLIENT: blackbox
-      UAA_CLIENT_SECRET: {{blackbox_client_secret}}
-  - task: log-cache-siege
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-      params:
-        LOG_CACHE_SIEGE_ADDR: http://log-cache-siege.lime.loggr.cf-app.com
-      run:
-        path: bash
-        args:
-        - -c
-        - |
-          #!/bin/bash
-          set -ex
-          curl -d '' -X POST $LOG_CACHE_SIEGE_ADDR/v1/siege
-
-- name: cf-blackbox-group-tests
-  public: false
-  serial_groups: [live-tests]
-  serial: true
-  plan:
-  - aggregate:
-    - get: loggregator-tools
-    - get: loggregator-ci
-    - get: 10m
-      trigger: true
-  - aggregate:
-    - task: push-request-spinner
-      file: loggregator-ci/tasks/log-cache-request-spinner-push/task.yml
-      timeout: 15m
-      params:
-        APP_NAME: "request-spinner"
-        SYSTEM_DOMAIN: "lime.loggr.cf-app.com"
-        LOG_CACHE_ADDR: http://log-cache.lime.loggr.cf-app.com
-        ORG: test
-        SPACE: test
-        USERNAME: admin
-        PASSWORD: {{cf_admin_password}}
-        SKIP_SSL_VALIDATION: true
-        UAA_CLIENT: blackbox
-        UAA_CLIENT_SECRET: {{blackbox_client_secret}}
-  - task: log-cache-group-blackbox-tests
-    file: loggregator-ci/tasks/log-cache-group-blackbox/task.yml
-    timeout: 15m
-    params:
-      APP_NAME: "log-cache-blackbox-groups"
-      APP_ADDR: "log-cache-blackbox-groups.lime.loggr.cf-app.com"
-      SYSTEM_DOMAIN: "lime.loggr.cf-app.com"
-      DATADOG_API_KEY: {{datadog-loggregator-api-key}}
-      LOG_CACHE_URL: http://log-cache.lime.loggr.cf-app.com
-      ORG: test
-      SPACE: test
-      USERNAME: admin
-      PASSWORD: {{cf_admin_password}}
-      SKIP_SSL_VALIDATION: true
-      UAA_CLIENT: blackbox
-      UAA_CLIENT_SECRET: {{blackbox_client_secret}}
+      vars-files: log-cache-deployments
+      vars-store: log-cache-deployments
 
 - name: deploy-datadog-forwarder
   public: false
   serial: true
   plan:
   - aggregate:
-    - get: loggregator-tools
-    - get: loggregator-ci
+    - get: log-cache-tools
+    - get: log-cache-ci
   - task: deploy-datadog-forwarder
-    file: loggregator-ci/tasks/datadog-forwarder/task.yml
+    file: log-cache-ci/tasks/datadog-forwarder/task.yml
     timeout: 15m
     params:
       APP_NAME: "datadog-forwarder"
@@ -716,37 +561,21 @@ jobs:
   - live-tests
   plan:
   - aggregate:
-    - get: loggregator-ci
+    - get: log-cache-ci
     - get: bbl-state
-      resource: deployments-loggregator
+      resource: log-cache-deployments
     - get: cf-deployment
     - get: cf-deployment-concourse-tasks
-    - get: loggregator-release
-      trigger: true
-    - get: loggregator-agent-release
-      trigger: true
     - get: log-cache-release
       trigger: true
       passed: ["log-cache-bump-submodule"]
     - get: vars-store
-      resource: deployments-loggregator
+      resource: log-cache-deployments
     - get: vars-files
-      resource: deployments-loggregator
+      resource: log-cache-deployments
   - aggregate:
-    - task: upload-loggregator-release
-      file: loggregator-ci/tasks/upload-release/task.yml
-      input_mapping:
-        bosh-release-dir: loggregator-release
-      params:
-        BBL_STATE_DIR: gcp/lime
-    - task: upload-loggregator-agent-release
-      file: loggregator-ci/tasks/upload-release/task.yml
-      input_mapping:
-        bosh-release-dir: loggregator-agent-release
-      params:
-        BBL_STATE_DIR: gcp/lime
     - task: upload-log-cache-release
-      file: loggregator-ci/tasks/upload-release/task.yml
+      file: log-cache-ci/tasks/upload-release/task.yml
       input_mapping:
         bosh-release-dir: log-cache-release
       params:
@@ -763,7 +592,6 @@ jobs:
       - name: bbl-state
       - name: cf-deployment
       - name: log-cache-release
-      - name: loggregator-agent-release
       outputs:
       - name: ops-files
       run:
@@ -774,20 +602,9 @@ jobs:
           set -e
 
           cp cf-deployment/operations/scale-to-one-az.yml ops-files/
-          cp cf-deployment/operations/use-compiled-releases.yml ops-files/
-          cp loggregator-agent-release/manifests/operations/infrastructure-metrics.yml ops-files/infrastructure-metrics.yml
+          cp cf-deployment/operations/use-compiled-releases.yml ops-files
 
           cat <<EOT >> ops-files/on-the-fly.yml
-          - type: replace
-            path: /releases/name=loggregator
-            value:
-              name: loggregator
-              version: latest
-          - type: replace
-            path: /releases/name=loggregator-agent
-            value:
-              name: loggregator-agent
-              version: latest
           - type: replace
             path: /instance_groups/name=doppler/instances
             value: 2
@@ -864,7 +681,7 @@ jobs:
         scale-to-one-az.yml
         use-compiled-releases.yml
         on-the-fly.yml
-  - put: deployments-loggregator
+  - put: log-cache-deployments
     params:
       repository: updated-vars-store
       rebase: true
@@ -881,7 +698,7 @@ jobs:
     params:
       BBL_STATE_DIR: gcp/lime
   - task: create-test-space
-    file: loggregator-ci/tasks/create-org-and-space/task.yml
+    file: log-cache-ci/tasks/create-org-and-space/task.yml
     input_mapping:
       vars-store: bbl-state
     params:
@@ -895,20 +712,21 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: loggregator-ci
+    - get: log-cache-ci
     - get: leadership-election
       trigger: true
   - task: run-tests
-    file: loggregator-ci/tasks/go-test-with-latest-packages/task.yml
+    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
     params:
       IMPORT_PATH: code.cloudfoundry.org/leadership-election
     input_mapping:
       source-repo: leadership-election
+
 - name: leadership-election-bump-submodule
   serial: true
   plan:
   - aggregate:
-    - get: loggregator-ci
+    - get: log-cache-ci
     - get: leadership-election-release
       trigger: true
     - get: leadership-election
@@ -916,7 +734,7 @@ jobs:
       - leadership-election-tests
       trigger: true
   - task: update-submodule
-    file: loggregator-ci/tasks/bump-submodule/task.yml
+    file: log-cache-ci/tasks/bump-submodule/task.yml
     params:
       SUBMODULE_PATH: src/code.cloudfoundry.org/leadership-election
     input_mapping:
@@ -925,7 +743,7 @@ jobs:
     output_mapping:
       bumped-release-repo: updated-leadership-election-release
   - task: sync-package-specs
-    file: loggregator-ci/tasks/run-release-script/task.yml
+    file: log-cache-ci/tasks/run-release-script/task.yml
     params:
       SCRIPT: scripts/sync-package-specs
     input_mapping:
@@ -933,13 +751,13 @@ jobs:
     output_mapping:
       updated-release-repo: synced-leadership-election-release
   - task: run-tests
-    file: loggregator-ci/tasks/run-release-script/task.yml
+    file: log-cache-ci/tasks/run-release-script/task.yml
     params:
       SCRIPT: scripts/test
     input_mapping:
       release-repo: synced-leadership-election-release
   - task: commit
-    file: loggregator-ci/tasks/commit-with-shortlog/task.yml
+    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
     params:
       PATHS: src/code.cloudfoundry.org/leadership-election packages
     input_mapping:

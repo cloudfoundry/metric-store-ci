@@ -22,6 +22,7 @@ function set_pipeline {
     DATADOG_FORWARDER_SECRET=`cat ~/workspace/deployments-loggregator/gcp/lime/deployment-vars.yml | yq .datadog_forwarder_client_secret`
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/release-credentials.yml" > release-credentials.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
+    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/docker-hub-ci.yml" > docker-hub-ci.yml
 
     echo setting pipeline for "$1"
     fly -t $TARGET set-pipeline -p "$1" \
@@ -30,10 +31,11 @@ function set_pipeline {
         -v "blackbox_client_secret=$BLACKBOX_SECRET" \
         -v "lcats_client_secret=$LCATS_SECRET" \
         -v "datadog_forwarder_client_secret=$DATADOG_FORWARDER_SECRET" \
+        -l ./docker-hub-ci.yml \
         -l ./github-key.yml \
         -l ./release-credentials.yml
 
-    rm github-key.yml release-credentials.yml
+    rm docker-hub-ci.yml github-key.yml release-credentials.yml
 }
 
 function sync_fly {
