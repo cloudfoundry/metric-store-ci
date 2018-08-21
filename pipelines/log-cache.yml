@@ -10,8 +10,6 @@ groups:
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
   - log-cache-cli-promotion
-  - blackbox-deploy
-  - deploy-datadog-forwarder
 - name: leadership-election
   jobs:
   - leadership-election-tests
@@ -452,103 +450,6 @@ jobs:
     input_mapping:
       bbl-state: log-cache-deployments
 
-- name: blackbox-deploy
-  serial: true
-  plan:
-  - aggregate:
-    - get: log-cache-deployments
-    - get: log-cache-release
-      passed:
-      - cf-deploy
-      trigger: true
-    - get: log-cache-ci
-  - task: create-blackbox-ops-file
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-          tag: v3.19.0
-      outputs:
-      - name: ops-files
-      run:
-        path: /bin/bash
-        args:
-        - "-c"
-        - |
-          set -e
-
-          cat <<EOT >> ops-files/blackbox.yml
-          - type: replace
-            path: /name
-            value: blackbox
-          - type: replace
-            path: /instance_groups
-            value:
-            - name: blackbox
-              azs: [z1]
-              instances: 1
-              persistent_disk_type: 5GB
-              vm_type: minimal
-              stemcell: default
-              networks: [{name: default}]
-              jobs:
-              - name: log-cache-blackbox
-                release: log-cache
-                consumes:
-                  log-cache: {from: log-cache, deployment: cf}
-                properties:
-                  log_cache_host: doppler.service.cf.internal
-                  datadog:
-                    api_key: ((datadog-loggregator-api-key))
-                    tags: [blackbox]
-                    origin_host: lime.loggr.cf-app.com
-                consumes: {log-cache: {from: log-cache, deployment: cf}}
-          EOT
-
-  - task: blackbox-deploy
-    file: log-cache-ci/tasks/bosh-deploy/task.yml
-    params:
-      BBL_STATE_DIR: gcp/lime
-      DEPLOYMENT_NAME: blackbox
-      MANIFEST_FILE: manifests/log-cache-blackbox.yml
-      OPS_FILES: |
-        blackbox.yml
-      VARS_FILES: gcp/lime/deployment-vars.yml
-      VARS_STORE_FILE: gcp/lime/blackbox-vars.yml
-    input_mapping:
-      bbl-state: log-cache-deployments
-      bosh-release: log-cache-release
-      ops-files: ops-files
-      vars-files: log-cache-deployments
-      vars-store: log-cache-deployments
-
-- name: deploy-datadog-forwarder
-  public: false
-  serial: true
-  plan:
-  - aggregate:
-    - get: log-cache-tools
-    - get: log-cache-ci
-  - task: deploy-datadog-forwarder
-    file: log-cache-ci/tasks/datadog-forwarder/task.yml
-    timeout: 15m
-    params:
-      APP_NAME: "datadog-forwarder"
-      SYSTEM_DOMAIN: "lime.loggr.cf-app.com"
-      DATADOG_API_KEY: {{datadog-loggregator-api-key}}
-      DATADOG_TAGS: accumulator-lime
-      ORG: test
-      SPACE: test
-      USERNAME: admin
-      PASSWORD: {{cf_admin_password}}
-      LOG_CACHE_HTTP_ADDR: https://log-cache.lime.loggr.cf-app.com
-      LOG_CACHE_GROUP_NAME: lime-datadog-forwarder
-      SKIP_SSL_VALIDATION: true
-      UAA_CLIENT: datadog-forwarder
-      UAA_CLIENT_SECRET: ((datadog_forwarder_client_secret))
-
 ###############################################################################
 # SHARED
 ###############################################################################
@@ -625,30 +526,6 @@ jobs:
             path: /variables/name=lcats_client_secret?
             value:
               name: lcats_client_secret
-              type: password
-          - type: replace
-            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/blackbox?
-            value:
-              authorities: doppler.firehose
-              authorized-grant-types: client_credentials
-              scope: doppler.firehose
-              secret: ((blackbox_client_secret))
-          - type: replace
-            path: /variables/name=blackbox_client_secret?
-            value:
-              name: blackbox_client_secret
-              type: password
-          - type: replace
-            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/datadog-forwarder?
-            value:
-              authorities: doppler.firehose
-              authorized-grant-types: client_credentials
-              scope: doppler.firehose
-              secret: ((datadog_forwarder_client_secret))
-          - type: replace
-            path: /variables/name=datadog_forwarder_client_secret?
-            value:
-              name: datadog_forwarder_client_secret
               type: password
           - type: replace
             path: /instance_groups/name=api/instances
