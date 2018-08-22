@@ -21,8 +21,7 @@ function set_pipeline {
     fly -t $TARGET set-pipeline -p "$PIPELINE_NAME" \
         -c "pipelines/$1.yml" \
         -l ./github-key.yml \
-        -l ./datadog-api-key.yml \
-        -l ~/workspace/log-cache-ci/scripts.yml
+        -l ./datadog-api-key.yml
 
     rm github-key.yml datadog-api-key.yml
 }

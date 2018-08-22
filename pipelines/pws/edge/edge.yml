@@ -1,0 +1,83 @@
+resources:
+- name: log-cache-release
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-release
+    branch: develop
+    private_key: {{github_key}}
+
+- name: log-cache-deployments
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-deployments
+    branch: master
+    private_key: {{github_key}}
+
+jobs:
+- name: log-cache-edge-deploy
+  plan:
+  - aggregate:
+    - get: log-cache-release
+    - get: log-cache-deployments
+  - aggregate:
+    - task: upload-log-cache
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+        params:
+          BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+          BOSH_CLIENT: ((bosh-admin-client.username))
+          BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+          BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        run:
+          path: bash
+          args:
+          - -c
+          - |
+            #!/bin/bash
+            set -eux
+
+            pushd log-cache-release
+              bosh create-release
+              bosh upload-release --rebase
+            popd
+        inputs:
+        - name: log-cache-release
+  - task: log-cache-edge-deploy
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        DEPLOYMENT_NAME: log-cache-edge
+        MANIFEST_FILE: manifests/log-cache.yml
+        SECRETS_FILE: shared-secrets.yml
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          bosh \
+            interpolate "log-cache-release/$MANIFEST_FILE" \
+            --ops-file "log-cache-deployments/pws/edge/log-cache-edge-ops-file.yml"
+
+          bosh \
+            deploy "log-cache-release/$MANIFEST_FILE" \
+            --deployment "$DEPLOYMENT_NAME" \
+            --non-interactive \
+            --ops-file "log-cache-deployments/pws/edge/log-cache-edge-ops-file.yml"
+      inputs:
+      - name: log-cache-release
+      - name: log-cache-deployments
