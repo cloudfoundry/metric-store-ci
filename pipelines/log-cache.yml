@@ -592,8 +592,8 @@ jobs:
               type: password
           EOT
 
-          # TODO - this can be removed once the related change is PRed into
-          # cf-deployment
+          # This should likely stay out of cf-deployment; only needs to be
+          # shared for LCATS.
           cat <<EOT >> ops-files/group-reader-link.yml
           - type: replace
             path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader/provides?
@@ -608,6 +608,14 @@ jobs:
           - type: replace
             path: /update/canaries
             value: 5
+          EOT
+
+          cat <<EOT >> ops-files/use-log-cache-latest.yml
+          - type: replace
+            path: /releases/name=log-cache
+            value:
+              name: log-cache
+              version: latest
           EOT
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
@@ -624,6 +632,7 @@ jobs:
         test-clients.yml
         group-reader-link.yml
         bosh-speed.yml
+        use-log-cache-latest.yml
 
   - put: log-cache-deployments
     params:
