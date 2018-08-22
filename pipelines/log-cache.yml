@@ -5,6 +5,7 @@ groups:
   - lcats
   - log-cache-tests
   - log-cache-cli-tests
+  - go-log-cache-tests
   - log-cache-docker-images
   - log-cache-bump-submodule
   - log-cache-release-elect-promotion
@@ -199,6 +200,20 @@ jobs:
       source-repo: log-cache-cli
     params:
       IMPORT_PATH: code.cloudfoundry.org/log-cache-cli
+
+- name: go-log-cache-tests
+  public: true
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: go-log-cache
+      trigger: true
+  - task: run-tests
+    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
+    input_mapping:
+      source-repo: go-log-cache
+    params:
+      IMPORT_PATH: code.cloudfoundry.org/go-log-cache
 
 - name: log-cache-docker-images
   serial: true
