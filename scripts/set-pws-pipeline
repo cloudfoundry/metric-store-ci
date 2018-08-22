@@ -13,6 +13,7 @@ function validate {
 }
 
 function set_pipeline {
+    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/release-credentials.yml" > release-credentials.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/datadog-api-key-pws.yml" > datadog-api-key.yml
 
@@ -21,9 +22,10 @@ function set_pipeline {
     fly -t $TARGET set-pipeline -p "$PIPELINE_NAME" \
         -c "pipelines/$1.yml" \
         -l ./github-key.yml \
-        -l ./datadog-api-key.yml
+        -l ./datadog-api-key.yml \
+        -l ./release-credentials.yml
 
-    rm github-key.yml datadog-api-key.yml
+    rm github-key.yml datadog-api-key.yml release-credentials.yml
 }
 
 function sync_fly {

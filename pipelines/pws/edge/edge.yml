@@ -13,12 +13,22 @@ resources:
     branch: master
     private_key: {{github_key}}
 
+- name: log-cache-version
+  type: semver
+  source:
+    bucket: loggregator-ci-versions
+    key: log-cache
+    access_key_id: {{loggregator-team-s3-access-key}}
+    secret_access_key: {{loggregator-team-s3-secret-key}}
+
 jobs:
 - name: log-cache-edge-deploy
   plan:
   - aggregate:
     - get: log-cache-release
     - get: log-cache-deployments
+  - get: log-cache-version
+    params: {pre: dev}
   - aggregate:
     - task: upload-log-cache
       config:
@@ -41,11 +51,13 @@ jobs:
             set -eux
 
             pushd log-cache-release
+              cp ../log-cache-version/version src/
               bosh create-release
               bosh upload-release --rebase
             popd
         inputs:
         - name: log-cache-release
+        - name: log-cache-version
   - task: log-cache-edge-deploy
     config:
       platform: linux
@@ -81,3 +93,5 @@ jobs:
       inputs:
       - name: log-cache-release
       - name: log-cache-deployments
+  - put: log-cache-version
+    params: {file: log-cache-version/version}
