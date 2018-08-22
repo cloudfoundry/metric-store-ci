@@ -3,6 +3,7 @@ groups:
   jobs:
   - cf-deploy
   - lcats
+  - cats
   - log-cache-tests
   - log-cache-cli-tests
   - go-log-cache-tests
@@ -46,6 +47,12 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/log-cache-acceptance-tests-release
+    branch: master
+
+- name: cf-acceptance-tests
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/cf-acceptance-tests
     branch: master
 
 - name: log-cache-ci
@@ -415,8 +422,7 @@ jobs:
       repository: merged-dest
 
 - name: lcats
-  serial_groups: [live-tests]
-  serial: true
+  serial_groups: [cf-deploy]
   plan:
   - aggregate:
     - get: log-cache-release
@@ -458,16 +464,51 @@ jobs:
     input_mapping:
       bbl-state: log-cache-deployments
 
-###############################################################################
-# SHARED
-###############################################################################
+- name: cats
+  serial_groups: [cf-deploy]
+  plan:
+  - aggregate:
+    - get: log-cache-release
+      passed:
+      - cf-deploy
+      trigger: true
+    - get: log-cache-deployments
+    - get: log-cache-ci
+    - get: cf-acceptance-tests
+      trigger: true
+    - get: cf-deployment-concourse-tasks
+  - task: integration-config
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+          tag: v3.19.0
+      outputs:
+      - name: integration-config
+      run:
+        path: /bin/bash
+        args:
+        - "-c"
+        - |
+          set -eux
+
+          cat <<EOT >> integration-config/integration_config.json
+          {
+            "api": "api.lime.loggr.cf-app.com",
+            "admin_user": "admin",
+            "admin_password": "((cf_admin_password))",
+            "apps_domain": "lime.loggr.cf-app.com",
+            "skip_ssl_validation": true,
+            "use_log_cache": true
+          }
+          EOT
+  - task: cats
+    file: cf-deployment-concourse-tasks/run-cats/task.yml
+
 - name: cf-deploy
-  serial: true
-  serial_groups:
-  - cf-deploy
-  - bosh-cf-cats
-  - bosh-cfar-lats
-  - live-tests
+  serial_groups: [cf-deploy]
   plan:
   - aggregate:
     - get: log-cache-ci
@@ -510,19 +551,9 @@ jobs:
         - |
           set -e
 
-          cp cf-deployment/operations/scale-to-one-az.yml ops-files/
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
 
-          cat <<EOT >> ops-files/on-the-fly.yml
-          - type: replace
-            path: /instance_groups/name=doppler/instances
-            value: 2
-          - type: replace
-            path: /instance_groups/name=diego-cell/instances
-            value: 6
-          - type: replace
-            path: /instance_groups/name=uaa/instances
-            value: 2
+          cat <<EOT >> ops-files/test-clients.yml
           - type: replace
             path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/lcats?
             value:
@@ -536,15 +567,41 @@ jobs:
               name: lcats_client_secret
               type: password
           - type: replace
-            path: /instance_groups/name=api/instances
-            value: 2
+            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/blackbox?
+            value:
+              authorities: doppler.firehose
+              authorized-grant-types: client_credentials
+              scope: doppler.firehose
+              secret: ((blackbox_client_secret))
           - type: replace
-            path: /instance_groups/name=doppler/vm_type
-            value: small-highmem
+            path: /variables/name=blackbox_client_secret?
+            value:
+              name: blackbox_client_secret
+              type: password
+          - type: replace
+            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/datadog-forwarder?
+            value:
+              authorities: doppler.firehose
+              authorized-grant-types: client_credentials
+              scope: doppler.firehose
+              secret: ((datadog_forwarder_client_secret))
+          - type: replace
+            path: /variables/name=datadog_forwarder_client_secret?
+            value:
+              name: datadog_forwarder_client_secret
+              type: password
+          EOT
+
+          # TODO - this can be removed once the related change is PRed into
+          # cf-deployment
+          cat <<EOT >> ops-files/group-reader-link.yml
           - type: replace
             path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader/provides?
             value:
                 log-cache-group-reader: {shared: true}
+          EOT
+
+          cat <<EOT >> ops-files/bosh-speed.yml
           - type: replace
             path: /update/max_in_flight
             value: 10
@@ -563,9 +620,11 @@ jobs:
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
       VARS_STORE_FILE: gcp/lime/deployment-vars.yml
       OPS_FILES: |
-        scale-to-one-az.yml
         use-compiled-releases.yml
-        on-the-fly.yml
+        test-clients.yml
+        group-reader-link.yml
+        bosh-speed.yml
+
   - put: log-cache-deployments
     params:
       repository: updated-vars-store
