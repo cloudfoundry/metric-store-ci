@@ -1,0 +1,88 @@
+resources:
+- name: cf-deployment
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/cf-deployment
+    branch: master
+    private_key: {{github_key}}
+    tag_filter: v3.4.*
+
+- name: cf-deployment-concourse-tasks
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
+    branch: v6.5
+
+- name: log-cache-deployments
+  type: git
+  source: &log_cache_deployments
+    uri: git@github.com:cloudfoundry/log-cache-deployments.git
+    branch: master
+    private_key: {{github_key}}
+
+- name: log-cache-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-ci
+    branch: master
+    private_key: {{github_key}}
+
+jobs:
+###############################################################################
+# LOG CACHE
+###############################################################################
+- name: cf-deploy
+  serial_groups: [cf-deploy]
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: bbl-state
+      resource: log-cache-deployments
+    - get: cf-deployment
+    - get: cf-deployment-concourse-tasks
+    - get: vars-files
+      resource: log-cache-deployments
+    - get: vars-store
+      resource: log-cache-deployments
+  - task: copy-ops-files
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+          tag: v3.19.0
+      inputs:
+      - name: bbl-state
+      - name: cf-deployment
+      outputs:
+      - name: ops-files
+      run:
+        path: /bin/bash
+        args:
+        - "-c"
+        - |
+          set -e
+
+          cp cf-deployment/operations/use-compiled-releases.yml ops-files
+          cp cf-deployment/operations/scale-to-one-az.yml ops-files
+          cp cf-deployment/operations/experimental/fast-deploy-with-downtime-and-danger.yml ops-files
+  - task: upload-stemcell
+    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
+    params:
+      BBL_STATE_DIR: gcp/citron
+  - task: cf-deploy
+    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+    params:
+      BBL_STATE_DIR: gcp/citron
+      SYSTEM_DOMAIN: citron.loggr.cf-app.com
+      USE_VARS_STORE: false
+      OPS_FILES: |
+        use-compiled-releases.yml
+        scale-to-one-az.yml
+        fast-deploy-with-downtime-and-danger.yml
+
+  - task: cleanup
+    file: cf-deployment-concourse-tasks/bosh-cleanup/task.yml
+    params:
+      BBL_STATE_DIR: gcp/citron
