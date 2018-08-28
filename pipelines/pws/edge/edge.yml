@@ -51,7 +51,7 @@ jobs:
 
           pushd log-cache-release
             cp ../log-cache-version/version src/
-            bosh create-release
+            bosh create-release --force
             bosh upload-release --rebase
           popd
       inputs:
