@@ -228,6 +228,15 @@ jobs:
       source-repo: log-cache-cli
     params:
       IMPORT_PATH: code.cloudfoundry.org/log-cache-cli
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text: {{slack_build_failure_text}}
 
 - name: go-log-cache-tests
   public: true
