@@ -402,6 +402,15 @@ jobs:
     params:
       repository: committed-log-cache-release
       rebase: true
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text: {{slack_build_failure_text}}
 
 - name: log-cache-release-elect-promotion
   serial: true
@@ -502,6 +511,15 @@ jobs:
       KEEP_ALIVE: true
     input_mapping:
       bbl-state: log-cache-deployments
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text: {{slack_build_failure_text}}
 
 - name: cats
   serial_groups: [cf-deploy]
@@ -545,6 +563,15 @@ jobs:
           EOT
   - task: cats
     file: cf-deployment-concourse-tasks/run-cats/task.yml
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text: {{slack_build_failure_text}}
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
@@ -672,7 +699,6 @@ jobs:
         group-reader-link.yml
         bosh-speed.yml
         use-log-cache-latest.yml
-
   - put: log-cache-deployments
     params:
       repository: updated-vars-store
@@ -698,6 +724,15 @@ jobs:
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text: {{slack_build_failure_text}}
 
 - name: leadership-election-tests
   public: true
