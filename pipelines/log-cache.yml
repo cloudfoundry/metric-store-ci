@@ -251,6 +251,15 @@ jobs:
       source-repo: go-log-cache
     params:
       IMPORT_PATH: code.cloudfoundry.org/go-log-cache
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text: {{slack_build_failure_text}}
 
 - name: log-cache-docker-images
   serial: true
