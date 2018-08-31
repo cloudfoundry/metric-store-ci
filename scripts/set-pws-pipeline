@@ -16,6 +16,7 @@ function set_pipeline {
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/release-credentials.yml" > release-credentials.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/datadog-api-key-pws.yml" > datadog-api-key.yml
+    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/slack-ci.yml" > slack-ci.yml
 
     PIPELINE_NAME=$(echo $1 | sed 's/\//-/g')
     echo setting pipeline for "$PIPELINE_NAME"
@@ -23,9 +24,10 @@ function set_pipeline {
         -c "pipelines/$1.yml" \
         -l ./github-key.yml \
         -l ./datadog-api-key.yml \
+        -l ./slack-ci.yml \
         -l ./release-credentials.yml
 
-    rm github-key.yml datadog-api-key.yml release-credentials.yml
+    rm github-key.yml datadog-api-key.yml slack-ci.yml release-credentials.yml
 }
 
 function sync_fly {
