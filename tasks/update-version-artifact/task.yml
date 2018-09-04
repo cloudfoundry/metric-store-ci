@@ -5,19 +5,14 @@ image_resource:
 platform: linux
 
 inputs:
+- name: log-cache-ci
 - name: log-cache-release-master
 - name: log-cache-release-develop
 - name: log-cache-release-version
-- name: log-cache-ci
 
 outputs:
-- name: github-release
-- name: log-cache-release-master-modified
 - name: log-cache-release-develop-modified
+- name: log-cache-release-master-modified
 
 run:
-  path: log-cache-ci/tasks/create-final-release/task
-
-params:
-  S3_ACCESS_KEY:
-  S3_SECRET_KEY:
+  path: log-cache-ci/tasks/update-version-artifact/task

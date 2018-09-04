@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# vi:syntax=sh
+
+set -ex
+
+version=`cat log-cache-release-version/version`
+
+pushd log-cache-release-master
+  git checkout master
+  echo $version > src/version
+  git add .
+  git commit -m "Bump version to ${version}"
+
+  cp -r . ../log-cache-release-master-modified
+popd
+
+pushd log-cache-release-develop
+  git checkout develop
+  echo $version > src/version
+  git add .
+  git commit -m "Bump version to ${version}"
+
+  cp -r . ../log-cache-release-develop-modified
+popd

@@ -1,3 +1,23 @@
+groups:
+- name: log-cache-release
+  jobs:
+  - release-patch-version
+  - release-minor-version
+  - release-major-version
+  - log-cache-create-final-release
+  - bump-golang
+- name: log-cache-cli
+  jobs:
+  - log-cache-cli-bump-major
+  - log-cache-cli-create-final-release
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
 resources:
 - name: log-cache-cli
   type: git
@@ -12,6 +32,38 @@ resources:
     initial_version: 0.0.0
     bucket: loggregator-ci-versions
     key: log-cache-cli
+    access_key_id: {{loggregator-team-s3-access-key}}
+    secret_access_key: {{loggregator-team-s3-secret-key}}
+
+- name: log-cache-release-version
+  type: semver
+  source:
+    bucket: loggregator-ci-versions
+    key: log-cache
+    access_key_id: {{loggregator-team-s3-access-key}}
+    secret_access_key: {{loggregator-team-s3-secret-key}}
+
+- name: log-cache-release-version-major
+  type: semver
+  source:
+    bucket: loggregator-ci-versions
+    key: log-cache
+    access_key_id: {{loggregator-team-s3-access-key}}
+    secret_access_key: {{loggregator-team-s3-secret-key}}
+
+- name: log-cache-release-version-minor
+  type: semver
+  source:
+    bucket: loggregator-ci-versions
+    key: log-cache
+    access_key_id: {{loggregator-team-s3-access-key}}
+    secret_access_key: {{loggregator-team-s3-secret-key}}
+
+- name: log-cache-release-version-patch
+  type: semver
+  source:
+    bucket: loggregator-ci-versions
+    key: log-cache
     access_key_id: {{loggregator-team-s3-access-key}}
     secret_access_key: {{loggregator-team-s3-secret-key}}
 
@@ -30,20 +82,6 @@ resources:
     branch: master
     private_key: {{github_key}}
 
-- name: log-cache-develop
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: develop
-    private_key: {{github_key}}
-
-- name: log-cache-master
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: master
-    private_key: {{github_key}}
-
 - name: log-cache-release-develop
   type: git
   source:
@@ -58,6 +96,12 @@ resources:
     branch: master
     private_key: {{github_key}}
 
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-release
+    branch: master
+    private_key: {{github_key}}
+
 - name: log-cache-github-release-drafts
   type: github-release
   source:
@@ -66,44 +110,134 @@ resources:
     access_token: {{github-access-token}}
     drafts: true
 
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: {{slack_alert_webhook_url}}
+
+shared:
+  - &alert-message-release
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: {{slack_alert_username}}
+        icon_url: {{slack_alert_icon_url}}
+        channel: {{slack_alert_channel}}
+        text_file: messages/success.txt
+
 jobs:
-- name: log-cache-create-final-release
-  serial: true
+- name: release-patch-version
   plan:
   - aggregate:
-    - get: log-cache-develop
-    - get: log-cache-master
-      resource: log-cache-master
     - get: log-cache-ci
-  - task: create-final-release
-    file: log-cache-ci/tasks/create-final-release/task.yml
+    - get: log-cache-release-version-patch
+      params: {bump: patch}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release/task.yml
     input_mapping:
-      to-repo: log-cache-develop
-      from-repo: log-cache-master
+      version: log-cache-release-version-patch
     params:
-      S3_ACCESS_KEY: {{loggregator-team-s3-access-key}}
-      S3_SECRET_KEY: {{loggregator-team-s3-secret-key}}
-      BLOBSTORE_BUCKET: log-cache-release-blobs
-      SSH_KEY: {{github_key}}
-      NEW_VERSION: "1.4.4"
-      RELEASE_NAME: "Log Cache"
-      TO_BRANCH: develop
-      FROM_BRANCH: master
-  - put: log-cache-release-master
+      LEVEL: patch
+  on_success:
+    do:
+    - put: log-cache-release-version
+      params: {file: log-cache-release-version-patch/version}
+    - put: log-cache-release-version-patch
+      params: {file: log-cache-release-version-patch/version}
+    - <<: *alert-message-release
+
+- name: release-minor-version
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: log-cache-release-version-minor
+      params: {bump: minor}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release/task.yml
+    input_mapping:
+      version: log-cache-release-version-minor
     params:
-      repository: repos/from-repo
-      rebase: false
-  - put: log-cache-release-develop
+      LEVEL: minor
+  on_success:
+    do:
+    - put: log-cache-release-version
+      params: {file: log-cache-release-version-minor/version}
+    - put: log-cache-release-version-minor
+      params: {file: log-cache-release-version-minor/version}
+    - <<: *alert-message-release
+
+- name: release-major-version
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: log-cache-release-version-major
+      params: {bump: major}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release/task.yml
+    input_mapping:
+      version: log-cache-release-version-major
     params:
-      repository: repos/to-repo
-      rebase: false
-  - put: log-cache-github-release-drafts
-    params:
-      name: github-release/name
-      tag: github-release/tag
-      body: github-release/body
-      globs:
-      - github-release/*.tgz
+      LEVEL: major
+  on_success:
+    do:
+    - put: log-cache-release-version
+      params: {file: log-cache-release-version-major/version}
+    - put: log-cache-release-version-major
+      params: {file: log-cache-release-version-major/version}
+    - <<: *alert-message-release
+
+- name: log-cache-create-final-release
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - get: log-cache-release-version-patch
+    trigger: true
+    passed: [release-patch-version]
+  - get: log-cache-release-version-minor
+    trigger: true
+    passed: [release-minor-version]
+  - get: log-cache-release-version-major
+    trigger: true
+    passed: [release-major-version]
+  - aggregate:
+    - get: log-cache-release-develop
+    - get: log-cache-release-master
+    - get: log-cache-ci
+    - get: log-cache-release-version
+  - do:
+    - task: update-version-artifact
+      file: log-cache-ci/tasks/update-version-artifact/task.yml
+    - put: log-cache-release-master
+      params:
+        repository: log-cache-release-master-modified
+        rebase: false
+    - put: log-cache-release-develop
+      params:
+        repository: log-cache-release-develop-modified
+        rebase: false
+
+  - do:
+    - task: create-final-release
+      file: log-cache-ci/tasks/create-final-release/task.yml
+      params:
+        S3_ACCESS_KEY: {{loggregator-team-s3-access-key}}
+        S3_SECRET_KEY: {{loggregator-team-s3-secret-key}}
+    - put: log-cache-release-master
+      params:
+        repository: log-cache-release-master-modified
+        rebase: false
+    - put: log-cache-release-develop
+      params:
+        repository: log-cache-release-develop-modified
+        rebase: false
+    - put: log-cache-github-release-drafts
+      params:
+        name: github-release/name
+        tag: github-release/tag
+        body: github-release/body
+        globs:
+        - github-release/*.tgz
 
 - name: bump-golang
   serial: true
