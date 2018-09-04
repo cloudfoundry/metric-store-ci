@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# vi:syntax=sh
+
+set -ex
+
+new_version=`cat version/version`
+echo ":axe: Releasing new '${LEVEL}' version as ${new_version}" > messages/success.txt
