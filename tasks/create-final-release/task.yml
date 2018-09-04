@@ -61,5 +61,3 @@ params:
   # - Required
   # - Branch to which the final release will be merged
   TO_BRANCH:
-
-
