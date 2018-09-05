@@ -5,14 +5,16 @@ groups:
   - lcats
   - cats
   - log-cache-tests
-  - log-cache-cli-tests
   - go-log-cache-tests
   - log-cache-docker-images
   - log-cache-bump-submodule
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
-  - log-cache-cli-promotion
   - log-cache-acceptance-tests-release-bump-submodule
+- name: log-cache-cli
+  jobs:
+  - log-cache-cli-tests
+  - log-cache-cli-promotion
 - name: leadership-election
   jobs:
   - leadership-election-tests
