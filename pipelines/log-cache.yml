@@ -658,15 +658,6 @@ jobs:
               type: password
           EOT
 
-          # This should likely stay out of cf-deployment; only needs to be
-          # shared for LCATS.
-          cat <<EOT >> ops-files/group-reader-link.yml
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader/provides?
-            value:
-                log-cache-group-reader: {shared: true}
-          EOT
-
           cat <<EOT >> ops-files/bosh-speed.yml
           - type: replace
             path: /update/max_in_flight
