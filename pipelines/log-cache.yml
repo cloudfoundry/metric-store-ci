@@ -60,7 +60,7 @@ resources:
 - name: log-cache-acceptance-tests-release
   type: git
   source:
-    uri: https://github.com/cloudfoundry/log-cache-acceptance-tests-release
+    uri: git@github.com:cloudfoundry/log-cache-acceptance-tests-release
     branch: master
     private_key: {{github_key}}
 
