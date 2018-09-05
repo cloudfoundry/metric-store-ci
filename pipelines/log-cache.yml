@@ -429,6 +429,7 @@ jobs:
       trigger: true
     - get: go-log-cache
       trigger: true
+      passed: ["go-log-cache-tests"]
     - get: log-cache-acceptance-tests
       trigger: true
   - task: update-go-log-cache-submodule
