@@ -42,7 +42,7 @@ jobs:
       username: {{slack_alert_username}}
       icon_url: {{slack_alert_icon_url}}
       channel: {{slack_alert_channel}}
-      text: ":yellow_heart: Started :tree-log: Log Cache :tree-log: deployment to PWS Edge :knife:"
+      text: ":yellow_heart: Started :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
   - aggregate:
     - get: log-cache-release
     - get: log-cache-deployments
@@ -121,7 +121,7 @@ jobs:
         username: {{slack_alert_username}}
         icon_url: {{slack_alert_icon_url}}
         channel: {{slack_alert_channel}}
-        text: ":green_heart: Finished :tree-log: Log Cache :tree-log: deployment to PWS Edge :knife:"
+        text: ":green_heart: Finished :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
   on_failure:
     do:
     - put: slack-alert
@@ -130,5 +130,5 @@ jobs:
         username: {{slack_alert_username}}
         icon_url: {{slack_alert_icon_url}}
         channel: {{slack_alert_channel}}
-        text: ":broken_heart: Failed to deploy :tree-log: Log Cache :tree-log: to PWS Edge :knife:
+        text: ":broken_heart: Failed to deploy :tree-log::dollar: Log Cache: to :knife: PWS Edge
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
