@@ -363,6 +363,7 @@ jobs:
       passed: ["log-cache-tests"]
     - get: go-log-cache
       trigger: true
+      passed: ["go-log-cache-tests"]
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
