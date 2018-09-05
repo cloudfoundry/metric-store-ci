@@ -673,6 +673,8 @@ jobs:
             value:
               name: log-cache
               version: latest
+          - type: remove
+            path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader
           EOT
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
