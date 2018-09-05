@@ -552,6 +552,7 @@ jobs:
     - get: log-cache-ci
     - get: log-cache-acceptance-tests-release
       trigger: true
+      passed: ["log-cache-acceptance-tests-release-bump-submodule"]
   - task: upload-lcats
     file: log-cache-ci/tasks/upload-release/task.yml
     params:
