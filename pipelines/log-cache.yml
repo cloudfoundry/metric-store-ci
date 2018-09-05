@@ -427,26 +427,14 @@ jobs:
     - get: log-cache-ci
     - get: log-cache-acceptance-tests-release
       trigger: true
-    - get: log-cache
-      trigger: true
-      passed: ["log-cache-tests"]
     - get: go-log-cache
       trigger: true
     - get: log-cache-acceptance-tests
       trigger: true
-  - task: update-log-cache-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    input_mapping:
-      release-repo: log-cache-acceptance-tests-release
-      source-repo: log-cache
-    output_mapping:
-      bumped-release-repo: bumped-log-cache
-    params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
   - task: update-go-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
-      release-repo: bumped-log-cache
+      release-repo: log-cache-acceptance-tests-release
       source-repo: go-log-cache
     output_mapping:
       bumped-release-repo: bumped-go-log-cache
@@ -477,7 +465,6 @@ jobs:
       committed-repo: committed-log-cache-acceptance-tests-release
     params:
       PATHS: |
-        src/code.cloudfoundry.org/log-cache
         src/code.cloudfoundry.org/go-log-cache
         src/github.com/cloudfoundry/log-cache-acceptance-tests
         packages
