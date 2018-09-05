@@ -673,6 +673,9 @@ jobs:
             value:
               name: log-cache
               version: latest
+          EOT
+
+          cat <<EOT >> ops-files/cf-deployment-candidate-changes.yml
           - type: remove
             path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader
           EOT
@@ -691,6 +694,7 @@ jobs:
         test-clients.yml
         bosh-speed.yml
         use-log-cache-latest.yml
+        cf-deployment-candidate-changes.yml
   - put: log-cache-deployments
     params:
       repository: updated-vars-store
