@@ -687,7 +687,6 @@ jobs:
       OPS_FILES: |
         use-compiled-releases.yml
         test-clients.yml
-        group-reader-link.yml
         bosh-speed.yml
         use-log-cache-latest.yml
   - put: log-cache-deployments

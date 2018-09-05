@@ -15,7 +15,6 @@ RUN go build \
 FROM alpine:latest
 
 ENV NODE_ADDRS=log-cache:8080 \
-    GROUP_READER_NODE_ADDRS=log-cache:8080 \
     CA_PATH="/srv/certs/ca.crt" \
     CERT_PATH="/srv/certs/log-cache.crt" \
     KEY_PATH="/srv/certs/log-cache.key" \
