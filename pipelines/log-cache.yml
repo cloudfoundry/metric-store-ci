@@ -44,7 +44,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
-    branch: v6.5
+    branch: v7.6
 
 - name: log-cache-deployments
   type: git
@@ -763,7 +763,6 @@ jobs:
     params:
       BBL_STATE_DIR: gcp/lime
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
-      VARS_STORE_FILE: gcp/lime/deployment-vars.yml
       OPS_FILES: |
         use-compiled-releases.yml
         test-clients.yml
@@ -780,7 +779,6 @@ jobs:
       vars-store: updated-vars-store
     params:
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
-      VARS_STORE_FILE: gcp/lime/deployment-vars.yml
       ENABLED_FEATURE_FLAGS: diego_docker
   - task: cleanup
     file: cf-deployment-concourse-tasks/bosh-cleanup/task.yml
@@ -791,7 +789,6 @@ jobs:
     input_mapping:
       vars-store: bbl-state
     params:
-      VARS_STORE_FILE: gcp/lime/deployment-vars.yml
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
