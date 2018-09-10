@@ -1,9 +1,16 @@
 #!/bin/bash
 set -ex
-password=$(bosh int vars-store/$VARS_STORE_FILE --path=/cf_admin_password)
+
+pushd bbl-state/${BBL_STATE_DIR}
+    eval "$(bbl print-env)"
+popd
+
+deployment=$(bosh environment --json | jq -r '.Tables[0].Rows[0].name')
+path="/${deployment}/cf"
+password=$(credhub get -n ${path}/cf_admin_password -j | jq -r ".value")
 
 cf api api.$SYSTEM_DOMAIN --skip-ssl-validation
-cf auth admin $password
+cf auth admin "${password}"
 cf target -o system
 
 set +e

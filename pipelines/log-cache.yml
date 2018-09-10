@@ -38,7 +38,6 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/cf-deployment
     branch: master
-    private_key: {{github_key}}
 
 - name: cf-deployment-concourse-tasks
   type: git
@@ -48,7 +47,7 @@ resources:
 
 - name: log-cache-deployments
   type: git
-  source: &log_cache_deployments
+  source:
     uri: git@github.com:cloudfoundry/log-cache-deployments.git
     branch: master
     private_key: {{github_key}}
@@ -944,15 +943,10 @@ jobs:
         use-log-cache-latest.yml
         cf-deployment-candidate-changes.yml
         metric-cache.yml
-  - put: log-cache-deployments
-    params:
-      repository: updated-vars-store
-      rebase: true
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
-    input_mapping:
-      vars-store: updated-vars-store
     params:
+      BBL_STATE_DIR: gcp/lime
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
       ENABLED_FEATURE_FLAGS: diego_docker
   - task: cleanup
@@ -961,9 +955,8 @@ jobs:
       BBL_STATE_DIR: gcp/lime
   - task: create-test-space
     file: log-cache-ci/tasks/create-org-and-space/task.yml
-    input_mapping:
-      vars-store: bbl-state
     params:
+      BBL_STATE_DIR: gcp/lime
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: lime.loggr.cf-app.com

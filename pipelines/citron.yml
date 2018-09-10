@@ -15,7 +15,7 @@ resources:
 
 - name: log-cache-deployments
   type: git
-  source: &log_cache_deployments
+  source:
     uri: git@github.com:cloudfoundry/log-cache-deployments.git
     branch: master
     private_key: {{github_key}}
