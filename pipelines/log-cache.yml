@@ -608,6 +608,8 @@ jobs:
     - get: cf-acceptance-tests
       trigger: true
     - get: cf-deployment-concourse-tasks
+    - get: bbl-state
+      resource: log-cache-deployments
   - task: integration-config
     file: log-cache-ci/tasks/create-integration-config/task.yml
     params:

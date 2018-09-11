@@ -5,6 +5,7 @@ image_resource:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 inputs:
+  - name: bbl-state
   - name: cf-deployment-concourse-tasks
   - name: log-cache-ci
 outputs:
