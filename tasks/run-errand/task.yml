@@ -8,6 +8,7 @@ image_resource:
 inputs:
 - name: log-cache-ci # This repo
 - name: bbl-state      # The BBL state repository
+- name: cf-deployment-concourse-tasks
 
 run:
   path: log-cache-ci/tasks/run-errand/task
