@@ -2,57 +2,60 @@
 
 function set_globals {
     pipeline=$1
+    pipeline_ext='.yml'
+    pipeline_dir='pipelines/pws/'
+    pipeline_name=$(echo "pws/${pipeline}" | sed 's/\//-/g')
+    config_path=${pipeline_dir}${pipeline}${pipeline_ext}
     TARGET="${TARGET:-pws}"
 }
 
-function validate {
-    if [ "$pipeline" = "-h" ] || [ "$pipeline" = "--help" ] || [ -z "$pipeline" ]; then
+function validate_usage {
+    if [[ "$pipeline" == pws* ]]; then
+        echo "the leading 'pws/' is not needed"
+        exit 1
+    fi
+
+    if [ "$pipeline" = "-h" ] || [ "$pipeline" = "--help" ] || [ -z "$pipeline" ] || [[ "$pipeline" == pws* ]]; then
         print_usage
         exit 1
     fi
 }
 
-function set_pipeline {
-    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/release-credentials.yml" > release-credentials.yml
-    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
-    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/datadog-api-key-pws.yml" > datadog-api-key.yml
-    lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/slack-ci.yml" > slack-ci.yml
+function validate_pipeline {
+    echo -n "Validating '${pipeline}' pipeline ... "
 
-    PIPELINE_NAME=$(echo $1 | sed 's/\//-/g')
-    echo setting pipeline for "$PIPELINE_NAME"
-    fly -t $TARGET set-pipeline -p "$PIPELINE_NAME" \
-        -c "pipelines/$1.yml" \
-        -l ./github-key.yml \
-        -l ./datadog-api-key.yml \
-        -l ./slack-ci.yml \
-        -l ./release-credentials.yml
+    fly -t ${TARGET} validate-pipeline -c ${config_path}
+    pipeline_valid=$?
 
-    rm github-key.yml datadog-api-key.yml slack-ci.yml release-credentials.yml
+    return $pipeline_valid
 }
 
 function sync_fly {
     fly -t $TARGET sync
 }
 
-function set_pipelines {
-    if [ "$pipeline" = all ]; then
-        for pipeline_file in $(ls "pipelines/"); do
-            set_pipeline "${pipeline_file%.yml}"
-        done
-        exit 0
-    fi
+function reconfigure_pipeline {
+    echo "Reconfiguring '${pipeline_name}' pipeline ..."
 
-    set_pipeline "$pipeline"
+    reconfigure-pipeline \
+      --target ${TARGET} \
+      --pipeline ${pipeline_name} \
+      --config ${config_path}
 }
 
 function print_usage {
-    echo "usage: $0 <pipeline | all>"
+    echo "usage: $0 <pipeline (without leading pws)>"
 }
 
 function main {
     set_globals $1
-    validate
+    validate_usage
+    validate_pipeline
     sync_fly
-    set_pipelines
+
+    if [ $? -eq 0 ]; then
+        reconfigure_pipeline
+    fi
 }
-main $1 $2
+
+main $1
