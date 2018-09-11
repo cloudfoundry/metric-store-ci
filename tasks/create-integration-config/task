@@ -5,7 +5,7 @@ source cf-deployment-concourse-tasks/shared-functions
 
 setup_bosh_env_vars
 
-popd integration-config
+pushd integration-config
   cat <<EOT >> integration_config.json
   {
     "api": "api.${SYSTEM_DOMAIN}",
@@ -16,4 +16,4 @@ popd integration-config
     "use_log_cache": true
   }
   EOT
-pushd
+popd
