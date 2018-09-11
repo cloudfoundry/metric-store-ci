@@ -7,18 +7,14 @@ image_resource:
   type: docker-image
   source:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-    tag: v5.2.0
+    tag: v5.20.0
 
 inputs:
 - name: log-cache-ci # - This repo
 - name: bbl-state      # - The Director's `bbl-state.json`
 - name: bosh-release   # - The release that contains the manifest file.
-- name: vars-store     # - The directory where the VARS_STORE_FILE will be saved
 - name: ops-files      # - The directory from which to read ops-files
 - name: vars-files     # - The directory from which to read vars files
-
-outputs:
-- name: updated-vars-store # - The updated and commited vars store.
 
 run:
   path: log-cache-ci/tasks/bosh-deploy/task
@@ -38,11 +34,6 @@ params:
   # - Filepath to the deployment manifest file.
   # - The path is relative to the bosh-release.
   MANIFEST_FILE:
-
-  # - Required
-  # - Filepath to the BOSH deployment vars-store yaml file
-  # - The path is relative to root of the `vars-store` input
-  VARS_STORE_FILE: deployment-vars.yml
 
   # - Optional
   # - List of operations files to be applied to the manifest

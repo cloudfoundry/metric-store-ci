@@ -1,11 +1,9 @@
 #!/bin/bash
 set -exu
 
-pushd bbl-state/$BBL_STATE_DIR
-  eval $(bbl print-env)
-  export BOSH_CA_CERT=$(bbl director-ca-cert)
-popd
+source cf-deployment-concourse-tasks/shared-functions
 
+setup_bosh_env_vars
 
 if [ "$KEEP_ALIVE" = true ]; then
   bosh -d $DEPLOYMENT_NAME run-errand $ERRAND --keep-alive

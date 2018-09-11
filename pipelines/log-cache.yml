@@ -569,13 +569,11 @@ jobs:
       DEPLOYMENT_NAME: lcats
       MANIFEST_FILE: manifests/manifest.yml
       VARS_FILES: gcp/lime/deployment-vars.yml
-      VARS_STORE_FILE: gcp/lime/lcats-vars.yml
     input_mapping:
       bbl-state: log-cache-deployments
       bosh-release: log-cache-acceptance-tests-release
       ops-files: log-cache-deployments
       vars-files: log-cache-deployments
-      vars-store: log-cache-deployments
   - task: run-lcats
     file: log-cache-ci/tasks/run-errand/task.yml
     params:
