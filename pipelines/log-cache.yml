@@ -659,10 +659,6 @@ jobs:
     - get: log-cache-release
       trigger: true
       passed: ["log-cache-bump-submodule"]
-    - get: vars-store
-      resource: log-cache-deployments
-    - get: vars-files
-      resource: log-cache-deployments
   - aggregate:
     - task: upload-log-cache-release
       file: log-cache-ci/tasks/upload-release/task.yml
@@ -933,6 +929,8 @@ jobs:
       BBL_STATE_DIR: gcp/lime
   - task: cf-deploy
     file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
+    input_mapping:
+      vars-files: bbl-state
     params:
       BBL_STATE_DIR: gcp/lime
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
