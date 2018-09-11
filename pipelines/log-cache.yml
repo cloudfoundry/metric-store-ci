@@ -569,7 +569,8 @@ jobs:
       BBL_STATE_DIR: gcp/lime
       DEPLOYMENT_NAME: lcats
       MANIFEST_FILE: manifests/manifest.yml
-      VARS_FILES: gcp/lime/deployment-vars.yml
+      OPS_FILES: gcp/lime/ops-files/lcats.yml
+      VARS_FILES: gcp/lime/lcats-vars.yml
     input_mapping:
       bbl-state: log-cache-deployments
       bosh-release: log-cache-acceptance-tests-release
