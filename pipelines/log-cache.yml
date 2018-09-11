@@ -552,6 +552,7 @@ jobs:
       trigger: true
     - get: log-cache-deployments
     - get: log-cache-ci
+    - get: cf-deployment-concourse-tasks
     - get: log-cache-acceptance-tests-release
       trigger: true
       passed: ["log-cache-acceptance-tests-release-bump-submodule"]

@@ -15,6 +15,7 @@ inputs:
 - name: bosh-release   # - The release that contains the manifest file.
 - name: ops-files      # - The directory from which to read ops-files
 - name: vars-files     # - The directory from which to read vars files
+- name: cf-deployment-concourse-tasks
 
 run:
   path: log-cache-ci/tasks/bosh-deploy/task
