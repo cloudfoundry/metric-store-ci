@@ -16,7 +16,6 @@ function set_pipeline {
     # TODO - this is an obviously nasty way of parsing and injecting
     # credentials. Replace by modifying task yamls to accept deployment
     # vars files directly ASAP.
-    CF_ADMIN_PASSWORD=`cat ~/workspace/log-cache-deployments/gcp/lime/deployment-vars.yml | yq -r .cf_admin_password`
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/release-credentials.yml" > release-credentials.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/github-key-ci.yml" > github-key.yml
     lpass show --note "Shared-CF- Log Cache (Pivotal ONLY)/docker-hub-ci.yml" > docker-hub-ci.yml
@@ -25,7 +24,6 @@ function set_pipeline {
     echo setting pipeline for "$1"
     fly -t $TARGET set-pipeline -p "$1" \
         -c "pipelines/$1.yml" \
-        -v "cf_admin_password=$CF_ADMIN_PASSWORD" \
         -l ./docker-hub-ci.yml \
         -l ./github-key.yml \
         -l ./release-credentials.yml \
