@@ -15,5 +15,5 @@ pushd integration-config
     "skip_ssl_validation": true,
     "use_log_cache": true
   }
-  EOT
+EOT
 popd
