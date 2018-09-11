@@ -1,16 +1,12 @@
 #!/bin/bash
 set -ex
 
-pushd bbl-state/${BBL_STATE_DIR}
-    eval "$(bbl print-env)"
-popd
+source cf-deployment-concourse-tasks/shared-functions
 
-deployment=$(bosh environment --json | jq -r '.Tables[0].Rows[0].name')
-path="/${deployment}/cf"
-password=$(credhub get -n ${path}/cf_admin_password -j | jq -r ".value")
+setup_bosh_env_vars
 
 cf api api.$SYSTEM_DOMAIN --skip-ssl-validation
-cf auth admin "${password}"
+cf auth admin "$(get_password_from_credhub cf_admin_password)"
 cf target -o system
 
 set +e

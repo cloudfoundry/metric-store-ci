@@ -5,6 +5,7 @@ image_resource:
 platform: linux
 inputs:
   - name: bbl-state
+  - name: cf-deployment-concourse-tasks
   - name: log-cache-ci
 params:
   BBL_STATE_DIR:
