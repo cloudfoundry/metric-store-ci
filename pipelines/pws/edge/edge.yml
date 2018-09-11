@@ -11,27 +11,27 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: develop
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-deployments
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-deployments
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-version
   type: semver
   source:
     bucket: loggregator-ci-versions
     key: log-cache
-    access_key_id: {{loggregator-team-s3-access-key}}
-    secret_access_key: {{loggregator-team-s3-secret-key}}
+    access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
+    secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
 
 - name: slack-alert
   type: slack-notification
   source:
-    url: {{slack_alert_webhook_url}}
+    url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
 jobs:
 - name: log-cache-edge-deploy
@@ -39,9 +39,9 @@ jobs:
   - put: slack-alert
     params:
       silent: true
-      username: {{slack_alert_username}}
-      icon_url: {{slack_alert_icon_url}}
-      channel: {{slack_alert_channel}}
+      username: ((slack-ci.yml/Notes/slack_alert_username))
+      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+      channel: ((slack-ci.yml/Notes/slack_alert_channel))
       text: ":yellow_heart: Started :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
   - aggregate:
     - get: log-cache-release
@@ -118,17 +118,17 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ":green_heart: Finished :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
   on_failure:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ":broken_heart: Failed to deploy :tree-log::dollar: Log Cache: to :knife: PWS Edge
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"

@@ -50,7 +50,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-deployments.git
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-acceptance-tests
   type: git
@@ -63,7 +63,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-acceptance-tests-release
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: cf-acceptance-tests
   type: git
@@ -76,14 +76,14 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-ci-docker-images
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
     paths:
     - docker-images
 
@@ -91,36 +91,36 @@ resources:
   type: docker-image
   source:
     repository: logcache/log-cache
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
 - name: scheduler-image
   type: docker-image
   source:
     repository: logcache/log-cache-scheduler
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
 - name: nozzle-image
   type: docker-image
   source:
     repository: logcache/log-cache-nozzle
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
 - name: gateway-image
   type: docker-image
   source:
     repository: logcache/log-cache-gateway
-    username: {{docker-hub-username}}
-    password: {{docker-hub-password}}
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
 - name: log-cache-release
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: develop
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -131,14 +131,14 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: release-elect
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-release-master
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
     disable_ci_skip: true
 
 - name: log-cache
@@ -146,7 +146,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: go-log-cache
   type: git
@@ -165,7 +165,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-cli
     branch: master
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: bumper-tool
   type: git
@@ -185,13 +185,13 @@ resources:
     ignore_paths:
     - .final_builds
     - releases
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
     uri: git@github.com:cloudfoundry/leadership-election-release
 
 - name: slack-alert
   type: slack-notification
   source:
-    url: {{slack_alert_webhook_url}}
+    url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
 jobs:
 ###############################################################################
@@ -216,10 +216,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: log-cache-cli-tests
   serial: true
@@ -242,10 +242,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: go-log-cache-tests
   public: true
@@ -265,10 +265,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: log-cache-docker-images
   serial: true
@@ -417,10 +417,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: log-cache-acceptance-tests-release-bump-submodule
   serial: true
@@ -480,10 +480,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: log-cache-release-elect-promotion
   serial: true
@@ -590,10 +590,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: cats
   serial_groups: [cf-deploy]
@@ -622,10 +622,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
@@ -943,10 +943,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: {{slack_alert_username}}
-        icon_url: {{slack_alert_icon_url}}
-        channel: {{slack_alert_channel}}
-        text: {{slack_build_failure_text}}
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: leadership-election-tests
   public: true

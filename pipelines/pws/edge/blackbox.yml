@@ -3,7 +3,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-deployments
-    private_key: {{github_key}}
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-release
   type: git
@@ -65,7 +65,7 @@ jobs:
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        DATADOG_API_KEY: {{datadog_api_key}}
+        DATADOG_API_KEY: ((datadog-api-key-pws.yml/Notes/datadog_api_key))
       run:
         path: bash
         args:
