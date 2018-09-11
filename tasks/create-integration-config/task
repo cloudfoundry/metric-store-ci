@@ -1,0 +1,19 @@
+#!/bin/bash
+set -ex
+
+source cf-deployment-concourse-tasks/shared-functions
+
+setup_bosh_env_vars
+
+popd integration-config
+  cat <<EOT >> integration_config.json
+  {
+    "api": "api.${SYSTEM_DOMAIN}",
+    "admin_user": "admin",
+    "admin_password": "$(get_password_from_credhub cf_admin_password)",
+    "apps_domain": "${SYSTEM_DOMAIN}",
+    "skip_ssl_validation": true,
+    "use_log_cache": true
+  }
+  EOT
+pushd

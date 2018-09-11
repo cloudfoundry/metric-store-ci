@@ -1,0 +1,16 @@
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+inputs:
+  - name: cf-deployment-concourse-tasks
+  - name: log-cache-ci
+outputs:
+  - name: integration-config
+params:
+  BBL_STATE_DIR:
+  SYSTEM_DOMAIN:
+run:
+  path: log-cache-ci/tasks/create-integration-config/task
