@@ -194,6 +194,13 @@ resources:
     private_key: ((github-key-ci.yml/Notes/github_key))
     uri: git@github.com:cloudfoundry/leadership-election-release
 
+- name: prism-github-release
+  type: github-release
+  source:
+    user: pivotal-cf
+    repository: prism-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
+
 - name: slack-alert
   type: slack-notification
   source:
@@ -653,6 +660,8 @@ jobs:
     - get: log-cache-release
       trigger: true
       passed: ["log-cache-bump-submodule"]
+    - get: github-release
+      resource: prism-github-release
   - aggregate:
     - task: upload-log-cache-release
       file: log-cache-ci/tasks/upload-release/task.yml
@@ -661,6 +670,29 @@ jobs:
         bosh-release-dir: log-cache-release
       params:
         BBL_STATE_DIR: gcp/lime
+    - task: upload-prism-release
+      config:
+        platform: linux
+        image_resource: ((cf_tasks_image_resource))
+        inputs:
+        - name: github-release
+        - name: cf-deployment-concourse-tasks
+        params:
+          RELEASE_GLOB: "app-metrics-registrar-*"
+        run:
+          path: /bin/bash
+          args:
+          - "-c"
+          - |
+            set -exu
+
+            source cf-deployment-concourse-tasks/shared_functions
+
+            setup_bosh_env_vars
+
+            pushd github-release
+              bosh upload-release ${RELEASE_GLOB}
+            popd
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
     config:
@@ -668,6 +700,7 @@ jobs:
       inputs:
       - name: bbl-state
       - name: cf-deployment
+      - name: log-cache-ci
       - name: log-cache-release
       outputs:
       - name: ops-files
@@ -679,6 +712,7 @@ jobs:
           set -e
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
+          cp log-cache-ci/ops-files/prism-in-cf.yml ops-files
 
           cat <<EOT >> ops-files/test-clients.yml
           - type: replace
@@ -932,6 +966,7 @@ jobs:
         use-log-cache-latest.yml
         cf-deployment-candidate-changes.yml
         metric-cache.yml
+        prism-in-cf.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
