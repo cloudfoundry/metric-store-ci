@@ -19,6 +19,12 @@ resource_types:
     tag: latest
 
 resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+
 - name: log-cache-cli
   type: git
   source:
