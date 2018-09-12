@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -exu
-
 function set_globals {
     pipeline=$1
     pipeline_ext='.yml'
@@ -20,9 +18,10 @@ function validate_usage {
 function validate_pipeline {
     echo -n "Validating '${pipeline}' pipeline ... "
 
-    fly -t ${TARGET} validate-pipeline \
-      --config=${config_path} \
-      --load-vars-from=pipelines/shared-config.yml
+    fly -t ${TARGET} validate-pipeline -c ${config_path}
+    pipeline_valid=$?
+
+    return $pipeline_valid
 }
 
 function sync_fly {
@@ -35,8 +34,7 @@ function reconfigure_pipeline {
     reconfigure-pipeline \
       --target ${TARGET} \
       --pipeline ${pipeline} \
-      --config ${config_path} \
-      --load-vars-from pipelines/shared-config.yml
+      --config ${config_path}
 }
 
 function print_usage {

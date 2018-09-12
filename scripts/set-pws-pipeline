@@ -24,8 +24,7 @@ function validate_usage {
 function validate_pipeline {
     echo -n "Validating '${pipeline}' pipeline ... "
 
-    fly -t ${TARGET} validate-pipeline -c ${config_path} \
-      --load-vars-from pipelines/shared-config.yml
+    fly -t ${TARGET} validate-pipeline -c ${config_path}
     pipeline_valid=$?
 
     return $pipeline_valid
@@ -41,8 +40,7 @@ function reconfigure_pipeline {
     reconfigure-pipeline \
       --target ${TARGET} \
       --pipeline ${pipeline_name} \
-      --config ${config_path} \
-      --load-vars-from pipelines/shared-config.yml
+      --config ${config_path}
 }
 
 function print_usage {

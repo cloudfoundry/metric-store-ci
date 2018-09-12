@@ -23,7 +23,10 @@ jobs:
   - aggregate:
     - task: upload-log-cache
       config:
-        image_resource: ((cf_tasks_image_resource))
+        image_resource:
+          type: docker-image
+          source:
+            repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
         platform: linux
         inputs:
         - name: log-cache-release
@@ -48,7 +51,10 @@ jobs:
     - task: copy-ops-files
       config:
         platform: linux
-        image_resource: ((cf_tasks_image_resource))
+        image_resource:
+          type: docker-image
+          source:
+            repository: ubuntu
         inputs:
         - name: deployments-loggregator
         outputs:
@@ -62,7 +68,10 @@ jobs:
 
   - task: log-cache-deploy
     config:
-      image_resource: ((cf_tasks_image_resource))
+      image_resource:
+        type: docker-image
+        source:
+          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
       platform: linux
       inputs:
       - name: log-cache-release
