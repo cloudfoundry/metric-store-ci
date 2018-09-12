@@ -1,0 +1,166 @@
+---
+- path: /releases/-
+  type: replace
+  value:
+    name: prism
+    version: latest
+
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients?/prism?
+  value:
+    access-token-validity: 900
+    authorities: cloud_controller.admin_read_only
+    authorized-grant-types: refresh_token,client_credentials,password
+    autoapprove: true
+    refresh-token-validity: 2628000
+    scope: cloud_controller.admin_read_only
+    secret: "((prism_uaa_client_secret))"
+
+- path: /instance_groups/name=doppler/jobs/-
+  type: replace
+  value:
+    name: prism_log_worker
+    release: prism
+    provides:
+      prism_log_worker: {as: prism_log_worker}
+    consumes:
+      reverse_log_proxy: {from: reverse_log_proxy, deployment: cf}
+    properties:
+      health_check_port: 8085
+      orchestration_port: 8086
+      loggregator: &prism_loggregator
+        tls:
+          ca_cert: "((loggregator_ca.certificate))"
+          agent:
+            cert: "((loggregator_tls_agent.certificate))"
+            key: "((loggregator_tls_agent.private_key))"
+      reverse_log_proxy:
+        tls:
+          cert: "((prism_rlp_tls.certificate))"
+          key: "((prism_rlp_tls.private_key))"
+      orchestration: &prism_worker_orchestration
+        tls:
+          ca: "((prism_ca.certificate))"
+          cert: "((prism_worker_tls.certificate))"
+          key: "((prism_worker_tls.private_key))"
+
+- path: /instance_groups/name=doppler/jobs/-
+  type: replace
+  value:
+    name: prism_endpoint_worker
+    release: prism
+    provides:
+      prism_endpoint_worker: {as: prism_endpoint_worker}
+    properties:
+      health_check_port: 8087
+      orchestration_port: 8088
+      loggregator: &prism_loggregator
+        tls:
+          ca_cert: "((loggregator_ca.certificate))"
+          agent:
+            cert: "((loggregator_tls_agent.certificate))"
+            key: "((loggregator_tls_agent.private_key))"
+      cloud_controller: &prism_cloud_controller
+        tls:
+          ca: "((service_cf_internal_ca.certificate))"
+          cert: "((prism_api_tls.certificate))"
+          key: "((prism_api_tls.private_key))"
+      orchestration: *prism_worker_orchestration
+      uaa:
+        client:
+          id: prism
+          secret: "((prism_uaa_client_secret))"
+
+- path: /instance_groups/name=scheduler/jobs/-
+  type: replace
+  value:
+    name: prism_orchestrator
+    release: prism
+    consumes:
+      cloud_controller: {from: cloud_controller, deployment: cf}
+      prism_log_worker: {from: prism_log_worker}
+    properties:
+      health_check_port: 8085
+      loggregator: *prism_loggregator
+      orchestration:
+        tls:
+          ca: "((prism_ca.certificate))"
+          cert: "((prism_orchestrator_tls.certificate))"
+          key: "((prism_orchestrator_tls.private_key))"
+      cloud_controller: *prism_cloud_controller
+
+- path: /instance_groups/name=smoke-tests/jobs/-
+  type: replace
+  value:
+    name: prism_smoke_test
+    release: prism
+    consumes:
+      cloud_controller: {from: cloud_controller, deployment: cf}
+    properties:
+      skip_ssl_validation: true
+      cf:
+        user: admin
+        password: "((cf_admin_password))"
+
+- path: /variables/-
+  type: replace
+  value:
+    name: prism_api_tls
+    type: certificate
+    options:
+      ca: service_cf_internal_ca
+      common_name: cloud-controller-ng.service.cf.internal
+      extended_key_usage:
+      - client_auth
+      - server_auth
+
+- path: /variables/-
+  type: replace
+  value:
+    name: prism_rlp_tls
+    type: certificate
+    options:
+      ca: loggregator_ca
+      common_name: rlp
+      extended_key_usage:
+      - client_auth
+      - server_auth
+
+- path: /variables/-
+  type: replace
+  value:
+    name: prism_ca
+    type: certificate
+    options:
+      is_ca: true
+      common_name: prism_ca
+
+- path: /variables/-
+  type: replace
+  value:
+    name: prism_orchestrator_tls
+    type: certificate
+    options:
+      ca: prism_ca
+      common_name: prism-orchestration
+      extended_key_usage:
+      - client_auth
+      - server_auth
+
+- path: /variables/-
+  type: replace
+  value:
+    name: prism_worker_tls
+    type: certificate
+    options:
+      ca: prism_ca
+      common_name: prism-orchestration
+      extended_key_usage:
+      - client_auth
+      - server_auth
+
+- path: /variables/-
+  type: replace
+  value:
+    name: prism_uaa_client_secret
+    type: password
