@@ -675,10 +675,12 @@ jobs:
       config:
         platform: linux
         inputs:
+        - name: bbl-state
         - name: github-release
         - name: cf-deployment-concourse-tasks
         params:
-          RELEASE_GLOB: "app-metrics-registrar-*"
+          BBL_STATE_DIR: gcp/lime
+          RELEASE_GLOB: "app-metric-registrar-*"
         run:
           path: /bin/bash
           args:
@@ -686,12 +688,12 @@ jobs:
           - |
             set -exu
 
-            source cf-deployment-concourse-tasks/shared_functions
+            source cf-deployment-concourse-tasks/shared-functions
 
             setup_bosh_env_vars
 
             pushd github-release
-              bosh upload-release ${RELEASE_GLOB}
+              bosh upload-release $(find -maxdepth 1 -name "${RELEASE_GLOB}")
             popd
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
@@ -984,15 +986,15 @@ jobs:
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+  # on_failure:
+  #   do:
+  #   - put: slack-alert
+  #     params:
+  #       silent: true
+  #       username: ((slack-ci.yml/Notes/slack_alert_username))
+  #       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+  #       channel: ((slack-ci.yml/Notes/slack_alert_channel))
+  #       text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: leadership-election-tests
   public: true
