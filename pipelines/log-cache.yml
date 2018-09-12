@@ -671,9 +671,9 @@ jobs:
       params:
         BBL_STATE_DIR: gcp/lime
     - task: upload-prism-release
+      image: cf-deployment-concourse-tasks-image
       config:
         platform: linux
-        image_resource: ((cf_tasks_image_resource))
         inputs:
         - name: github-release
         - name: cf-deployment-concourse-tasks
