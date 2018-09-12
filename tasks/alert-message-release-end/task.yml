@@ -12,7 +12,4 @@ outputs:
 - name: messages
 
 run:
-  path: log-cache-ci/tasks/alert-message-release/task
-
-params:
-  LEVEL:
+  path: log-cache-ci/tasks/alert-message-release-end/task

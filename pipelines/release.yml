@@ -116,7 +116,7 @@ resources:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
 shared:
-  - &alert-message-release
+  - &send-release-alert-message
     do:
     - put: slack-alert
       params:
@@ -134,7 +134,7 @@ jobs:
     - get: log-cache-release-version-patch
       params: {bump: patch}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release/task.yml
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
     input_mapping:
       version: log-cache-release-version-patch
     params:
@@ -145,7 +145,7 @@ jobs:
       params: {file: log-cache-release-version-patch/version}
     - put: log-cache-release-version-patch
       params: {file: log-cache-release-version-patch/version}
-    - <<: *alert-message-release
+    - <<: *send-release-alert-message
 
 - name: release-minor-version
   plan:
@@ -154,7 +154,7 @@ jobs:
     - get: log-cache-release-version-minor
       params: {bump: minor}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release/task.yml
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
     input_mapping:
       version: log-cache-release-version-minor
     params:
@@ -165,7 +165,7 @@ jobs:
       params: {file: log-cache-release-version-minor/version}
     - put: log-cache-release-version-minor
       params: {file: log-cache-release-version-minor/version}
-    - <<: *alert-message-release
+    - <<: *send-release-alert-message
 
 - name: release-major-version
   plan:
@@ -174,7 +174,7 @@ jobs:
     - get: log-cache-release-version-major
       params: {bump: major}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release/task.yml
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
     input_mapping:
       version: log-cache-release-version-major
     params:
@@ -185,7 +185,7 @@ jobs:
       params: {file: log-cache-release-version-major/version}
     - put: log-cache-release-version-major
       params: {file: log-cache-release-version-major/version}
-    - <<: *alert-message-release
+    - <<: *send-release-alert-message
 
 - name: log-cache-create-final-release
   serial: true
@@ -238,6 +238,13 @@ jobs:
         body: github-release/body
         globs:
         - github-release/*.tgz
+  on_success:
+    do:
+    - task: create-message
+      file: log-cache-ci/tasks/alert-message-release-end/task.yml
+      input_mapping:
+        version: log-cache-release-version
+    - <<: *send-release-alert-message
 
 - name: bump-golang
   serial: true

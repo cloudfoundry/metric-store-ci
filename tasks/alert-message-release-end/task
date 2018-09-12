@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# vi:syntax=sh
+
+set -ex
+
+new_version=`cat version/version`
+echo ":tada: ... new version ${new_version} is released!" > messages/success.txt
