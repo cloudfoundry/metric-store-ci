@@ -11,22 +11,26 @@ resources:
     uri: https://github.com/cloudfoundry/log-cache-release
     branch: master
 
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+
 jobs:
 - name: log-cache-deploy
   serial: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: deployments-loggregator
     - get: log-cache-release
       trigger: true
 
   - aggregate:
     - task: upload-log-cache
+      image: cf-deployment-concourse-tasks-image
       config:
-        image_resource:
-          type: docker-image
-          source:
-            repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
         platform: linux
         inputs:
         - name: log-cache-release
@@ -49,12 +53,9 @@ jobs:
             popd
 
     - task: copy-ops-files
+      image: cf-deployment-concourse-tasks-image
       config:
         platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: ubuntu
         inputs:
         - name: deployments-loggregator
         outputs:
@@ -67,11 +68,8 @@ jobs:
             cp deployments-loggregator/pws/ops-files/log-cache.yml ops-files/
 
   - task: log-cache-deploy
+    image: cf-deployment-concourse-tasks-image
     config:
-      image_resource:
-        type: docker-image
-        source:
-          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
       platform: linux
       inputs:
       - name: log-cache-release

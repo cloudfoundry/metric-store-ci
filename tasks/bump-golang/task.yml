@@ -1,11 +1,5 @@
 platform: linux
 
-image_resource:
-  type: docker-image
-  source:
-    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-    tag: v3.19.0
-
 inputs:
 # - The source bosh release repo where the script resides and will be ran.
 - name: release-repo

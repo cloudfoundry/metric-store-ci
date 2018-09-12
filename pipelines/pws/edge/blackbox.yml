@@ -1,4 +1,10 @@
 resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+
 - name: log-cache-deployments
   type: git
   source:
@@ -16,16 +22,14 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release
     - get: log-cache-deployments
 
   - aggregate:
     - task: upload-log-cache
+      image: cf-deployment-concourse-tasks-image
       config:
-        image_resource:
-          type: docker-image
-          source:
-            repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
         platform: linux
         inputs:
         - name: log-cache-release
@@ -48,11 +52,8 @@ jobs:
             popd
 
   - task: log-cache-blackbox-deploy
+    image: cf-deployment-concourse-tasks-image
     config:
-      image_resource:
-        type: docker-image
-        source:
-          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
       platform: linux
       inputs:
       - name: log-cache-release

@@ -6,6 +6,12 @@ resource_types:
     tag: latest
 
 resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+
 - name: log-cache-release
   type: git
   source:
@@ -44,17 +50,15 @@ jobs:
       channel: ((slack-ci.yml/Notes/slack_alert_channel))
       text: ":yellow_heart: Started :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release
     - get: log-cache-deployments
-  - get: log-cache-version
-    params: {pre: dev}
+    - get: log-cache-version
+      params: {pre: dev}
   - task: upload-log-cache
+    image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
       params:
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_CLIENT: ((bosh-admin-client.username))
@@ -77,12 +81,9 @@ jobs:
       - name: log-cache-release
       - name: log-cache-version
   - task: log-cache-edge-deploy
+    image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
       params:
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_CLIENT: ((bosh-admin-client.username))
