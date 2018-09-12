@@ -4,8 +4,24 @@ function set_globals {
     pipeline=$1
     pipeline_ext='.yml'
     pipeline_dir='pipelines/'
+
+    if [[ "${pipeline}" == prod/* ]] || [[ "${pipeline}" == edge/* ]]; then
+        pipeline="pws/${pipeline}"
+    fi
+
+    if [[ "${pipeline}" == blackbox* ]] || [[ "${pipeline}" == edge* ]]; then
+        pipeline="pws/edge/${pipeline}"
+    fi
+
     config_path=${pipeline_dir}${pipeline}${pipeline_ext}
-    TARGET="${TARGET:-log-cache}"
+
+    if [[ "$pipeline" == pws* ]]; then
+        TARGET="${TARGET:-pws}"
+        pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g')
+    else
+        TARGET="${TARGET:-log-cache}"
+        pipeline_name=${pipeline}
+    fi
 }
 
 function validate_usage {
@@ -29,11 +45,11 @@ function sync_fly {
 }
 
 function reconfigure_pipeline {
-    echo "Reconfiguring '${pipeline}' pipeline ..."
+    echo "Reconfiguring '${pipeline_name}' pipeline ..."
 
     reconfigure-pipeline \
       --target ${TARGET} \
-      --pipeline ${pipeline} \
+      --pipeline ${pipeline_name} \
       --config ${config_path}
 }
 
