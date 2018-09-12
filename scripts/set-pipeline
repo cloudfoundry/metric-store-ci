@@ -2,6 +2,11 @@
 
 set -e
 
+function check_lpass {
+    echo -n "Checking lpass ..."
+    lpass status
+}
+
 function set_globals {
     pipeline=$1
     pipeline_ext='.yml'
@@ -60,6 +65,7 @@ function print_usage {
 }
 
 function main {
+    check_lpass
     set_globals $1
     validate_usage
     sync_fly
