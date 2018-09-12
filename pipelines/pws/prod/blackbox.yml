@@ -3,13 +3,15 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-deployments
+    branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-release
   type: git
   source:
-    uri: https://github.com/cloudfoundry/log-cache-release
+    uri: git@github.com:cloudfoundry/log-cache-release
     branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 jobs:
 - name: log-cache-blackbox-deploy
