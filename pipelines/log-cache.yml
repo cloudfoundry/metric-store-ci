@@ -777,29 +777,29 @@ jobs:
             path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader
           EOT
 
-          cat <<EOT >> ops-files/metric-cache.yml
+          cat <<EOT >> ops-files/metric-store.yml
           - type: replace
             path: /instance_groups/-
             value:
-              name: metric-cache-scheduler
+              name: metric-store-scheduler
               azs:
               - z1
               instances: 1
               jobs:
-              - name: metric-cache-scheduler
+              - name: metric-store-scheduler
                 release: log-cache
-              - name: metric-cache-expvar-forwarder
+              - name: metric-store-expvar-forwarder
                 properties:
                   counters: []
                   gauges: []
                   maps:
                   - addr: http://localhost:6064/debug/vars
                     name: worker-assignments
-                    source_id: metric-cache-scheduler
+                    source_id: metric-store-scheduler
                     template: "{{.WorkerAssignments | jsonMap}}"
                   - addr: http://localhost:6064/debug/vars
                     name: worker-health
-                    source_id: metric-cache-scheduler
+                    source_id: metric-store-scheduler
                     template: "{{.WorkerHealth | jsonMap}}"
                 release: log-cache
               networks:
@@ -812,7 +812,7 @@ jobs:
           - type: replace
             path: /instance_groups/-
             value:
-              name: metric-cache
+              name: metric-store
               networks:
               - name: default
               stemcell: default
@@ -821,7 +821,7 @@ jobs:
               - z1
               instances: 1
               jobs:
-              - name: metric-cache
+              - name: metric-store
                 properties:
                   egress_port: 8080
                   health_addr: localhost:6060
@@ -830,11 +830,11 @@ jobs:
                     cert: ((log_cache.certificate))
                     key: ((log_cache.private_key))
                 release: log-cache
-              - name: metric-cache-gateway
+              - name: metric-store-gateway
                 properties:
                   gateway_addr: localhost:8081
                 release: log-cache
-              - name: metric-cache-nozzle
+              - name: metric-store-nozzle
                 consumes:
                   reverse_log_proxy:
                     from: reverse_log_proxy
@@ -845,81 +845,81 @@ jobs:
                       cert: ((logs_provider.certificate))
                       key: ((logs_provider.private_key))
                 release: log-cache
-              - name: metric-cache-expvar-forwarder
+              - name: metric-store-expvar-forwarder
                 properties:
                   counters:
                   - addr: http://localhost:6060/debug/vars
                     name: egress
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.Egress}}"
                   - addr: http://localhost:6060/debug/vars
                     name: ingress
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.Ingress}}"
                   - addr: http://localhost:6060/debug/vars
                     name: expired
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.Expired}}"
                   - addr: http://localhost:6060/debug/vars
                     name: dropped
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.Dropped}}"
                   - addr: http://localhost:6060/debug/vars
                     name: promql-timeout
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.PromQLTimeout}}"
                   - addr: http://localhost:6061/debug/vars
                     name: egress
-                    source_id: metric-cache-nozzle
+                    source_id: metric-store-nozzle
                     template: "{{.Nozzle.Egress}}"
                   - addr: http://localhost:6061/debug/vars
                     name: ingress
-                    source_id: metric-cache-nozzle
+                    source_id: metric-store-nozzle
                     template: "{{.Nozzle.Ingress}}"
                   - addr: http://localhost:6061/debug/vars
                     name: err
-                    source_id: metric-cache-nozzle
+                    source_id: metric-store-nozzle
                     template: "{{.Nozzle.Err}}"
                   - addr: http://localhost:6061/debug/vars
                     name: dropped
-                    source_id: metric-cache-nozzle
+                    source_id: metric-store-nozzle
                     template: "{{.Nozzle.Dropped}}"
                   gauges:
                   - addr: http://localhost:6060/debug/vars
                     name: cache-period
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.CachePeriod}}"
                   - addr: http://localhost:6060/debug/vars
                     name: store-size
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.StoreSize}}"
                   - addr: http://localhost:6060/debug/vars
                     name: total-system-memory
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.TotalSystemMemory}}"
                   - addr: http://localhost:6060/debug/vars
                     name: available-system-memory
-                    source_id: metric-cache
+                    source_id: metric-store
                     template: "{{.LogCache.AvailableSystemMemory}}"
                   - addr: http://localhost:6065/debug/vars
                     name: last-uaa-latency
-                    source_id: metric-cache-cf-auth-proxy
+                    source_id: metric-store-cf-auth-proxy
                     template: "{{.CFAuthProxy.LastUAALatency}}"
                   - addr: http://localhost:6065/debug/vars
                     name: last-capi-v3-apps-latency
-                    source_id: metric-cache-cf-auth-proxy
+                    source_id: metric-store-cf-auth-proxy
                     template: "{{.CFAuthProxy.LastCAPIV3AppsLatency}}"
                   - addr: http://localhost:6065/debug/vars
                     name: last-capi-v2-list-service-instances-latency
-                    source_id: metric-cache-cf-auth-proxy
+                    source_id: metric-store-cf-auth-proxy
                     template: "{{.CFAuthProxy.LastCAPIV2ListServiceInstancesLatency}}"
                   - addr: http://localhost:6065/debug/vars
                     name: last-capi-v4-log-access-latency
-                    source_id: metric-cache-cf-auth-proxy
+                    source_id: metric-store-cf-auth-proxy
                     template: "{{.CFAuthProxy.LastCAPIV4LogAccessLatency}}"
                   - addr: http://localhost:6065/debug/vars
                     name: last-capi-v2-service-instances-latency
-                    source_id: metric-cache-cf-auth-proxy
+                    source_id: metric-store-cf-auth-proxy
                     template: "{{.CFAuthProxy.LastCAPIV2ServiceInstancesLatency}}"
                   maps: []
                 release: log-cache
@@ -927,14 +927,14 @@ jobs:
                 properties:
                   route_registrar:
                     routes:
-                    - name: metric-cache-reverse-proxy
+                    - name: metric-store-reverse-proxy
                       port: 8083
                       registration_interval: 20s
                       uris:
-                      - metric-cache.((system_domain))
-                      - "*.metric-cache.((system_domain))"
+                      - metric-store.((system_domain))
+                      - "*.metric-store.((system_domain))"
                 release: routing
-              - name: metric-cache-cf-auth-proxy
+              - name: metric-store-cf-auth-proxy
                 properties:
                   cc:
                     ca_cert: ((log_cache_tls_cc_auth_proxy.ca))
@@ -967,7 +967,7 @@ jobs:
         bosh-speed.yml
         use-log-cache-latest.yml
         cf-deployment-candidate-changes.yml
-        metric-cache.yml
+        metric-store.yml
         prism-in-cf.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
