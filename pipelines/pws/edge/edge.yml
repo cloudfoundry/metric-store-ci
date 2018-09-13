@@ -40,7 +40,7 @@ resources:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
 jobs:
-- name: log-cache-edge-deploy
+- name: metric-store-edge-deploy
   plan:
   - put: slack-alert
     params:
@@ -48,7 +48,7 @@ jobs:
       username: ((slack-ci.yml/Notes/slack_alert_username))
       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
       channel: ((slack-ci.yml/Notes/slack_alert_channel))
-      text: ":yellow_heart: Started :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
+      text: ":yellow_heart: Started :tree-log::dollar: Metric Store deployment to :knife: PWS Edge"
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release
@@ -80,7 +80,7 @@ jobs:
       inputs:
       - name: log-cache-release
       - name: log-cache-version
-  - task: log-cache-edge-deploy
+  - task: metric-store-edge-deploy
     image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
@@ -89,8 +89,7 @@ jobs:
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        DEPLOYMENT_NAME: log-cache-edge
-        MANIFEST_FILE: manifests/log-cache.yml
+        DEPLOYMENT_NAME: metric-store-edge
         SECRETS_FILE: shared-secrets.yml
       run:
         path: bash
@@ -101,16 +100,10 @@ jobs:
           set -eux
 
           bosh \
-            interpolate "log-cache-release/$MANIFEST_FILE" \
-            --ops-file "log-cache-deployments/pws/edge/log-cache-edge-ops-file.yml"
-
-          bosh \
-            deploy "log-cache-release/$MANIFEST_FILE" \
+            deploy "log-cache-deployments/pws/edge/metric-store-edge-manifest.yml" \
             --deployment "$DEPLOYMENT_NAME" \
-            --non-interactive \
-            --ops-file "log-cache-deployments/pws/edge/log-cache-edge-ops-file.yml"
+            --non-interactive
       inputs:
-      - name: log-cache-release
       - name: log-cache-deployments
   - put: log-cache-version
     params: {file: log-cache-version/version}
@@ -122,7 +115,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ":green_heart: Finished :tree-log::dollar: Log Cache deployment to :knife: PWS Edge"
+        text: ":green_heart: Finished :tree-log::dollar: Metric Store deployment to :knife: PWS Edge"
   on_failure:
     do:
     - put: slack-alert
@@ -131,5 +124,5 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ":broken_heart: Failed to deploy :tree-log::dollar: Log Cache: to :knife: PWS Edge
+        text: ":broken_heart: Failed to deploy :tree-log::dollar: Metric Store: to :knife: PWS Edge
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
