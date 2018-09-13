@@ -369,6 +369,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
     - get: log-cache-release
       trigger: true
@@ -440,6 +441,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
     - get: log-cache-acceptance-tests-release
       trigger: true
@@ -632,6 +634,7 @@ jobs:
       resource: log-cache-deployments
   - task: integration-config
     file: log-cache-ci/tasks/create-integration-config/task.yml
+    image: cf-deployment-concourse-tasks-image
     params:
       BBL_STATE_DIR: gcp/lime
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
@@ -986,15 +989,15 @@ jobs:
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: lime.loggr.cf-app.com
-  # on_failure:
-  #   do:
-  #   - put: slack-alert
-  #     params:
-  #       silent: true
-  #       username: ((slack-ci.yml/Notes/slack_alert_username))
-  #       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-  #       channel: ((slack-ci.yml/Notes/slack_alert_channel))
-  #       text: ((slack-ci.yml/Notes/slack_build_failure_text))
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
 - name: leadership-election-tests
   public: true
@@ -1015,6 +1018,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
     - get: leadership-election-release
       trigger: true

@@ -249,13 +249,16 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release-develop
   - task: download-go
+    image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
     params:
       VERSION: &golang-version 1.10.3
   - do:
     - task: bump-log-cache-release
+      image: cf-deployment-concourse-tasks-image
       file: log-cache-ci/tasks/bump-golang/task.yml
       input_mapping:
         release-repo: log-cache-release-develop
@@ -267,6 +270,7 @@ jobs:
         SECRET_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
         BUCKET_NAME: log-cache-release-blobs
     - task: commit-log-cache-release
+      image: cf-deployment-concourse-tasks-image
       file: log-cache-ci/tasks/commit/task.yml
       input_mapping:
         release-repo: updated-log-cache-release
