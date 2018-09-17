@@ -18,7 +18,7 @@ resources:
     branch: develop
 
 jobs:
-- name: log-cache-blackbox-deploy
+- name: metric-store-edge-blackbox-deploy
   serial: true
   plan:
   - aggregate:
@@ -51,7 +51,7 @@ jobs:
               bosh upload-release --rebase
             popd
 
-  - task: log-cache-blackbox-deploy
+  - task: metric-store-edge-blackbox-deploy
     image: cf-deployment-concourse-tasks-image
     config:
       platform: linux

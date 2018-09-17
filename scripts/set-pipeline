@@ -3,7 +3,7 @@
 set -e
 
 function check_lpass {
-    echo -n "Checking lpass ..."
+    echo -n "Checking lpass ... "
     lpass status
 }
 
