@@ -59,7 +59,7 @@ jobs:
       - name: log-cache-release
       - name: log-cache-deployments
       params:
-        DEPLOYMENT_NAME: log-cache-edge-blackbox
+        DEPLOYMENT_NAME: metric-store-edge-blackbox
         MANIFEST_FILE: manifests/log-cache-blackbox.yml
         SECRETS_FILE: shared-secrets.yml
         BOSH_CLIENT: ((bosh-admin-client.username))
