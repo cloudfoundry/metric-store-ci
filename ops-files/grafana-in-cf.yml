@@ -1,0 +1,35 @@
+- path: /instance_groups/name=metric-store/jobs/name=route_registrar/properties/route_registrar/routes/-
+  type: replace
+  value:
+    name: grafana-reverse-proxy
+    port: 3000
+    registration_interval: 20s
+    uris:
+    - grafana.((system_domain))
+
+- path: /instance_groups/name=metric-store/jobs/-
+  type: replace
+  value:
+    name: grafana
+    release: grafana
+    properties:
+      grafana:
+        admin_password: "((grafana_admin_password))"
+        admin_username: admin
+        datasources:
+        - name: log-cache
+          type: prometheus
+          url: http://localhost:8081
+        root_url: http://grafana.((system_domain))/
+
+- path: /releases/-
+  type: replace
+  value:
+    name: grafana
+    version: latest
+
+- path: /variables/-
+  type: replace
+  value:
+    name: grafana_admin_password
+    type: password
