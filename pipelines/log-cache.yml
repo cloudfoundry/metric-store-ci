@@ -201,6 +201,11 @@ resources:
     repository: prism-release
     access_token: ((github-key-ci.yml/Notes/github-access-token))
 
+- name: grafana-boshrelease
+  type: git
+  source:
+    uri: https://github.com/vito/grafana-boshrelease
+
 - name: slack-alert
   type: slack-notification
   source:
@@ -515,6 +520,7 @@ jobs:
     - get: log-cache-release
       trigger: true
       passed: ["log-cache-bump-submodule"]
+    - get: grafana-boshrelease
     - get: github-release
       resource: prism-github-release
   - aggregate:
@@ -523,6 +529,13 @@ jobs:
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-release-dir: log-cache-release
+      params:
+        BBL_STATE_DIR: gcp/lime
+    - task: upload-grafana-release
+      file: log-cache-ci/tasks/upload-release/task.yml
+      image: cf-deployment-concourse-tasks-image
+      input_mapping:
+        bosh-release-dir: grafana-boshrelease
       params:
         BBL_STATE_DIR: gcp/lime
     - task: upload-prism-release
@@ -569,6 +582,7 @@ jobs:
           set -e
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
+          cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/prism-in-cf.yml ops-files
 
           cat <<EOT >> ops-files/test-clients.yml
@@ -823,6 +837,7 @@ jobs:
         use-log-cache-latest.yml
         cf-deployment-candidate-changes.yml
         metric-store.yml
+        grafana-in-cf.yml
         prism-in-cf.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
