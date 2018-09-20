@@ -237,6 +237,11 @@ jobs:
       body: github-release/body
       globs:
       - github-release/*.tgz
+  - put: log-cache-ci
+    params:
+      repository: log-cache-ci
+      tag: github-release/tag
+      only_tag: true
   on_success:
     do:
     - task: create-message
