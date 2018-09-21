@@ -75,9 +75,39 @@ jobs:
           #!/bin/bash
           set -eux
 
+          cat > on-the-fly.yml <<EOF
+          - type: replace
+            path: /name
+            value: "metric-store-edge-blackbox"
+          - type: replace
+            path: /instance_groups/name=log-cache-blackbox/name
+            value: "metric-store-edge-blackbox"
+          - type: replace
+            path: /instance_groups/name=metric-store-edge-blackbox/jobs/name=log-cache-blackbox/name
+            value: "metric-store-blackbox"
+          - type: replace
+            path: /instance_groups/name=metric-store-edge-blackbox/azs
+            value: [z2, z3]
+          - type: replace
+            path: /instance_groups/name=metric-store-edge-blackbox/networks
+            value: [{name: pws-cf}]
+          - type: replace
+            path: /instance_groups/name=metric-store-edge-blackbox/jobs/name=metric-store-blackbox/consumes
+            value:
+              metric-store: {from: metric-store-edge, deployment: metric-store-edge}
+              cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
+          - type: replace
+            path: /instance_groups/name=metric-store-edge-blackbox/jobs/name=metric-store-blackbox/properties?
+            value:
+              source_id: metric-store-edge
+              cf_blackbox:
+                enabled: true
+                client_id: ((pws-datadog-forwarder-client/Username))
+                client_secret: ((pws-datadog-forwarder-client/Password))
+          EOF
+
           bosh \
             deploy "log-cache-release/$MANIFEST_FILE" \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive \
-            --ops-file "log-cache-deployments/pws/edge/blackbox-ops-file.yml" \
-            --var=datadog_api_key=$DATADOG_API_KEY
+            --ops-file on-the-fly.yml
