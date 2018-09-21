@@ -5,7 +5,6 @@ groups:
   - lcats
   - cats
   - log-cache-tests
-  - go-log-cache-tests
   - log-cache-docker-images
   - log-cache-bump-submodule
   - log-cache-release-elect-promotion
@@ -154,12 +153,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: go-log-cache
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/go-log-cache
-    branch: master
-
 - name: log-cache-cli
   type: git
   source:
@@ -265,29 +258,6 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ((slack-ci.yml/Notes/slack_build_failure_text))
 
-- name: go-log-cache-tests
-  public: true
-  plan:
-  - aggregate:
-    - get: log-cache-ci
-    - get: go-log-cache
-      trigger: true
-  - task: run-tests
-    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
-    input_mapping:
-      source-repo: go-log-cache
-    params:
-      IMPORT_PATH: code.cloudfoundry.org/go-log-cache
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
-
 - name: log-cache-docker-images
   serial: true
   public: true
@@ -381,9 +351,6 @@ jobs:
     - get: log-cache
       trigger: true
       passed: ["log-cache-tests"]
-    - get: go-log-cache
-      trigger: true
-      passed: ["go-log-cache-tests"]
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -393,19 +360,10 @@ jobs:
       bumped-release-repo: bumped-log-cache-release
     params:
       SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
-  - task: update-go-log-cache-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    input_mapping:
-      release-repo: bumped-log-cache-release
-      source-repo: go-log-cache
-    output_mapping:
-      bumped-release-repo: bumped-go-log-cache-release
-    params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/go-log-cache
   - task: sync-package-specs
     file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
-      release-repo: bumped-go-log-cache-release
+      release-repo: bumped-log-cache-release
     output_mapping:
       updated-release-repo: synced-log-cache-release
     params:
@@ -426,7 +384,6 @@ jobs:
     params:
       PATHS: |
         src/code.cloudfoundry.org/log-cache
-        src/code.cloudfoundry.org/go-log-cache
         packages
   - put: log-cache-release
     params:
@@ -450,11 +407,9 @@ jobs:
     - get: log-cache-ci
     - get: log-cache-acceptance-tests-release
       trigger: true
-    - get: go-log-cache
-      trigger: true
-      passed: ["go-log-cache-tests"]
     - get: log-cache-acceptance-tests
       trigger: true
+  # TODO - this needs to draw from the client
   - task: update-go-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -1015,7 +970,7 @@ jobs:
     params:
       SOURCE_BRANCH: release-elect
       DEST_BRANCH: master
-      FOLLOW_BUMPS_OF: src/code.cloudfoundry.org/log-cache,src/code.cloudfoundry.org/go-log-cache
+      FOLLOW_BUMPS_OF: src/code.cloudfoundry.org/log-cache
   - put: log-cache-release-master
     params:
       repository: merged-dest
