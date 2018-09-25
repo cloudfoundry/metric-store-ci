@@ -13,6 +13,7 @@ groups:
 - name: metric-store
   jobs:
   - metric-store-tests
+  - metric-store-bump-submodule
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -162,6 +163,17 @@ resources:
     uri: git@github.com:pivotal/metric-store
     branch: master
     private_key: ((github-key-ci.yml/Notes/metric_store_github_private_key))
+
+- name: metric-store-release
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/metric_store_github_private_key))
+    ignore_paths:
+    - .final_builds
+    - releases
+    disable_ci_skip: false
 
 - name: log-cache-cli
   type: git
@@ -414,6 +426,65 @@ jobs:
   - put: log-cache-release
     params:
       repository: committed-log-cache-release
+      rebase: true
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+
+- name: metric-store-bump-submodule
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: metric-store-release
+      trigger: true
+    - get: metric-store
+      trigger: true
+      passed: ["metric-store-tests"]
+  - task: update-metric-store-submodule
+    file: log-cache-ci/tasks/bump-submodule/task.yml
+    input_mapping:
+      release-repo: metric-store-release
+      source-repo: metric-store
+    output_mapping:
+      bumped-release-repo: bumped-metric-store-release
+    params:
+      SUBMODULE_PATH: src/github.com/pivotal/metric-store
+  - task: sync-package-specs
+    file: log-cache-ci/tasks/run-release-script/task.yml
+    input_mapping:
+      release-repo: bumped-metric-store-release
+    output_mapping:
+      updated-release-repo: synced-metric-store-release
+    params:
+      SCRIPT: scripts/sync-package-specs
+  - task: run-tests
+    file: log-cache-ci/tasks/run-release-script/task.yml
+    input_mapping:
+      release-repo: synced-metric-store-release
+    params:
+      SCRIPT: scripts/test
+  - task: commit
+    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      release-repo: synced-metric-store-release
+    output_mapping:
+      committed-repo: committed-metric-store-release
+    params:
+      PATHS: |
+        src/github.com/pivotal/metric-store
+        packages
+  - put: metric-store-release
+    params:
+      repository: committed-metric-store-release
       rebase: true
   on_failure:
     do:
