@@ -402,29 +402,28 @@ jobs:
       trigger: true
     - get: log-cache-acceptance-tests
       trigger: true
-  # TODO - this needs to draw from the client
-  - task: update-go-log-cache-submodule
+  - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
       release-repo: log-cache-acceptance-tests-release
-      source-repo: go-log-cache
+      source-repo: log-cache
     output_mapping:
-      bumped-release-repo: bumped-go-log-cache
+      bumped-release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache
     params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/go-log-cache
+      SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
   - task: update-log-cache-acceptance-tests-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
-      release-repo: bumped-go-log-cache
+      release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache
       source-repo: log-cache-acceptance-tests
     output_mapping:
-      bumped-release-repo: bumped-log-cache-acceptance-tests
+      bumped-release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache-acceptance-tests
     params:
       SUBMODULE_PATH: src/github.com/cloudfoundry/log-cache-acceptance-tests
   - task: sync-package-specs
     file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
-      release-repo: bumped-log-cache-acceptance-tests
+      release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache-acceptance-tests
     output_mapping:
       updated-release-repo: synced-log-cache-acceptance-tests-release
     params:
