@@ -7,10 +7,11 @@ ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
 
 pushd source-repo
   target_sha="$(git rev-parse HEAD)"
+  source_repo_dir=${PWD}
 popd
 
 pushd "release-repo/$SUBMODULE_PATH"
-  git fetch
+  git fetch ${source_repo_dir}
   git checkout "$target_sha"
 popd
 
