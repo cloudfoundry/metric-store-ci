@@ -2,6 +2,9 @@
 
 set -ex
 
+mkdir -p $HOME/.ssh
+ssh-keyscan -H github.com >> $HOME/.ssh/known_hosts
+
 pushd source-repo
   target_sha="$(git rev-parse HEAD)"
 popd
