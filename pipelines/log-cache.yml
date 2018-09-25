@@ -14,6 +14,7 @@ groups:
   jobs:
   - metric-store-tests
   - metric-store-bump-submodule
+  - cf-deploy
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -573,6 +574,9 @@ jobs:
     - get: log-cache-release
       trigger: true
       passed: ["log-cache-bump-submodule"]
+    - get: metric-store-release
+      trigger: true
+      passed: ["metric-store-bump-submodule"]
     - get: grafana-boshrelease
   - aggregate:
     - task: upload-log-cache-release
@@ -580,6 +584,13 @@ jobs:
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-release-dir: log-cache-release
+      params:
+        BBL_STATE_DIR: gcp/lime
+    - task: upload-metric-store-release
+      file: log-cache-ci/tasks/upload-release/task.yml
+      image: cf-deployment-concourse-tasks-image
+      input_mapping:
+        bosh-release-dir: metric-store-release
       params:
         BBL_STATE_DIR: gcp/lime
     - task: upload-grafana-release
@@ -597,7 +608,6 @@ jobs:
       - name: bbl-state
       - name: cf-deployment
       - name: log-cache-ci
-      - name: log-cache-release
       outputs:
       - name: ops-files
       run:
@@ -668,16 +678,55 @@ jobs:
 
           cat <<EOT >> ops-files/metric-store.yml
           - type: replace
+            path: /releases/-
+            value:
+              name: metric-store
+              version: latest
+
+          - type: replace
+            path: /variables/-
+            value:
+              name: metric_store_ca
+              type: certificate
+              options:
+                common_name: metric-store
+                is_ca: true
+
+          - type: replace
+            path: /variables/-
+            value:
+              name: metric_store
+              type: certificate
+              options:
+                ca: metric_store_ca
+                common_name: metric-store
+                extended_key_usage:
+                - client_auth
+                - server_auth
+
+          - type: replace
+            path: /variables/-
+            value:
+              name: metric_store_tls_cc_auth_proxy
+              type: certificate
+              options:
+                ca: service_cf_internal_ca
+                common_name: metric-store
+                extended_key_usage:
+                - client_auth
+
+          - type: replace
             path: /instance_groups/-
             value:
               name: metric-store-scheduler
               azs:
               - z1
-              instances: 1
+              instances: 2
               jobs:
               - name: metric-store-scheduler
-                release: log-cache
+                release: metric-store
               - name: metric-store-expvar-forwarder
+                release: metric-store
                 properties:
                   counters: []
                   gauges: []
@@ -690,7 +739,6 @@ jobs:
                     name: worker-health
                     source_id: metric-store-scheduler
                     template: "{{.WorkerHealth | jsonMap}}"
-                release: log-cache
               networks:
               - name: default
               stemcell: default
@@ -708,22 +756,24 @@ jobs:
               vm_type: minimal
               azs:
               - z1
-              instances: 1
+              instances: 2
+              persistent_disk_type: 5GB
               jobs:
               - name: metric-store
+                release: metric-store
                 properties:
                   egress_port: 8080
                   health_addr: localhost:6060
                   tls:
-                    ca_cert: ((log_cache.ca))
-                    cert: ((log_cache.certificate))
-                    key: ((log_cache.private_key))
-                release: log-cache
+                    ca_cert: ((metric_store.ca))
+                    cert: ((metric_store.certificate))
+                    key: ((metric_store.private_key))
               - name: metric-store-gateway
+                release: metric-store
                 properties:
                   gateway_addr: localhost:8081
-                release: log-cache
               - name: metric-store-nozzle
+                release: metric-store
                 consumes:
                   reverse_log_proxy:
                     from: reverse_log_proxy
@@ -733,8 +783,8 @@ jobs:
                       ca_cert: ((logs_provider.ca))
                       cert: ((logs_provider.certificate))
                       key: ((logs_provider.private_key))
-                release: log-cache
               - name: metric-store-expvar-forwarder
+                release: metric-store
                 properties:
                   counters:
                   - addr: http://localhost:6060/debug/vars
@@ -811,8 +861,8 @@ jobs:
                     source_id: metric-store-cf-auth-proxy
                     template: "{{.CFAuthProxy.LastCAPIV2ServiceInstancesLatency}}"
                   maps: []
-                release: log-cache
               - name: route_registrar
+                release: routing
                 properties:
                   route_registrar:
                     routes:
@@ -822,13 +872,13 @@ jobs:
                       uris:
                       - metric-store.((system_domain))
                       - "*.metric-store.((system_domain))"
-                release: routing
               - name: metric-store-cf-auth-proxy
+                release: metric-store
                 properties:
                   cc:
-                    ca_cert: ((log_cache_tls_cc_auth_proxy.ca))
-                    cert: ((log_cache_tls_cc_auth_proxy.certificate))
-                    key: ((log_cache_tls_cc_auth_proxy.private_key))
+                    ca_cert: ((metric_store_tls_cc_auth_proxy.ca))
+                    cert: ((metric_store_tls_cc_auth_proxy.certificate))
+                    key: ((metric_store_tls_cc_auth_proxy.private_key))
                     capi_internal_addr: https://cloud-controller-ng.service.cf.internal:9023
                     common_name: cloud-controller-ng.service.cf.internal
                   proxy_port: 8083
@@ -837,7 +887,6 @@ jobs:
                     client_id: doppler
                     client_secret: ((uaa_clients_doppler_secret))
                     internal_addr: https://uaa.service.cf.internal:8443
-                release: log-cache
           EOT
 
           cat <<EOT >> ops-files/cf-deployment-candidate-changes.yml
