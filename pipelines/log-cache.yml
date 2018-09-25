@@ -431,6 +431,8 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
+    - get: log-cache
+      trigger: true
     - get: log-cache-acceptance-tests-release
       trigger: true
     - get: log-cache-acceptance-tests
