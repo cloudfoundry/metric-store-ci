@@ -10,6 +10,9 @@ groups:
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
   - log-cache-acceptance-tests-release-bump-submodule
+- name: metric-store
+  jobs:
+  - metric-store-tests
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -153,6 +156,13 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
+- name: metric-store
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/metric_store_github_private_key))
+
 - name: log-cache-cli
   type: git
   source:
@@ -215,6 +225,29 @@ jobs:
       source-repo: log-cache
     params:
       IMPORT_PATH: code.cloudfoundry.org/log-cache
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+
+- name: metric-store-tests
+  serial: true
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: metric-store
+      trigger: true
+  - task: run-tests
+    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
+    input_mapping:
+      source-repo: metric-store
+    params:
+      IMPORT_PATH: github.com/pivotal/metric-store
   on_failure:
     do:
     - put: slack-alert
