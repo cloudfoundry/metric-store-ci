@@ -163,14 +163,14 @@ resources:
   source:
     uri: git@github.com:pivotal/metric-store
     branch: master
-    private_key: ((github-key-ci.yml/Notes/metric_store_github_private_key))
+    private_key: ((github-key-ci.yml/Notes/temp_github_private_key))
 
 - name: metric-store-release
   type: git
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: develop
-    private_key: ((github-key-ci.yml/Notes/metric_store_github_private_key))
+    private_key: ((github-key-ci.yml/Notes/temp_github_private_key))
     ignore_paths:
     - .final_builds
     - releases

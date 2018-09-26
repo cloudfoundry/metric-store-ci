@@ -1,0 +1,217 @@
+groups:
+- name: all
+  jobs:
+  - bump-submodule
+  - create-final-release
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
+resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+
+- name: log-cache-1.3.x
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache
+    branch: v1.3.x
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-release-1.3.x
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-release
+    branch: v1.3.x
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-release-develop
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-release-master
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-ci
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-github-release-drafts
+  type: github-release
+  source:
+    user: cloudfoundry
+    repository: log-cache-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    drafts: true
+
+- name: log-cache-release-version-1.3.x
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-resources
+    key: log-cache-1.3.x
+    initial_version: 1.3.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
+
+shared:
+  - &send-release-alert-message
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text_file: messages/success.txt
+
+jobs:
+###############################################################################
+# LOG CACHE
+###############################################################################
+- name: bump-submodule
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: log-cache-release-1.3.x
+      trigger: true
+    - get: log-cache-1.3.x
+      trigger: true
+  - task: update-log-cache-submodule
+    file: log-cache-ci/tasks/bump-submodule/task.yml
+    input_mapping:
+      release-repo: log-cache-release-1.3.x
+      source-repo: log-cache-1.3.x
+    output_mapping:
+      bumped-release-repo: bumped-log-cache-release-1.3.x
+    params:
+      SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
+  - task: sync-package-specs
+    file: log-cache-ci/tasks/run-release-script/task.yml
+    input_mapping:
+      release-repo: bumped-log-cache-release-1.3.x
+    output_mapping:
+      updated-release-repo: synced-log-cache-release-1.3.x
+    params:
+      SCRIPT: scripts/sync-package-specs
+  - task: run-tests
+    file: log-cache-ci/tasks/run-release-script/task.yml
+    input_mapping:
+      release-repo: synced-log-cache-release-1.3.x
+    params:
+      SCRIPT: scripts/test
+  - task: commit
+    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      release-repo: synced-log-cache-release-1.3.x
+    output_mapping:
+      committed-repo: committed-log-cache-release-1.3.x
+    params:
+      PATHS: |
+        src/code.cloudfoundry.org/log-cache
+        packages
+  - put: log-cache-release-1.3.x
+    params:
+      repository: committed-log-cache-release-1.3.x
+      rebase: true
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+
+- name: create-final-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-release-develop
+      params:
+        submodules: false
+    - get: log-cache-release-master
+      params:
+        submodules: false
+    - get: log-cache-ci
+    - get: log-cache-release-1.3.x
+      passed: [bump-submodule]
+    - get: log-cache-release-version-1.3.x
+      params: {bump: patch}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      version: log-cache-release-version-1.3.x
+    params:
+      LEVEL: patch
+  - <<: *send-release-alert-message
+  - task: create-final-release-1.3.x
+    file: log-cache-ci/tasks/create-final-backport-release/task.yml
+    input_mapping:
+      log-cache-release-version-backport: log-cache-release-version-1.3.x
+      log-cache-release-backport: log-cache-release-1.3.x
+    output_mapping:
+      log-cache-release-backport-modified: log-cache-release-1.3.x-modified
+    params:
+      S3_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
+      S3_SECRET_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+      BACKPORT_BRANCH: v1.3.x
+  - put: log-cache-release-1.3.x
+    params:
+      repository: log-cache-release-1.3.x-modified
+  - put: log-cache-release-develop
+    params:
+      repository: log-cache-release-develop-modified
+      rebase: false
+  - put: log-cache-release-master
+    params:
+      repository: log-cache-release-master-modified
+      rebase: false
+  - put: log-cache-github-release-drafts
+    params:
+      name: github-release/name
+      tag: github-release/tag
+      body: github-release/body
+      globs:
+      - github-release/*.tgz
+  - put: log-cache-ci
+    params:
+      repository: log-cache-ci
+      tag: github-release/tag
+      only_tag: true
+  on_success:
+    do:
+    - put: log-cache-release-version-1.3.x
+      params: {file: log-cache-release-version-1.3.x/version}
+    - task: create-message
+      file: log-cache-ci/tasks/alert-message-release-end/task.yml
+      input_mapping:
+        version: log-cache-release-version-1.3.x
+    - <<: *send-release-alert-message
