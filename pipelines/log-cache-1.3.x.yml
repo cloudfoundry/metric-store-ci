@@ -186,6 +186,7 @@ jobs:
   - put: log-cache-release-1.3.x
     params:
       repository: log-cache-release-1.3.x-modified
+      rebase: false
   - put: log-cache-release-develop
     params:
       repository: log-cache-release-develop-modified
