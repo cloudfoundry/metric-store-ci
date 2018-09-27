@@ -890,9 +890,6 @@ jobs:
           EOT
 
           cat <<EOT >> ops-files/cf-deployment-candidate-changes.yml
-          - type: remove
-            path: /instance_groups/name=doppler/jobs/name=log-cache-group-reader
-
           - type: replace
             path: /instance_groups/name=metric-store/jobs/name=metric-store/provides?
             value:
