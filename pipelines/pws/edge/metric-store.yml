@@ -12,10 +12,10 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 
-- name: log-cache-release
+- name: metric-store-release
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-release
+    uri: git@github.com:pivotal/metric-store-release
     branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -25,14 +25,6 @@ resources:
     uri: git@github.com:cloudfoundry/log-cache-deployments
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
-
-- name: log-cache-version
-  type: semver
-  source:
-    bucket: loggregator-ci-versions
-    key: log-cache
-    access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
-    secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
 
 - name: slack-alert
   type: slack-notification
@@ -48,14 +40,13 @@ jobs:
       username: ((slack-ci.yml/Notes/slack_alert_username))
       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
       channel: ((slack-ci.yml/Notes/slack_alert_channel))
-      text: ":yellow_heart: Started :tree-log::dollar: Metric Store deployment to :knife: PWS Edge"
+      text: ":yellow_heart: Started :metric: Metric Store deployment to :knife: PWS Edge"
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-release
+    - get: metric-store-release
     - get: log-cache-deployments
-    - get: log-cache-version
       params: {pre: dev}
-  - task: upload-log-cache
+  - task: upload-metric-store
     image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
@@ -72,14 +63,12 @@ jobs:
           #!/bin/bash
           set -eux
 
-          pushd log-cache-release
-            cp ../log-cache-version/version src/
+          pushd metric-store-release
             bosh create-release --force
             bosh upload-release --rebase
           popd
       inputs:
-      - name: log-cache-release
-      - name: log-cache-version
+      - name: metric-store-release
   - task: metric-store-edge-deploy
     image: cf-deployment-concourse-tasks-image
     config:
@@ -105,8 +94,6 @@ jobs:
             --non-interactive
       inputs:
       - name: log-cache-deployments
-  - put: log-cache-version
-    params: {file: log-cache-version/version}
   on_success:
     do:
     - put: slack-alert
@@ -115,7 +102,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ":green_heart: Finished :tree-log::dollar: Metric Store deployment to :knife: PWS Edge"
+        text: ":green_heart: Finished :metric: Metric Store deployment to :knife: PWS Edge"
   on_failure:
     do:
     - put: slack-alert
@@ -124,5 +111,5 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ":broken_heart: Failed to deploy :tree-log::dollar: Metric Store: to :knife: PWS Edge
+        text: ":broken_heart: Failed to deploy :metric: Metric Store: to :knife: PWS Edge
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
