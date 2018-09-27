@@ -155,10 +155,10 @@ jobs:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release-develop
       params:
-        submodules: false
+        submodules: none
     - get: log-cache-release-master
       params:
-        submodules: false
+        submodules: none
     - get: log-cache-ci
     - get: log-cache-release-1.3.x
       passed: [bump-submodule]
@@ -187,14 +187,17 @@ jobs:
     params:
       repository: log-cache-release-1.3.x-modified
       rebase: false
+      get_params: {submodules: none}
   - put: log-cache-release-develop
     params:
       repository: log-cache-release-develop-modified
       rebase: false
+      get_params: {submodules: none}
   - put: log-cache-release-master
     params:
       repository: log-cache-release-master-modified
       rebase: false
+      get_params: {submodules: none}
   - put: log-cache-github-release-drafts
     params:
       name: github-release/name
