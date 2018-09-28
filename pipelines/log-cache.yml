@@ -210,12 +210,12 @@ resources:
     private_key: ((github-key-ci.yml/Notes/github_key))
     uri: git@github.com:cloudfoundry/leadership-election-release
 
-- name: prism-github-release
-  type: github-release
+- name: prism-release
+  type: git
   source:
-    user: pivotal-cf
-    repository: prism-release
-    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    uri: git@github.com:pivotal-cf/prism-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: grafana-boshrelease
   type: git
@@ -585,8 +585,36 @@ jobs:
       trigger: true
       passed: ["metric-store-bump-submodule"]
     - get: grafana-boshrelease
-    - get: github-release
-      resource: prism-github-release
+    - get: prism-release
+  - task: prism-dep-ensure
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: prism-release
+      outputs:
+      - name: prism-release-ensured
+      run:
+        path: /bin/bash
+        args:
+        - "-c"
+        - |
+          set -eux
+          export GOPATH=$(pwd)/prism-release
+          export PATH=$PATH:${GOPATH}/bin
+          go get -u github.com/golang/dep/cmd/dep
+
+          pushd prism-release/src/prism
+            dep ensure
+          popd
+          pushd prism-release/src/smoke_test
+            dep ensure
+          popd
+          pushd prism-release/src/tools
+            dep ensure
+          popd
+
+          rsync -a prism-release/ prism-release-ensured
   - aggregate:
     - task: upload-log-cache-release
       file: log-cache-ci/tasks/upload-release/task.yml
@@ -610,30 +638,13 @@ jobs:
       params:
         BBL_STATE_DIR: gcp/lime
     - task: upload-prism-release
+      file: log-cache-ci/tasks/upload-release/task.yml
       image: cf-deployment-concourse-tasks-image
-      config:
-        platform: linux
-        inputs:
-        - name: bbl-state
-        - name: github-release
-        - name: cf-deployment-concourse-tasks
-        params:
-          BBL_STATE_DIR: gcp/lime
-          RELEASE_GLOB: "app-metric-registrar-*"
-        run:
-          path: /bin/bash
-          args:
-          - "-c"
-          - |
-            set -exu
+      input_mapping:
+        bosh-release-dir: prism-release-ensured
+      params:
+        BBL_STATE_DIR: gcp/lime
 
-            source cf-deployment-concourse-tasks/shared-functions
-
-            setup_bosh_env_vars
-
-            pushd github-release
-              bosh upload-release $(find -maxdepth 1 -name "${RELEASE_GLOB}")
-            popd
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
     config:
