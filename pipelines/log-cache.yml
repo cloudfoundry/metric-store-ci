@@ -227,15 +227,23 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
-- name: log-cache-slack-cli-tests-version
+- name: notification-log-cache-tests-version
   type: semver
   source:
-    driver: s3
-    bucket: loggregator-ci-versions
+    driver: gcs
+    bucket: log-cache-ci-notifications
+    key: log-cache-slack-log-cache-tests-version
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: notification-cli-tests-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-notifications
     key: log-cache-slack-cli-tests-version
     initial_version: 0.0.0
-    access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
-    secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 jobs:
 ###############################################################################
@@ -249,8 +257,11 @@ jobs:
     - get: log-cache-ci
     - get: log-cache
       trigger: true
+    - get: notification-log-cache-tests-version
+      params: { bump: patch }
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
+    input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
     params:
       TITLE: Log Cache Test
   - task: run-tests
@@ -261,6 +272,8 @@ jobs:
       IMPORT_PATH: code.cloudfoundry.org/log-cache
   on_failure:
     do:
+    - put: notification-log-cache-tests-version
+      params: { file: notification-log-cache-tests-version/version }
     - put: slack-alert
       params:
         silent: true
@@ -268,6 +281,21 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - task: enable-disable-alert-success
+      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+      input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text_file: modified-metadata/alert_toggle
+        attachments_file: modified-metadata/alert_message_success
+    - put: notification-log-cache-tests-version
+      params: { bump: minor }
 
 - name: metric-store-tests
   serial: true
@@ -306,11 +334,11 @@ jobs:
       trigger: true
     - get: 10m
       trigger: true
-    - get: log-cache-slack-cli-tests-version
+    - get: notification-cli-tests-version
       params: { bump: patch }
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: log-cache-slack-cli-tests-version }
+    input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
     params:
       TITLE: Log Cache CLI Tests
   - task: run-tests
@@ -321,11 +349,11 @@ jobs:
       IMPORT_PATH: code.cloudfoundry.org/log-cache-cli
   on_failure:
     do:
-    - put: log-cache-slack-cli-tests-version
-      params: { file: log-cache-slack-cli-tests-version/version }
+    - put: notification-cli-tests-version
+      params: { file: notification-cli-tests-version/version }
     - task: enable-disable-alert-failure
       file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: log-cache-slack-cli-tests-version }
+      input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
       params: { alert_multiple: 5 }
     - put: slack-alert
       params:
@@ -339,7 +367,7 @@ jobs:
     do:
     - task: enable-disable-alert-success
       file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: log-cache-slack-cli-tests-version }
+      input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
     - put: slack-alert
       params:
         silent: true
@@ -348,7 +376,7 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text_file: modified-metadata/alert_toggle
         attachments_file: modified-metadata/alert_message_success
-    - put: log-cache-slack-cli-tests-version
+    - put: notification-cli-tests-version
       params: { bump: minor }
 
 - name: log-cache-docker-images
