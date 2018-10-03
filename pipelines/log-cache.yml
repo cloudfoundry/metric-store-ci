@@ -252,7 +252,7 @@ jobs:
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
-      TITLE: Log Cache Tests
+      TITLE: Log Cache Test
   - task: run-tests
     file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
     input_mapping:
@@ -267,7 +267,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: modified-metadata/alert_message_failure
+        attachments_file: metadata/alert_message_failure
 
 - name: metric-store-tests
   serial: true
