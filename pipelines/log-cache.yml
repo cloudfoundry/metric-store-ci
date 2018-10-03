@@ -578,72 +578,76 @@ jobs:
     - get: cf-deployment
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-release
-      trigger: true
-      passed: ["log-cache-bump-submodule"]
-    - get: metric-store-release
-      trigger: true
-      passed: ["metric-store-bump-submodule"]
-    - get: grafana-boshrelease
-    - get: prism-release
-  - task: prism-dep-ensure
-    image: cf-deployment-concourse-tasks-image
-    config:
-      platform: linux
-      inputs:
-      - name: prism-release
-      outputs:
-      - name: prism-release-ensured
-      run:
-        path: /bin/bash
-        args:
-        - "-c"
-        - |
-          set -eux
-          export GOPATH=$(pwd)/prism-release
-          export PATH=$PATH:${GOPATH}/bin
-          go get -u github.com/golang/dep/cmd/dep
-
-          pushd prism-release/src/prism
-            dep ensure
-          popd
-          pushd prism-release/src/smoke_test
-            dep ensure
-          popd
-          pushd prism-release/src/tools
-            dep ensure
-          popd
-
-          rsync -a prism-release/ prism-release-ensured
   - aggregate:
-    - task: upload-log-cache-release
-      file: log-cache-ci/tasks/upload-release/task.yml
-      image: cf-deployment-concourse-tasks-image
-      input_mapping:
-        bosh-release-dir: log-cache-release
-      params:
-        BBL_STATE_DIR: gcp/lime
-    - task: upload-metric-store-release
-      file: log-cache-ci/tasks/upload-release/task.yml
-      image: cf-deployment-concourse-tasks-image
-      input_mapping:
-        bosh-release-dir: metric-store-release
-      params:
-        BBL_STATE_DIR: gcp/lime
-    - task: upload-grafana-release
-      file: log-cache-ci/tasks/upload-release/task.yml
-      image: cf-deployment-concourse-tasks-image
-      input_mapping:
-        bosh-release-dir: grafana-boshrelease
-      params:
-        BBL_STATE_DIR: gcp/lime
-    - task: upload-prism-release
-      file: log-cache-ci/tasks/upload-release/task.yml
-      image: cf-deployment-concourse-tasks-image
-      input_mapping:
-        bosh-release-dir: prism-release-ensured
-      params:
-        BBL_STATE_DIR: gcp/lime
+    - do:
+      - get: log-cache-release
+        trigger: true
+        passed: ["log-cache-bump-submodule"]
+      - task: upload-log-cache-release
+        file: log-cache-ci/tasks/upload-release/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          bosh-release-dir: log-cache-release
+        params:
+          BBL_STATE_DIR: gcp/lime
+    - do:
+      - get: metric-store-release
+        trigger: true
+        passed: ["metric-store-bump-submodule"]
+      - task: upload-metric-store-release
+        file: log-cache-ci/tasks/upload-release/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          bosh-release-dir: metric-store-release
+        params:
+          BBL_STATE_DIR: gcp/lime
+    - do:
+      - get: grafana-boshrelease
+      - task: upload-grafana-release
+        file: log-cache-ci/tasks/upload-release/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          bosh-release-dir: grafana-boshrelease
+        params:
+          BBL_STATE_DIR: gcp/lime
+    - do:
+      - get: prism-release
+      - task: prism-dep-ensure
+        image: cf-deployment-concourse-tasks-image
+        config:
+          platform: linux
+          inputs:
+          - name: prism-release
+          outputs:
+          - name: prism-release-ensured
+          run:
+            path: /bin/bash
+            args:
+            - "-c"
+            - |
+              set -eux
+              export GOPATH=$(pwd)/prism-release
+              export PATH=$PATH:${GOPATH}/bin
+              go get -u github.com/golang/dep/cmd/dep
+
+              pushd prism-release/src/prism
+                dep ensure
+              popd
+              pushd prism-release/src/smoke_test
+                dep ensure
+              popd
+              pushd prism-release/src/tools
+                dep ensure
+              popd
+
+              rsync -a prism-release/ prism-release-ensured
+      - task: upload-prism-release
+        file: log-cache-ci/tasks/upload-release/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          bosh-release-dir: prism-release-ensured
+        params:
+          BBL_STATE_DIR: gcp/lime
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
