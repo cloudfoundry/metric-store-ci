@@ -444,6 +444,10 @@ jobs:
     - get: log-cache
       trigger: true
       passed: ["log-cache-tests"]
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Log Cache Bump Submodule
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -490,7 +494,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+        attachments_file: metadata/alert_message_failure
 
 - name: metric-store-bump-submodule
   serial: true
@@ -503,6 +507,10 @@ jobs:
     - get: metric-store
       trigger: true
       passed: ["metric-store-tests"]
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Metric Store Bump Submodule
   - task: update-metric-store-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -549,7 +557,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+        attachments_file: metadata/alert_message_failure
 
 - name: log-cache-acceptance-tests-release-bump-submodule
   serial: true
@@ -563,6 +571,10 @@ jobs:
       trigger: true
     - get: log-cache-acceptance-tests
       trigger: true
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: LCATS Release Bump Submodule
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -613,7 +625,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+        attachments_file: metadata/alert_message_failure
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
@@ -625,6 +637,10 @@ jobs:
     - get: cf-deployment
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Log Cache CF Deploy
   - aggregate:
     - do:
       - get: log-cache-release
@@ -1038,7 +1054,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+        attachments_file: metadata/alert_message_failure
 
 - name: lcats
   serial_groups: [cf-deploy]
@@ -1055,6 +1071,10 @@ jobs:
     - get: log-cache-acceptance-tests-release
       trigger: true
       passed: ["log-cache-acceptance-tests-release-bump-submodule"]
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: LCATS
   - task: upload-lcats
     file: log-cache-ci/tasks/upload-release/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -1095,7 +1115,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+        attachments_file: metadata/alert_message_failure
 
 - name: cats
   serial_groups: [cf-deploy]
@@ -1113,6 +1133,10 @@ jobs:
     - get: cf-deployment-concourse-tasks-image
     - get: bbl-state
       resource: log-cache-deployments
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: CATS
   - task: integration-config
     file: log-cache-ci/tasks/create-integration-config/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -1129,7 +1153,7 @@ jobs:
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text: ((slack-ci.yml/Notes/slack_build_failure_text))
+        attachments_file: metadata/alert_message_failure
 
 - name: log-cache-release-elect-promotion
   serial: true
