@@ -8,6 +8,7 @@ image_resource:
 inputs:
 - name: log-cache-ci
 - name: slack-rate-limit-version
+  optional: true
 
 outputs:
 - name: metadata

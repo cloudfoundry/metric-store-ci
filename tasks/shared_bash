@@ -25,16 +25,25 @@ alert_setup() {
 alert_title() {
   local title="${1} #\${BUILD_NAME}"
   local build_link="\${ATC_EXTERNAL_URL}/teams/main/pipelines/\${BUILD_PIPELINE_NAME}/jobs/\${BUILD_JOB_NAME}/builds/\${BUILD_NAME}"
-  local current_version=$(cat slack-rate-limit-version/version)
-  local attempt=$(patch_from_semver ${current_version})
-
   current=$(cat metadata/alert_message_failure)
-  new=$(echo $current | jq -c ". += [{ title: \"${title} failed!\", title_link: \"${build_link}\", footer: \"attempt #${attempt}\", color: \"danger\"}]")
-  echo $new > metadata/alert_message_failure
-
   current=$(cat metadata/alert_message_success)
-  new=$(echo $current | jq -c ". += [{ title: \"${title} passed!\", title_link: \"${build_link}\", footer: \"attempt #${attempt}\", color: \"good\"}]")
-  echo $new > metadata/alert_message_success
+
+  if [ -d slack-rate-limit-version ]; then
+    local current_version=$(cat slack-rate-limit-version/version)
+    local attempt=$(patch_from_semver ${current_version})
+
+    new=$(echo $current | jq -c ". += [{ title: \"${title} failed!\", title_link: \"${build_link}\", footer: \"attempt #${attempt}\", color: \"danger\"}]")
+    echo $new > metadata/alert_message_failure
+
+    new=$(echo $current | jq -c ". += [{ title: \"${title} passed!\", title_link: \"${build_link}\", footer: \"attempt #${attempt}\", color: \"good\"}]")
+    echo $new > metadata/alert_message_success
+  else
+    new=$(echo $current | jq -c ". += [{ title: \"${title} failed!\", title_link: \"${build_link}\", color: \"danger\"}]")
+    echo $new > metadata/alert_message_failure
+
+    new=$(echo $current | jq -c ". += [{ title: \"${title} passed!\", title_link: \"${build_link}\", color: \"good\"}]")
+    echo $new > metadata/alert_message_success
+  fi
 }
 
 alert_failure() {
