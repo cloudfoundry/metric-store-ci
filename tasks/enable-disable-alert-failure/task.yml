@@ -1,0 +1,21 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+
+inputs:
+  - name: log-cache-ci
+  - name: slack-rate-limit-version
+  - name: metadata
+
+outputs:
+  - name: modified-metadata
+
+params:
+  alert_multiple:
+
+run:
+  path: log-cache-ci/tasks/enable-disable-alert-failure/run.sh

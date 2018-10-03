@@ -1,0 +1,82 @@
+echo_green() {
+  GREEN='\033[0;32m'
+  CLEAR='\033[0m'
+  local message=${1}
+
+  echo -e "${GREEN}${message}${CLEAR}"
+}
+
+echo_red() {
+  RED='\033[0;31m'
+  CLEAR='\033[0m'
+  local message=${1}
+
+  echo -e "${RED}${message}${CLEAR}"
+}
+
+alert_setup() {
+  mkdir -p metadata
+  touch metadata/alert_message_failure
+  touch metadata/alert_message_success
+  echo "[]" > metadata/alert_message_failure
+  echo "[]" > metadata/alert_message_success
+}
+
+alert_title() {
+  local title="${1} #\${BUILD_NAME}"
+  local build_link="\${ATC_EXTERNAL_URL}/teams/main/pipelines/\${BUILD_PIPELINE_NAME}/jobs/\${BUILD_JOB_NAME}/builds/\${BUILD_NAME}"
+  local current_version=$(cat slack-rate-limit-version/version)
+  local attempt=$(patch_from_semver ${current_version})
+
+  current=$(cat metadata/alert_message_failure)
+  new=$(echo $current | jq -c ". += [{ title: \"${title} failed!\", title_link: \"${build_link}\", footer: \"attempt #${attempt}\", color: \"danger\"}]")
+  echo $new > metadata/alert_message_failure
+
+  current=$(cat metadata/alert_message_success)
+  new=$(echo $current | jq -c ". += [{ title: \"${title} passed!\", title_link: \"${build_link}\", footer: \"attempt #${attempt}\", color: \"good\"}]")
+  echo $new > metadata/alert_message_success
+}
+
+alert_failure() {
+  local message=${1}
+
+  echo_red "${message}"
+
+  current=$(cat metadata/alert_message_failure)
+  new=$(echo $current | jq -c ". += [{ text: \"${message}\", color: \"danger\"}]")
+  echo $new > metadata/alert_message_failure
+}
+
+alert_success() {
+  local message=${1}
+
+  echo_green "${message}"
+
+  current=$(cat metadata/alert_message_success)
+  new=$(echo $current | jq -c ". += [{ text: \"${message}\", color: \"good\"}]")
+  echo $new > metadata/alert_message_success
+}
+
+patch_from_semver() {
+  local version=${1}
+
+  echo ${version} | cut -d. -f3
+}
+
+major_minor_from_semver() {
+  local version=${1}
+
+  echo ${version} | cut -d. -f1,2
+}
+
+alert_enable() {
+  cp metadata/alert_message_failure modified-metadata/alert_message_failure
+  cp metadata/alert_message_success modified-metadata/alert_message_success
+  echo ' ' > modified-metadata/alert_toggle
+}
+
+alert_disable() {
+  touch modified-metadata/alert_message_failure
+  touch modified-metadata/alert_message_success
+  touch modified-metadata/alert_toggle
+}

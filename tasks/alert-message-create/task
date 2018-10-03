@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+. ./log-cache-ci/tasks/shared_bash
+set -eoux pipefail
+
+alert_setup
+alert_title "${TITLE}"
