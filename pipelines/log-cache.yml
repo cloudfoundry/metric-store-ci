@@ -210,12 +210,12 @@ resources:
     private_key: ((github-key-ci.yml/Notes/github_key))
     uri: git@github.com:cloudfoundry/leadership-election-release
 
-- name: prism-release
-  type: git
+- name: metric-registrar-release
+  type: github-release
   source:
-    uri: git@github.com:pivotal-cf/prism-release
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    user: pivotal-cf
+    repository: metric-registrar-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
 
 - name: grafana-boshrelease
   type: git
@@ -702,43 +702,15 @@ jobs:
         params:
           BBL_STATE_DIR: gcp/lime
     - do:
-      - get: prism-release
-      - task: prism-dep-ensure
-        image: cf-deployment-concourse-tasks-image
-        config:
-          platform: linux
-          inputs:
-          - name: prism-release
-          outputs:
-          - name: prism-release-ensured
-          run:
-            path: /bin/bash
-            args:
-            - "-c"
-            - |
-              set -eux
-              export GOPATH=$(pwd)/prism-release
-              export PATH=$PATH:${GOPATH}/bin
-              go get -u github.com/golang/dep/cmd/dep
-
-              pushd prism-release/src/prism
-                dep ensure
-              popd
-              pushd prism-release/src/smoke_test
-                dep ensure
-              popd
-              pushd prism-release/src/tools
-                dep ensure
-              popd
-
-              rsync -a prism-release/ prism-release-ensured
-      - task: upload-prism-release
-        file: log-cache-ci/tasks/upload-release/task.yml
+      - get: metric-registrar-release
+      - task: upload-metric-registrar-release
+        file: log-cache-ci/tasks/upload-release-tarball/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          bosh-release-dir: prism-release-ensured
+          release-tarball: metric-registrar-release
         params:
           BBL_STATE_DIR: gcp/lime
+          RELEASE_TARBALL_GLOB: "app-metric-registrar-*"
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
@@ -759,7 +731,7 @@ jobs:
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
-          cp log-cache-ci/ops-files/prism-in-cf.yml ops-files
+          cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
 
           cat <<EOT >> ops-files/test-clients.yml
           - type: replace
@@ -1056,7 +1028,7 @@ jobs:
         metric-store.yml
         cf-deployment-candidate-changes.yml
         grafana-in-cf.yml
-        prism-in-cf.yml
+        metric-registrar-in-cf.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
