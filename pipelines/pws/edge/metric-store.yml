@@ -157,7 +157,7 @@ jobs:
           set -eux
 
           bosh --deployment "$DEPLOYMENT_NAME" manifest > manifest.yml
-          bosh --deployment "$DEPLOYMENT_NAME" deploy --recreate manifest.yml
+          bosh --deployment "$DEPLOYMENT_NAME" deploy -n --recreate manifest.yml
   on_success:
     do:
     - put: slack-alert
