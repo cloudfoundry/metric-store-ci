@@ -1,0 +1,19 @@
+platform: linux
+
+inputs:
+- name: log-cache-ci
+- name: bbl-state
+- name: release-tarball
+- name: cf-deployment-concourse-tasks
+
+params:
+  # - Optional
+  # - Path to the directory containing the `bbl-state.json` file
+  # - The path is relative to root of the `bbl-state` input
+  # - Defaults to the root of the `bbl-state` input
+  BBL_STATE_DIR:
+
+  RELEASE_TARBALL_GLOB:
+
+run:
+  path: log-cache-ci/tasks/upload-release-tarball/task

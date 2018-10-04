@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -exu
+
+source cf-deployment-concourse-tasks/shared-functions
+
+setup_bosh_env_vars
+
+pushd release-tarball
+  bosh upload-release $(find -maxdepth 1 -name "${RELEASE_TARBALL_GLOB}")
+popd
