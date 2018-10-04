@@ -4,7 +4,6 @@ groups:
   - cf-deploy
   - lcats
   - cats
-  - log-cache-tests
   - log-cache-docker-images
   - log-cache-bump-submodule
   - log-cache-release-elect-promotion
@@ -12,7 +11,6 @@ groups:
   - log-cache-acceptance-tests-release-bump-submodule
 - name: metric-store
   jobs:
-  - metric-store-tests
   - metric-store-bump-submodule
   - cf-deploy
 - name: log-cache-cli
@@ -249,81 +247,6 @@ jobs:
 ###############################################################################
 # LOG CACHE
 ###############################################################################
-- name: log-cache-tests
-  serial: true
-  public: true
-  plan:
-  - aggregate:
-    - get: log-cache-ci
-    - get: log-cache
-      trigger: true
-    - get: notification-log-cache-tests-version
-      params: { bump: patch }
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
-    params:
-      TITLE: Log Cache Test
-  - task: run-tests
-    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
-    input_mapping:
-      source-repo: log-cache
-    params:
-      IMPORT_PATH: code.cloudfoundry.org/log-cache
-  on_failure:
-    do:
-    - put: notification-log-cache-tests-version
-      params: { file: notification-log-cache-tests-version/version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-log-cache-tests-version
-      params: { bump: minor }
-
-- name: metric-store-tests
-  serial: true
-  plan:
-  - aggregate:
-    - get: log-cache-ci
-    - get: metric-store
-      trigger: true
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Metric Store Test
-  - task: run-tests
-    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
-    input_mapping:
-      source-repo: metric-store
-    params:
-      IMPORT_PATH: github.com/pivotal/metric-store
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
-
 - name: log-cache-cli-tests
   serial: true
   public: true
@@ -389,7 +312,7 @@ jobs:
       trigger: true
     - get: log-cache
       trigger: true
-      passed: ["log-cache-tests"]
+      passed: ["log-cache-bump-submodule"]
   - aggregate:
     - task: build-log-cache-image
       file: log-cache-ci/tasks/build-go-docker-image/task.yml
@@ -471,11 +394,6 @@ jobs:
       trigger: true
     - get: log-cache
       trigger: true
-      passed: ["log-cache-tests"]
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Log Cache Bump Submodule
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -493,12 +411,46 @@ jobs:
       updated-release-repo: synced-log-cache-release
     params:
       SCRIPT: scripts/sync-package-specs
-  - task: run-tests
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    input_mapping:
-      release-repo: synced-log-cache-release
-    params:
-      SCRIPT: scripts/test
+  - do:
+    - get: notification-log-cache-tests-version
+      params: { bump: patch }
+    - task: create-slack-message
+      file: log-cache-ci/tasks/alert-message-create/task.yml
+      input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
+      params:
+        TITLE: Log Cache Bump Submodule
+    - task: run-tests
+      file: log-cache-ci/tasks/run-release-script/task.yml
+      input_mapping:
+        release-repo: synced-log-cache-release
+      params:
+        SCRIPT: scripts/test
+    on_failure:
+      do:
+      - put: notification-log-cache-tests-version
+        params: { file: notification-log-cache-tests-version/version }
+      - put: slack-alert
+        params:
+          silent: true
+          username: ((slack-ci.yml/Notes/slack_alert_username))
+          icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+          channel: ((slack-ci.yml/Notes/slack_alert_channel))
+          attachments_file: metadata/alert_message_failure
+    on_success:
+      do:
+      - task: enable-disable-alert-success
+        file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+        input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
+      - put: slack-alert
+        params:
+          silent: true
+          username: ((slack-ci.yml/Notes/slack_alert_username))
+          icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+          channel: ((slack-ci.yml/Notes/slack_alert_channel))
+          text_file: modified-metadata/alert_toggle
+          attachments_file: modified-metadata/alert_message_success
+      - put: notification-log-cache-tests-version
+        params: { bump: minor }
   - task: commit
     file: log-cache-ci/tasks/commit-with-shortlog/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -534,7 +486,6 @@ jobs:
       trigger: true
     - get: metric-store
       trigger: true
-      passed: ["metric-store-tests"]
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
