@@ -39,6 +39,11 @@ resources:
     stop: 7 AM
     location: America/Denver
 
+- name: every-23-hours
+  type: time
+  source:
+    interval: 23h
+
 jobs:
 - name: metric-store-edge-deploy
   plan:
@@ -77,7 +82,7 @@ jobs:
           popd
       inputs:
       - name: metric-store-release
-  - task: metric-store-edge-deploy
+  - task: deploy
     image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
@@ -86,8 +91,7 @@ jobs:
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        DEPLOYMENT_NAME: metric-store-edge
-        SECRETS_FILE: shared-secrets.yml
+        BOSH_DEPLOYMENT: metric-store-edge
       run:
         path: bash
         args:
@@ -98,7 +102,6 @@ jobs:
 
           bosh \
             deploy "log-cache-deployments/pws/edge/metric-store-edge-manifest.yml" \
-            --deployment "$DEPLOYMENT_NAME" \
             --non-interactive
       inputs:
       - name: log-cache-deployments
@@ -123,6 +126,7 @@ jobs:
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
 
 - name: metric-store-edge-nightly-redeploy
+  serial_groups: [chaos]
   plan:
   - put: slack-alert
     params:
@@ -137,7 +141,7 @@ jobs:
       passed: [metric-store-edge-deploy]
     - get: nightly
       trigger: true
-  - task: metric-store-edge-redeploy
+  - task: redeploy
     image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
@@ -146,8 +150,7 @@ jobs:
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        DEPLOYMENT_NAME: metric-store-edge
-        SECRETS_FILE: shared-secrets.yml
+        BOSH_DEPLOYMENT: metric-store-edge
       run:
         path: bash
         args:
@@ -156,8 +159,8 @@ jobs:
           #!/bin/bash
           set -eux
 
-          bosh --deployment "$DEPLOYMENT_NAME" manifest > manifest.yml
-          bosh --deployment "$DEPLOYMENT_NAME" deploy -n --recreate manifest.yml
+          bosh manifest > manifest.yml
+          bosh deploy --non-interactive --recreate manifest.yml
   on_success:
     do:
     - put: slack-alert
@@ -176,4 +179,75 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ":broken_heart: Failed nightly :metric: Metric Store Edge redeployment
+          Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+
+- name: metric-store-edge-kill-vm
+  serial_groups: [chaos]
+  plan:
+  - put: slack-alert
+    params:
+      silent: true
+      username: ((slack-ci.yml/Notes/slack_alert_username))
+      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+      channel: ((slack-ci.yml/Notes/slack_alert_channel))
+      text: ":monkey: Killing a :metric: Metric Store Edge vm"
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: metric-store-release
+      passed: [metric-store-edge-deploy]
+    - get: every-23-hours
+      trigger: true
+  - task: kill-vm
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        BOSH_DEPLOYMENT: metric-store-edge
+        VM_OFFLINE_DURATION: 5m
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          vm_to_stop="$(bosh vms |
+            grep 'metric-store/' |
+            sort -R |
+            head -n 1 |
+            awk '{print $1}')"
+
+          bosh \
+            stop "${vm_to_stop}" \
+            --soft --skip-drain \
+            --non-interactive
+
+          sleep ${VM_OFFLINE_DURATION}
+
+          bosh \
+            start "${vm_to_stop}" \
+            --non-interactive
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":green_heart: Finished killing and restarting a :metric: Metric Store Edge vm"
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":broken_heart: Failed to kill a :metric: Metric Store Edge vm
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
