@@ -1,0 +1,20 @@
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+
+inputs:
+- name: bbl-state
+- name: cf-deployment-concourse-tasks
+- name: github-release
+- name: log-cache-deployments
+
+outputs:
+- name: log-cache-deployments-modified
+
+params:
+  BBL_STATE_DIR:
+
+run:
+  path: log-cache-ci/tasks/create-release-deployment-artifacts/task

@@ -1,0 +1,18 @@
+#!/bin/bash
+set -exuo pipefail
+
+source cf-deployment-concourse-tasks/shared-functions
+
+setup_bosh_env_vars
+
+pushd log-cache-deployments
+  mkdir -p release-artifacts
+  pushd release-artifacts
+    bosh -d cf manifest > cf-manifest.yml
+    git add .
+  popd
+
+  git commit --allow-empty -m "Save release artifacts for $(cat ../github-release/tag)"
+
+  cp -r . ../log-cache-deployments-modified
+popd
