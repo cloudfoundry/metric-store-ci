@@ -11,6 +11,8 @@ echo "Log Cache ${new_version}" > github-release/name
 echo ${tag_name} > github-release/tag
 echo "TBD" > github-release/body
 
+exit
+
 pushd log-cache-release-master
   git checkout master
 
