@@ -25,7 +25,7 @@ class Committer
   end
 
   def find_shas
-    diffs = `git diff --cached`.split('diff --git').select do |log|
+    diffs = must("git diff --cached").split('diff --git').select do |log|
       log =~ /Subproject/
     end
 
@@ -45,7 +45,7 @@ class Committer
     locations.each do |location, shas|
       Dir.chdir(location) do
         commit_messages_by_author = Hash.new([])
-        `git log #{shas} --pretty=format:'%h %an: %s'`.split("\n").each do |commit|
+        must("git log #{shas} --pretty=format:'%h %an: %s'").split("\n").each do |commit|
           _sha, rest_of_commit = commit.split(" ", 2)
           author, message = rest_of_commit.split(":", 2)
           commit_messages_by_author[author] += [message]
@@ -62,13 +62,18 @@ class Committer
   end
 
   def commit(msg)
-    `git config --global user.email "cf-log-cache@pivotal.io>"`
-    `git config --global user.name "Log Cache CI"`
-    `git commit -m "#{msg}"`
+    must("git config --global user.email 'cf-log-cache@pivotal.io>'")
+    must("git config --global user.name 'Log Cache CI'")
+    must("git commit -m '#{msg}'")
   end
 
   def copy_release_dir
-    `cp -r ../release-repo/. .`
+    must("cp -r ../release-repo/. .")
+  end
+
+  def must(cmd)
+    out = exec(cmd)
+    $? != 0 ? exit($?) : out
   end
 end
 
