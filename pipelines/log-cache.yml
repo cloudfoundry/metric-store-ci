@@ -589,7 +589,6 @@ jobs:
       committed-repo: committed-log-cache-acceptance-tests-release
     params:
       PATHS: |
-        src/code.cloudfoundry.org/go-log-cache
         src/github.com/cloudfoundry/log-cache-acceptance-tests
         packages
   - put: log-cache-acceptance-tests-release
