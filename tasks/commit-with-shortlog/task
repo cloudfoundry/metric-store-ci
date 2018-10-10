@@ -4,6 +4,7 @@ class Committer
   def initialize(paths)
     @paths = paths.split(" ")
     puts "Paths to be committed #{@paths}"
+    puts `git status`
   end
 
   def run
@@ -29,7 +30,7 @@ class Committer
   end
 
   def stage_paths
-    @paths.each { |p| `git add #{p}` }
+    @paths.each { |p| must(`git add #{p}`) }
   end
 
   def find_shas
