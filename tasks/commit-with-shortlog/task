@@ -30,7 +30,7 @@ class Committer
   end
 
   def stage_paths
-    @paths.each { |p| must(`git add #{p}`) }
+    @paths.each { |p| must("git add #{p}") }
   end
 
   def find_shas
@@ -81,7 +81,7 @@ class Committer
   end
 
   def must(cmd)
-    out = exec(cmd)
+    out = `#{cmd}`
     $? != 0 ? exit($?) : out
   end
 end
