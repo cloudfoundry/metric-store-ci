@@ -3,6 +3,7 @@
 class Committer
   def initialize(paths)
     @paths = paths.split(" ")
+    puts "Paths to be committed #{@paths}"
   end
 
   def run
@@ -11,6 +12,11 @@ class Committer
     if has_diff?
       stage_paths
       commit(build_message(find_shas))
+
+      if has_diff?
+        puts "uncommited code still present after commit"
+        exit(1)
+      end
     end
   end
 
