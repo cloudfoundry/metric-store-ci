@@ -18,6 +18,8 @@ class Committer
         exit(1)
       end
     end
+
+    puts "No diff present"
   end
 
   def has_diff?
