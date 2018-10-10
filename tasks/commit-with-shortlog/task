@@ -4,11 +4,11 @@ class Committer
   def initialize(paths)
     @paths = paths.split(" ")
     puts "Paths to be committed #{@paths}"
-    puts `git status`
   end
 
   def run
     copy_release_dir
+    puts `git status`
 
     if has_diff?
       stage_paths
