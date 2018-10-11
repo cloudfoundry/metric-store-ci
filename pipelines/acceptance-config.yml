@@ -1,0 +1,4 @@
+---
+env_name: yuzu
+sys_domain: yuzu.cf-denver.com
+bbl_state_dir: acceptance-bosh/claimed/yuzu

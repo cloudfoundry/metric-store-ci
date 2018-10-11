@@ -53,10 +53,10 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 
-- name: log-cache-deployments
+- name: denver-locks
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-deployments.git
+    uri: git@github.com:pivotal-cf/denver-locks.git
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -589,7 +589,7 @@ jobs:
       committed-repo: committed-log-cache-acceptance-tests-release
     params:
       PATHS: |
-        src/github.com/cloudfoundry/log-cache-acceptance-tests
+        src
         packages
   - put: log-cache-acceptance-tests-release
     params:
@@ -611,7 +611,7 @@ jobs:
   - aggregate:
     - get: log-cache-ci
     - get: bbl-state
-      resource: log-cache-deployments
+      resource: denver-locks
     - get: cf-deployment
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
@@ -630,7 +630,7 @@ jobs:
         input_mapping:
           bosh-release-dir: log-cache-release
         params:
-          BBL_STATE_DIR: gcp/lime
+          BBL_STATE_DIR: ((bbl_state_dir))
     - do:
       - get: metric-store-release
         trigger: true
@@ -641,7 +641,7 @@ jobs:
         input_mapping:
           bosh-release-dir: metric-store-release
         params:
-          BBL_STATE_DIR: gcp/lime
+          BBL_STATE_DIR: ((bbl_state_dir))
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
@@ -650,7 +650,7 @@ jobs:
         input_mapping:
           bosh-release-dir: grafana-boshrelease
         params:
-          BBL_STATE_DIR: gcp/lime
+          BBL_STATE_DIR: ((bbl_state_dir))
     - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
@@ -659,8 +659,8 @@ jobs:
         input_mapping:
           release-tarball: metric-registrar-release
         params:
-          BBL_STATE_DIR: gcp/lime
-          RELEASE_TARBALL_GLOB: "app-metric-registrar-*"
+          BBL_STATE_DIR: ((bbl_state_dir))
+          RELEASE_TARBALL_GLOB: "metric-registrar-*"
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
@@ -962,14 +962,14 @@ jobs:
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
     params:
-      BBL_STATE_DIR: gcp/lime
+      BBL_STATE_DIR: ((bbl_state_dir))
   - task: cf-deploy
     file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
     input_mapping:
       vars-files: bbl-state
     params:
-      BBL_STATE_DIR: gcp/lime
-      SYSTEM_DOMAIN: lime.loggr.cf-app.com
+      BBL_STATE_DIR: ((bbl_state_dir))
+      SYSTEM_DOMAIN: ((sys_domain))
       OPS_FILES: |
         use-compiled-releases.yml
         test-clients.yml
@@ -982,20 +982,20 @@ jobs:
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
-      BBL_STATE_DIR: gcp/lime
-      SYSTEM_DOMAIN: lime.loggr.cf-app.com
+      BBL_STATE_DIR: ((bbl_state_dir))
+      SYSTEM_DOMAIN: ((sys_domain))
       ENABLED_FEATURE_FLAGS: diego_docker
   - task: cleanup
     file: cf-deployment-concourse-tasks/bosh-cleanup/task.yml
     params:
-      BBL_STATE_DIR: gcp/lime
+      BBL_STATE_DIR: ((bbl_state_dir))
   - task: create-test-space
     file: log-cache-ci/tasks/create-org-and-space/task.yml
     params:
-      BBL_STATE_DIR: gcp/lime
+      BBL_STATE_DIR: ((bbl_state_dir))
       ORG: test
       SPACE: test
-      SYSTEM_DOMAIN: lime.loggr.cf-app.com
+      SYSTEM_DOMAIN: ((sys_domain))
   on_failure:
     do:
     - put: slack-alert
@@ -1014,7 +1014,7 @@ jobs:
       passed:
       - cf-deploy
       trigger: true
-    - get: log-cache-deployments
+    - get: denver-locks
     - get: log-cache-ci
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
@@ -1029,34 +1029,50 @@ jobs:
     file: log-cache-ci/tasks/upload-release/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
-      BBL_STATE_DIR: gcp/lime
+      BBL_STATE_DIR: ((bbl_state_dir))
     input_mapping:
-      bbl-state: log-cache-deployments
+      bbl-state: denver-locks
       bosh-release-dir: log-cache-acceptance-tests-release
+  - task: create-ops-files
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: log-cache-ci
+      outputs:
+      - name: ops-files
+      run:
+        path: /bin/bash
+        args:
+        - "-c"
+        - |
+          set -e
+          erb log-cache-ci/ops-files/lcats.yml.erb > ops-files/lcats.yml
+    params:
+      ENV_NAME: ((env_name))
+      SYS_DOMAIN: ((sys_domain))
   - task: lcats-deploy
     file: log-cache-ci/tasks/bosh-deploy/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
-      BBL_STATE_DIR: gcp/lime
+      BBL_STATE_DIR: ((bbl_state_dir))
       DEPLOYMENT_NAME: lcats
       MANIFEST_FILE: manifests/manifest.yml
-      OPS_FILES: gcp/lime/ops-files/lcats.yml
-      VARS_FILES: gcp/lime/lcats-vars.yml
+      OPS_FILES: lcats.yml
     input_mapping:
-      bbl-state: log-cache-deployments
+      bbl-state: denver-locks
       bosh-release: log-cache-acceptance-tests-release
-      ops-files: log-cache-deployments
-      vars-files: log-cache-deployments
+      ops-files: ops-files
   - task: run-lcats
     file: log-cache-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
-      BBL_STATE_DIR: gcp/lime
+      BBL_STATE_DIR: ((bbl_state_dir))
       DEPLOYMENT_NAME: lcats
       ERRAND: lcats
       KEEP_ALIVE: true
     input_mapping:
-      bbl-state: log-cache-deployments
+      bbl-state: denver-locks
   on_failure:
     do:
     - put: slack-alert
@@ -1075,14 +1091,14 @@ jobs:
       passed:
       - cf-deploy
       trigger: true
-    - get: log-cache-deployments
+    - get: denver-locks
     - get: log-cache-ci
     - get: cf-acceptance-tests
       trigger: true
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
     - get: bbl-state
-      resource: log-cache-deployments
+      resource: denver-locks
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
@@ -1091,8 +1107,8 @@ jobs:
     file: log-cache-ci/tasks/create-integration-config/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
-      BBL_STATE_DIR: gcp/lime
-      SYSTEM_DOMAIN: lime.loggr.cf-app.com
+      BBL_STATE_DIR: ((bbl_state_dir))
+      SYSTEM_DOMAIN: ((sys_domain))
   - task: cats
     file: cf-deployment-concourse-tasks/run-cats/task.yml
   on_failure:
