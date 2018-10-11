@@ -1063,6 +1063,7 @@ jobs:
       bbl-state: denver-locks
       bosh-release: log-cache-acceptance-tests-release
       ops-files: ops-files
+      vars-files: ops-files
   - task: run-lcats
     file: log-cache-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
