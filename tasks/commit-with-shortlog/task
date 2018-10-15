@@ -62,6 +62,7 @@ echo
 
 pushd committed-repo >/dev/null
     cp -r ../release-repo/. .
+    git update-index --refresh
 
     if has_diff; then
         stage_paths
