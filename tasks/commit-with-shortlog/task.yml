@@ -9,8 +9,7 @@ outputs:
 - name: committed-repo
 
 run:
-  path: ../log-cache-ci/tasks/commit-with-shortlog/task
-  dir: committed-repo
+  path: log-cache-ci/tasks/commit-with-shortlog/task
 
 params:
   # Required. The paths to commit.

@@ -1,89 +1,80 @@
-#!/usr/bin/env ruby
+#!/bin/bash
 
-class Committer
-  def initialize(paths)
-    @paths = paths.split(" ")
-    puts "Paths to be committed #{@paths}"
-  end
+set -euo pipefail
 
-  def run
-    copy_release_dir
-    puts `git status`
+function has_diff {
+    if git diff-index --quiet HEAD; then
+        return 1
+    else
+        return 0
+    fi
+}
 
-    if has_diff?
-      stage_paths
-      commit(build_message(find_shas))
+function stage_paths {
+    for path in "${paths_to_commit[@]}"; do
+        git add ${path}
+    done
+}
 
-      if has_diff?
-        puts "uncommited code still present after commit"
-        exit(1)
-      end
-    end
+function build_submodule_message {
+    local submodule_path=$1
+    local start_sha=$2
+    local end_sha=$3
 
-    puts "No diff present"
-  end
+    pushd ${submodule_path} > /dev/null
+        echo "${submodule_path}:"
 
-  def has_diff?
-    `git diff-index --quiet HEAD`
-    process = $?
-    !process.success?
-  end
+        git log --pretty="  %h: %s (%an, %cn)" ${start_sha}..${end_sha}
+    popd > /dev/null
+}
 
-  def stage_paths
-    @paths.each { |p| must("git add #{p}") }
-  end
+function build_message {
+    echo "Bump submodules"
 
-  def find_shas
-    diffs = must("git diff --cached").split('diff --git').select do |log|
-      log =~ /Subproject/
-    end
+    git diff --cached --raw | (
+        while read _ dst_mode start_sha end_sha _ submodule_path; do
+            if [[ $dst_mode != 160000 ]]; then
+                # Not a submodule
+                continue
+            fi
 
-    locations = {}
-    diffs.each do |diff|
-      /a\/(?<loc>.+?)\sb.*index\s(?<shas>\S+)/m.match diff do |matches|
-        locations[matches[:loc]] = matches[:shas]
-      end
-    end
+            echo
+            build_submodule_message $submodule_path $start_sha $end_sha
+        done
+    )
+}
 
-    locations
-  end
+function commit {
+    message="$(build_message)"
 
-  def build_message(locations)
-    commit_msg = ["Bump #{locations.keys.join(", ")}\n"]
+    git config --global user.email 'cf-log-cache@pivotal.io>'
+    git config --global user.name 'Log Cache CI'
+    git commit -m "${message}"
+}
 
-    locations.each do |location, shas|
-      Dir.chdir(location) do
-        commit_messages_by_author = Hash.new([])
-        must("git log #{shas} --pretty=format:'%h %an: %s'").split("\n").each do |commit|
-          _sha, rest_of_commit = commit.split(" ", 2)
-          author, message = rest_of_commit.split(":", 2)
-          commit_messages_by_author[author] += [message]
-        end
+read -a paths_to_commit <<< "${PATHS}"
 
-        commit_messages_by_author.each do |author, messages|
-          commit_msg << "  #{author}:"
-          messages.each { |message| commit_msg << "    #{message}" }
-        end
-      end
-    end
+echo "Paths to be committed:"
+for path in ${paths_to_commit[@]}; do
+    echo "  $path"
+done
+echo
 
-    commit_msg.join("\n")
-  end
+pushd committed-repo >/dev/null
+    cp -r ../release-repo/. .
 
-  def commit(msg)
-    must("git config --global user.email 'cf-log-cache@pivotal.io>'")
-    must("git config --global user.name 'Log Cache CI'")
-    must("git commit -m '#{msg}'")
-  end
+    if has_diff; then
+        stage_paths
 
-  def copy_release_dir
-    must("cp -r ../release-repo/. .")
-  end
+        git status
 
-  def must(cmd)
-    out = `#{cmd}`
-    $? != 0 ? exit($?) : out
-  end
-end
+        commit
 
-Committer.new(ENV["PATHS"]).run
+        if has_diff; then
+            echo "uncommitted code still present after commit"
+            exit 1
+        fi
+    else
+        echo "No diff present, skipping commit"
+    fi
+popd committed-repo >/dev/null
