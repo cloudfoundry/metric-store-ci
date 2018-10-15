@@ -39,7 +39,7 @@ function build_message {
             fi
 
             echo
-            build_submodule_message $submodule_path $start_sha $end_sha
+            build_submodule_message $submodule_path $(tr -d . <<< "${start_sha}") $(tr -d . <<< "${end_sha}")
         done
     )
 }
@@ -77,4 +77,4 @@ pushd committed-repo >/dev/null
     else
         echo "No diff present, skipping commit"
     fi
-popd committed-repo >/dev/null
+popd >/dev/null
