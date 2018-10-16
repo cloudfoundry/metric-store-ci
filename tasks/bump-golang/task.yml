@@ -7,8 +7,6 @@ inputs:
 - name: log-cache-ci
 # - The director that contains the downloaded golang blobs.
 - name: golang-blobs
-- name: golang-github-release
-  optional: true
 
 outputs:
 # - The directory where the result of running the script is copied. This will

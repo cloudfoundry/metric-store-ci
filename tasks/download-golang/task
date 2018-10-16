@@ -16,11 +16,7 @@ def check_process(process, action)
 end
 
 def to_version
-  if File.exist? "golang-github-release/version"
-    @to_version ||= File.read.chomp!
-  else
-    @to_version ||= ENV.fetch("VERSION")
-  end
+  @to_version ||= ENV.fetch("VERSION")
 end
 
 def linux_filename(version)
