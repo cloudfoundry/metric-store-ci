@@ -12,7 +12,7 @@ def text(txt)
 end
 
 def to_version
-  if File.exist? "go-version/version"
+  if File.exist? "golang-github-release/version"
     @to_version ||= File.read.chomp!
   else
     @to_version ||= ENV.fetch("VERSION")
