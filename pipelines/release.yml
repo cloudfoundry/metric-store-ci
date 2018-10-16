@@ -82,7 +82,7 @@ resources:
 - name: log-cache-cli-github-release-drafts
   type: github-release
   source:
-    user: cloudfoundry
+    owner: cloudfoundry
     repository: log-cache-cli
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
@@ -128,11 +128,13 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
-- name: golang-github-release
-  type: github-release
+- name: go
+  type: git
   source:
-    user: golang
-    repository: go
+    uri: https://github.com/golang/go
+    # This only works for versions that have at least one patch (go1.11.1, not
+    # go1.11).
+    tag_filter: go1.[1-9][0-9].[1-9]
 
 shared:
   - &send-release-alert-message
@@ -283,9 +285,23 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release-develop
-    - get: golang-github-release
+    - get: go
       params:
-        globs: [ dont-fetch-any-files ]
+        depth: 1
+  - task: identify-golang-version
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: go
+      outputs:
+      - name: go-version
+      run:
+        path: bash
+        args:
+          - "-c"
+          - |
+            git --git-dir=go/.git describe --tags HEAD > go-version/version
   - task: download-go
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
