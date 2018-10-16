@@ -3,6 +3,8 @@ platform: linux
 inputs:
 # - The repo that contains run-release-script.sh.
 - name: log-cache-ci
+- name: golang-github-release
+  optional: true
 
 outputs:
 # - The directory where the result of running the script is copied. This will

@@ -115,12 +115,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: log-cache-github-release-drafts
   type: github-release
   source:
@@ -133,6 +127,12 @@ resources:
   type: slack-notification
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
+
+- name: golang-github-release
+  type: github-release
+  source:
+    user: golang
+    repository: go
 
 shared:
   - &send-release-alert-message
@@ -283,11 +283,12 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-release-develop
+    - get: golang-github-release
+      params:
+        globs: [ dont-fetch-any-files ]
   - task: download-go
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
-    params:
-      VERSION: &golang-version 1.10.3
   - do:
     - task: bump-log-cache-release
       image: cf-deployment-concourse-tasks-image
@@ -297,23 +298,30 @@ jobs:
       output_mapping:
         updated-release-repo: updated-log-cache-release
       params:
-        VERSION: *golang-version
         ACCESS_KEY_ID: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
         SECRET_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
         BUCKET_NAME: log-cache-release-blobs
+    - task: test-log-cache-release
+      file: log-cache-ci/tasks/run-release-script/task.yml
+      input_mapping:
+        release-repo: updated-log-cache-release
+      output_mapping:
+        updated-release-repo: tested-log-cache-release
+      params:
+        SCRIPT: scripts/test
     - task: commit-log-cache-release
       image: cf-deployment-concourse-tasks-image
       file: log-cache-ci/tasks/commit/task.yml
       input_mapping:
-        release-repo: updated-log-cache-release
+        release-repo: tested-log-cache-release
       output_mapping:
         committed-repo: committed-log-cache-release
       params:
         COMMIT_MESSAGE: "Bump golang version"
-    - put: log-cache-release-develop
-      params:
-        repository: committed-log-cache-release
-        rebase: false
+    # - put: log-cache-release-develop
+    #   params:
+    #     repository: committed-log-cache-release
+    #     rebase: false
 
 - name: log-cache-cli-bump-major
   serial: true
