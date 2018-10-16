@@ -115,12 +115,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: log-cache-github-release-drafts
   type: github-release
   source:
