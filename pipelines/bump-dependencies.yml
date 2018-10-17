@@ -1,0 +1,158 @@
+resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.20.0
+
+- name: log-cache-release-develop
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-ci
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-base-image
+  type: docker-image
+  source:
+    repository: logcache/base
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+
+- name: metric-store-release-develop
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+jobs:
+- name: bump-docker-golang
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+  - task: bump-logcache-base-golang
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: log-cache-ci
+      outputs:
+      - name: updated-log-cache-ci
+      - name: log-cache-base-build
+      params:
+        GO_VERSION: &golang-minor-version "1.11"
+      run:
+        path: bash
+        args:
+          - -c
+          - |
+            pushd log-cache-ci
+              sed -i -e "1s/golang:.*/golang:${GO_VERSION}/" docker-images/base/Dockerfile
+
+              git add docker-images/base/Dockerfile
+
+              git config --global user.email 'cf-log-cache@pivotal.io>'
+              git config --global user.name 'Log Cache CI'
+              git commit -m "Bump golang version in base Dockerfile"
+            popd
+
+            cp -r log-cache-ci/. updated-log-cache-ci/.
+
+            cp -r log-cache-ci/docker-images/base/. log-cache-base-build/.
+            echo "go${GO_VERSION}" > log-cache-base-build/tag
+  - put: log-cache-base-image
+    params:
+      build: log-cache-base-build
+      tag: log-cache-base-build/tag
+      tag_as_latest: true
+  - put: log-cache-ci
+    params:
+      repository: updated-log-cache-ci
+      rebase: false
+
+- name: bump-log-cache-release-golang
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-release-develop
+    - get: log-cache-ci
+  - task: download-go
+    image: cf-deployment-concourse-tasks-image
+    file: log-cache-ci/tasks/download-golang/task.yml
+    params:
+      VERSION: &golang-version "1.11.1"
+  - do:
+    - task: bump-log-cache-release
+      image: cf-deployment-concourse-tasks-image
+      file: log-cache-ci/tasks/bump-golang/task.yml
+      input_mapping:
+        release-repo: log-cache-release-develop
+      output_mapping:
+        updated-release-repo: updated-log-cache-release
+      params:
+        VERSION: *golang-version
+        ACCESS_KEY_ID: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
+        SECRET_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+        BUCKET_NAME: log-cache-release-blobs
+    - task: commit-log-cache-release
+      image: cf-deployment-concourse-tasks-image
+      file: log-cache-ci/tasks/commit/task.yml
+      input_mapping:
+        release-repo: updated-log-cache-release
+      output_mapping:
+        committed-repo: committed-log-cache-release
+      params:
+        COMMIT_MESSAGE: "Bump golang version"
+    - put: log-cache-release-develop
+      params:
+        repository: committed-log-cache-release
+        rebase: false
+
+- name: bump-metric-store-release-golang
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: metric-store-release-develop
+    - get: log-cache-ci
+  - task: download-go
+    image: cf-deployment-concourse-tasks-image
+    file: log-cache-ci/tasks/download-golang/task.yml
+    params:
+      VERSION: &golang-version 1.11.1
+  - do:
+    - task: bump-metric-store-release
+      image: cf-deployment-concourse-tasks-image
+      file: log-cache-ci/tasks/bump-golang/task.yml
+      input_mapping:
+        release-repo: metric-store-release-develop
+      output_mapping:
+        updated-release-repo: updated-metric-store-release
+      params:
+        VERSION: *golang-version
+        ACCESS_KEY_ID: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
+        SECRET_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+        BUCKET_NAME: log-cache-release-blobs
+    - task: commit-metric-store-release
+      image: cf-deployment-concourse-tasks-image
+      file: log-cache-ci/tasks/commit/task.yml
+      input_mapping:
+        release-repo: updated-metric-store-release
+      output_mapping:
+        committed-repo: committed-metric-store-release
+      params:
+        COMMIT_MESSAGE: "Bump golang version"
+    - put: metric-store-release-develop
+      params:
+        repository: committed-metric-store-release
+        rebase: false
