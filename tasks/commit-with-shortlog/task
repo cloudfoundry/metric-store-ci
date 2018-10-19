@@ -52,7 +52,7 @@ function commit {
     git commit -m "${message}"
 }
 
-read -a paths_to_commit <<< "${PATHS}"
+read -a paths_to_commit <<< ${PATHS}
 
 echo "Paths to be committed:"
 for path in ${paths_to_commit[@]}; do
