@@ -122,6 +122,13 @@ resources:
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
 
+- name: log-cache
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: slack-alert
   type: slack-notification
   source:
@@ -225,6 +232,7 @@ jobs:
     - get: log-cache-ci
     - get: log-cache-deployments
     - get: log-cache-release-version
+    - get: log-cache
   - task: create-final-release
     file: log-cache-ci/tasks/create-final-release/task.yml
     params:
@@ -257,6 +265,10 @@ jobs:
       params:
         repository: log-cache-deployments-modified
         tag: github-release/tag
+  - put: log-cache
+    params:
+      repository: log-cache-modified
+      only_tag: true
   - put: log-cache-ci
     params:
       repository: log-cache-ci
