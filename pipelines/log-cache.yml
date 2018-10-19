@@ -453,13 +453,17 @@ jobs:
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
+    - task: enable-disable-alert-success
+      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+      input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
     - put: slack-alert
       params:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_success
+        text_file: modified-metadata/alert_toggle
+        attachments_file: modified-metadata/alert_message_success
     - put: notification-log-cache-tests-version
       params: { bump: minor }
 
