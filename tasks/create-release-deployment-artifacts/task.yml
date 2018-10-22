@@ -9,6 +9,7 @@ inputs:
 - name: cf-deployment-concourse-tasks
 - name: github-release
 - name: log-cache-deployments
+- name: log-cache-ci
 
 outputs:
 - name: log-cache-deployments-modified
