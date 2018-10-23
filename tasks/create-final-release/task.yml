@@ -9,6 +9,7 @@ inputs:
 - name: log-cache-release-develop
 - name: log-cache-release-version
 - name: log-cache-ci
+- name: log-cache
 
 outputs:
 - name: github-release
