@@ -5,6 +5,8 @@ groups:
   - release-minor-version
   - release-major-version
   - log-cache-create-final-release
+  - log-cache-github-publish
+  - tag-for-backports
 - name: log-cache-cli
   jobs:
   - log-cache-cli-bump-major
@@ -134,6 +136,15 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
+- name: release-tarball
+  type: s3
+  source:
+    bucket: log-cache-final-releases
+    versioned_file: log-cache-release-2.0.0.tgz
+    region_name: us-east-2
+    access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
+    secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+
 shared:
   - &send-release-alert-message
     do:
@@ -238,6 +249,9 @@ jobs:
     params:
       S3_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
       S3_SECRET_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+  - put: release-tarball
+    params:
+      repository: release-tarball
   - put: log-cache-release-master
     params:
       repository: log-cache-release-master-modified
@@ -246,6 +260,53 @@ jobs:
     params:
       repository: log-cache-release-develop-modified
       rebase: false
+
+- name: log-cache-github-publish
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - aggregate:
+    - get: log-cache-release-version
+      # trigger: true
+      # passed: [log-cache-create-final-release]
+    - get: log-cache
+    - get: release-tarball
+    - get: log-cache-ci
+  - task: github-publish-release-metadata
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: loggregator/base
+      inputs:
+      - name: log-cache-release-version
+      - name: release-tarball
+      - name: log-cache
+      outputs:
+      - name: log-cache-modified
+      - name: github-release
+      run:
+        path: /bin/bash
+        args:
+        - "-c"
+        - |
+          set -e
+
+          new_version=`cat log-cache-release-version/version`
+          tag_name="v${new_version}"
+
+          echo "Log Cache ${new_version}" > github-release/name
+          echo ${tag_name} > github-release/tag
+          echo "TBD" > github-release/body
+          cp release-tarball/*.tgz github-release/
+
+          pushd log-cache
+            git tag "${tag_name}" ${log_cache_release_sha}
+
+            cp -r . ../log-cache-modified
+          popd
+
   - put: log-cache-github-release-drafts
     params:
       name: github-release/name
@@ -253,26 +314,9 @@ jobs:
       body: github-release/body
       globs:
       - github-release/*.tgz
-  - do:
-    - task: create-release-deployment-artifacts
-      file: log-cache-ci/tasks/create-release-deployment-artifacts/task.yml
-      input_mapping:
-        bbl-state: log-cache-deployments
-        log-cache-deployments: log-cache-deployments
-      params:
-        BBL_STATE_DIR: gcp/lime
-    - put: log-cache-deployments
-      params:
-        repository: log-cache-deployments-modified
-        tag: github-release/tag
   - put: log-cache
     params:
       repository: log-cache-modified
-      only_tag: true
-  - put: log-cache-ci
-    params:
-      repository: log-cache-ci
-      tag: github-release/tag
       only_tag: true
   on_success:
     do:
@@ -281,6 +325,34 @@ jobs:
       input_mapping:
         version: log-cache-release-version
     - <<: *send-release-alert-message
+
+- name: tag-for-backports
+  serial: true
+  # disable_manual_trigger: true
+  plan:
+  - aggregate:
+    - get: log-cache-release-version
+      trigger: true
+      passed: [log-cache-github-publish]
+    - get: log-cache-ci
+    - get: log-cache-deployments
+  - do:
+    - task: snapshot-acceptance-environment
+      file: log-cache-ci/tasks/snapshot-acceptance-environment/task.yml
+      input_mapping:
+        bbl-state: log-cache-deployments
+        log-cache-deployments: log-cache-deployments
+      params:
+        BBL_STATE_DIR: ((bbl_state_dir))
+    - put: log-cache-deployments
+      params:
+        repository: log-cache-deployments-modified
+        tag: log-cache-release-version/version
+  - put: log-cache-ci
+    params:
+      repository: log-cache-ci
+      tag: log-cache-release-version/version
+      only_tag: true
 
 - name: log-cache-cli-bump-major
   serial: true

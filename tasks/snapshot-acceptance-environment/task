@@ -12,7 +12,7 @@ pushd log-cache-deployments
     git add .
   popd
 
-  git commit --allow-empty -m "Save release artifacts for $(cat ../github-release/tag)"
+  git commit --allow-empty -m "Save acceptance manifest for $(cat ../log-cache-release-version/version)"
 
   cp -r . ../log-cache-deployments-modified
 popd

@@ -7,10 +7,6 @@ set -ex
 new_version=`cat log-cache-release-version/version`
 tag_name="v${new_version}"
 
-echo "Log Cache ${new_version}" > github-release/name
-echo ${tag_name} > github-release/tag
-echo "TBD" > github-release/body
-
 pushd log-cache-release-master
   git checkout master
 
@@ -32,7 +28,7 @@ blobstore:
 EOF
 
   bosh -n create-release --sha2 --final \
-    --tarball ../github-release/release.tgz \
+    --tarball ../release-tarball/release.tgz \
     --version "${new_version}"
 
   # commit release creation changes
@@ -53,10 +49,4 @@ pushd log-cache-release-develop
   git merge -v -m "Merge final release artifacts" "local_master/${final_release_abbrev}"
 
   cp -r . ../log-cache-release-develop-modified
-popd
-
-pushd log-cache
-  git tag "${tag_name}" ${log_cache_release_sha}
-
-  cp -r . ../log-cache-modified
 popd
