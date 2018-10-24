@@ -15,6 +15,7 @@ outputs:
 - name: release-tarball
 - name: log-cache-release-master-modified
 - name: log-cache-release-develop-modified
+- name: log-cache-modified
 
 run:
   path: log-cache-ci/tasks/create-final-release/task

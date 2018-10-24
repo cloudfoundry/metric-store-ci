@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# vi:syntax=sh
+
+set -ex
+
+new_version=`cat log-cache-release-version/version`
+tag_name="v${new_version}"
+
+echo "Log Cache ${new_version}" > github-release/name
+echo ${tag_name} > github-release/tag
+echo "TBD" > github-release/body
+cp release-tarball/*.tgz github-release/

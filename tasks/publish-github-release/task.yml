@@ -1,0 +1,15 @@
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+platform: linux
+
+inputs:
+- name: log-cache-release-version
+- name: release-tarball
+
+outputs:
+- name: github-release
+
+run:
+  path: log-cache-ci/tasks/publish-github-release

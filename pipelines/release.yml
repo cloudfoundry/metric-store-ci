@@ -4,8 +4,8 @@ groups:
   - release-patch-version
   - release-minor-version
   - release-major-version
-  - log-cache-create-final-release
-  - log-cache-github-publish
+  - create-lcr-final-release
+  - publish-lcr-github-release
   - tag-for-backports
 - name: log-cache-cli
   jobs:
@@ -100,6 +100,12 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-deployments
     branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: denver-locks
+  type: git
+  source:
+    uri: git@github.com:pivotal-cf/denver-locks
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-release-develop
@@ -223,7 +229,7 @@ jobs:
       params: {file: log-cache-release-version-major/version}
     - <<: *send-release-alert-message
 
-- name: log-cache-create-final-release
+- name: create-lcr-final-release
   serial: true
   disable_manual_trigger: true
   plan:
@@ -241,7 +247,6 @@ jobs:
     - get: log-cache-release-develop
     - get: log-cache-release-master
     - get: log-cache-ci
-    - get: log-cache-deployments
     - get: log-cache-release-version
     - get: log-cache
   - task: create-final-release
@@ -260,53 +265,23 @@ jobs:
     params:
       repository: log-cache-release-develop-modified
       rebase: false
+  - put: log-cache
+    params:
+      repository: log-cache-modified
+      only_tag: true
 
-- name: log-cache-github-publish
+- name: publish-lcr-github-release
   serial: true
   disable_manual_trigger: true
   plan:
   - aggregate:
     - get: log-cache-release-version
-      # trigger: true
-      # passed: [log-cache-create-final-release]
-    - get: log-cache
+      trigger: true
+      passed: [create-lcr-final-release]
     - get: release-tarball
     - get: log-cache-ci
   - task: github-publish-release-metadata
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: loggregator/base
-      inputs:
-      - name: log-cache-release-version
-      - name: release-tarball
-      - name: log-cache
-      outputs:
-      - name: log-cache-modified
-      - name: github-release
-      run:
-        path: /bin/bash
-        args:
-        - "-c"
-        - |
-          set -e
-
-          new_version=`cat log-cache-release-version/version`
-          tag_name="v${new_version}"
-
-          echo "Log Cache ${new_version}" > github-release/name
-          echo ${tag_name} > github-release/tag
-          echo "TBD" > github-release/body
-          cp release-tarball/*.tgz github-release/
-
-          pushd log-cache
-            git tag "${tag_name}" ${log_cache_release_sha}
-
-            cp -r . ../log-cache-modified
-          popd
-
+    file: log-cache-ci/tasks/publish-github-release/task.yml
   - put: log-cache-github-release-drafts
     params:
       name: github-release/name
@@ -314,33 +289,24 @@ jobs:
       body: github-release/body
       globs:
       - github-release/*.tgz
-  - put: log-cache
-    params:
-      repository: log-cache-modified
-      only_tag: true
-  on_success:
-    do:
-    - task: create-message
-      file: log-cache-ci/tasks/alert-message-release-end/task.yml
-      input_mapping:
-        version: log-cache-release-version
-    - <<: *send-release-alert-message
 
 - name: tag-for-backports
   serial: true
-  # disable_manual_trigger: true
+  disable_manual_trigger: true
   plan:
   - aggregate:
     - get: log-cache-release-version
       trigger: true
-      passed: [log-cache-github-publish]
+      passed: [publish-lcr-github-release]
     - get: log-cache-ci
     - get: log-cache-deployments
+    - get: denver-locks
+    - get: cf-deployment-concourse-tasks
   - do:
     - task: snapshot-acceptance-environment
       file: log-cache-ci/tasks/snapshot-acceptance-environment/task.yml
       input_mapping:
-        bbl-state: log-cache-deployments
+        bbl-state: denver-locks
         log-cache-deployments: log-cache-deployments
       params:
         BBL_STATE_DIR: ((bbl_state_dir))
@@ -353,6 +319,13 @@ jobs:
       repository: log-cache-ci
       tag: log-cache-release-version/version
       only_tag: true
+  on_success:
+    do:
+    - task: create-message
+      file: log-cache-ci/tasks/alert-message-release-end/task.yml
+      input_mapping:
+        version: log-cache-release-version
+    - <<: *send-release-alert-message
 
 - name: log-cache-cli-bump-major
   serial: true

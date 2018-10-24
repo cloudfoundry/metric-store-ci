@@ -50,3 +50,8 @@ pushd log-cache-release-develop
 
   cp -r . ../log-cache-release-develop-modified
 popd
+
+pushd log-cache
+    git tag "${tag_name}" ${log_cache_release_sha}
+    cp -r . ../log-cache-modified
+popd
