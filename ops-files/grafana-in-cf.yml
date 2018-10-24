@@ -30,7 +30,7 @@
             port: 3000
             registration_interval: 20s
             uris:
-            - grafana.lime.loggr.cf-app.com
+            - grafana.((system_domain))
 
 - path: /releases/-
   type: replace
