@@ -7,6 +7,7 @@ platform: linux
 inputs:
 - name: log-cache-release-version
 - name: release-tarball
+- name: log-cache-ci
 
 outputs:
 - name: github-release

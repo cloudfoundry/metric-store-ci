@@ -146,7 +146,7 @@ resources:
   type: s3
   source:
     bucket: log-cache-final-releases
-    versioned_file: log-cache-release-2.0.0.tgz
+    versioned_file: release.tgz
     region_name: us-east-2
     access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
     secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
@@ -256,7 +256,7 @@ jobs:
       S3_SECRET_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
   - put: release-tarball
     params:
-      repository: release-tarball
+      file: release-tarball/release.tgz
   - put: log-cache-release-master
     params:
       repository: log-cache-release-master-modified
