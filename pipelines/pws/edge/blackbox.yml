@@ -11,11 +11,12 @@ resources:
     uri: git@github.com:cloudfoundry/log-cache-deployments
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: log-cache-release
+- name: metric-store-release
   type: git
   source:
-    uri: https://github.com/cloudfoundry/log-cache-release
+    uri: git@github.com:pivotal/metric-store-release
     branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 jobs:
 - name: metric-store-edge-blackbox-deploy
@@ -23,16 +24,16 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-release
+    - get: metric-store-release
     - get: log-cache-deployments
 
   - aggregate:
-    - task: upload-log-cache
+    - task: upload-metric-store
       image: cf-deployment-concourse-tasks-image
       config:
         platform: linux
         inputs:
-        - name: log-cache-release
+        - name: metric-store-release
         params:
           BOSH_CLIENT: ((bosh-admin-client.username))
           BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
@@ -46,7 +47,7 @@ jobs:
             #!/bin/bash
             set -eux
 
-            pushd log-cache-release
+            pushd metric-store-release
               bosh create-release
               bosh upload-release --rebase
             popd
@@ -56,11 +57,11 @@ jobs:
     config:
       platform: linux
       inputs:
-      - name: log-cache-release
+      - name: metric-store-release
       - name: log-cache-deployments
       params:
         DEPLOYMENT_NAME: metric-store-edge-blackbox
-        MANIFEST_FILE: manifests/log-cache-blackbox.yml
+        MANIFEST_FILE: manifests/metric-store-blackbox.yml
         SECRETS_FILE: shared-secrets.yml
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
@@ -80,34 +81,29 @@ jobs:
             path: /name
             value: "metric-store-edge-blackbox"
           - type: replace
-            path: /instance_groups/name=log-cache-blackbox/name
-            value: "metric-store-edge-blackbox"
-          - type: replace
-            path: /instance_groups/name=metric-store-edge-blackbox/jobs/name=log-cache-blackbox/name
-            value: "metric-store-blackbox"
-          - type: replace
-            path: /instance_groups/name=metric-store-edge-blackbox/azs
+            path: /instance_groups/name=metric-store-blackbox/azs
             value: [z2, z3]
           - type: replace
-            path: /instance_groups/name=metric-store-edge-blackbox/networks
+            path: /instance_groups/name=metric-store-blackbox/networks
             value: [{name: pws-cf}]
           - type: replace
-            path: /instance_groups/name=metric-store-edge-blackbox/jobs/name=metric-store-blackbox/consumes
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/consumes
             value:
               metric-store: {from: metric-store-edge, deployment: metric-store-edge}
               cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
           - type: replace
-            path: /instance_groups/name=metric-store-edge-blackbox/jobs/name=metric-store-blackbox/properties?
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties?
             value:
               source_id: metric-store-edge
               cf_blackbox:
-                enabled: true
+                skip_tls_verify: true
+                metric_store_address: https://metric-store-edge.run.pivotal.io
                 client_id: ((pws-datadog-forwarder-client/Username))
                 client_secret: ((pws-datadog-forwarder-client/Password))
           EOF
 
           bosh \
-            deploy "log-cache-release/$MANIFEST_FILE" \
+            deploy "metric-store-release/$MANIFEST_FILE" \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive \
             --ops-file on-the-fly.yml
