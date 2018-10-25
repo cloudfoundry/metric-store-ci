@@ -13,4 +13,4 @@ outputs:
 - name: github-release
 
 run:
-  path: log-cache-ci/tasks/publish-github-release
+  path: log-cache-ci/tasks/publish-github-release/task
