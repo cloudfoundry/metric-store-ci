@@ -310,7 +310,7 @@ jobs:
     - get: log-cache-ci
     - get: log-cache-ci-docker-images
       trigger: true
-    - get: log-cache
+    - get: log-cache-release
       trigger: true
       passed: ["log-cache-bump-submodule"]
   - aggregate:
@@ -318,7 +318,7 @@ jobs:
       file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
         context-repo: log-cache-ci-docker-images
-        source-repo: log-cache
+        source-repo: log-cache-release
       output_mapping:
         build-image: build-log-cache-image
       params:
@@ -328,7 +328,7 @@ jobs:
       file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
         context-repo: log-cache-ci-docker-images
-        source-repo: log-cache
+        source-repo: log-cache-release
       output_mapping:
         build-image: build-nozzle-image
       params:
@@ -338,7 +338,7 @@ jobs:
       file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
         context-repo: log-cache-ci-docker-images
-        source-repo: log-cache
+        source-repo: log-cache-release
       output_mapping:
         build-image: build-gateway-image
       params:
@@ -348,7 +348,7 @@ jobs:
       file: log-cache-ci/tasks/build-go-docker-image/task.yml
       input_mapping:
         context-repo: log-cache-ci-docker-images
-        source-repo: log-cache
+        source-repo: log-cache-release
       output_mapping:
         build-image: build-scheduler-image
       params:
