@@ -96,7 +96,6 @@ jobs:
             value:
               source_id: metric-store-edge
               cf_blackbox:
-                skip_tls_verify: true
                 metric_store_address: https://metric-store-edge.run.pivotal.io
                 client_id: ((pws-datadog-forwarder-client/Username))
                 client_secret: ((pws-datadog-forwarder-client/Password))
