@@ -9,6 +9,7 @@ groups:
   - tag-for-backports
 - name: log-cache-cli
   jobs:
+  -  log-cache-cli-bump-minor
   - log-cache-cli-bump-major
   - log-cache-cli-create-final-release
 
@@ -333,13 +334,18 @@ jobs:
   - put: log-cache-cli-version
     params: {bump: major}
 
+- name: log-cache-cli-bump-minor
+  serial: true
+  plan:
+  - put: log-cache-cli-version
+    params: {bump: minor}
+
 - name: log-cache-cli-create-final-release
   serial: true
   plan:
   - aggregate:
     - get: log-cache-cli
     - get: log-cache-cli-version
-      params: {bump: minor}
   - task: create-binaries
     config:
       image_resource:
