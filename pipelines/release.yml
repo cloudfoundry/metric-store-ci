@@ -377,7 +377,7 @@ jobs:
             version="{\"Major\":${version_parts[0]},\"Minor\":${version_parts[1]},\"Build\":${version_parts[2]}}"
 
             # write out github release files
-            echo "log cache cli $semver" > github-release/name
+            echo "Log Cache CLI $semver" > github-release/name
             echo "v$semver" > github-release/tag
             echo "TBD" > github-release/body
             cp -R log-cache-cli/. output-repo
