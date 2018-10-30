@@ -7,28 +7,88 @@ function check_lpass {
     lpass status
 }
 
-function set_globals {
-    pipeline=$1
-    pipeline_ext='.yml'
+function find_pipeline {
+    echo -n "Finding pipeline ..."
+    query=${1}
     pipeline_dir='pipelines/'
 
-    if [[ "${pipeline}" == prod/* ]] || [[ "${pipeline}" == edge/* ]]; then
-        pipeline="pws/${pipeline}"
+    pushd ${pipeline_dir} > /dev/null
+        pipelines=()
+        top_level_pipelines=()
+
+        while IFS=  read -r -d $'\n'; do
+            normalized_pipeline=`echo ${REPLY} | cut -c 3-`
+            top_level_pipelines+=("$normalized_pipeline")
+        done < <(find . -maxdepth 1 -type f \( ! -name . \) | sort)
+
+        while IFS=  read -r -d $'\0'; do
+            normalized_pipeline=`echo ${REPLY} | cut -c 3-`
+            pipelines+=($normalized_pipeline)
+        done < <(find . -mindepth 2 -type f \( ! -name . \) -print0)
+    popd > /dev/null
+
+    pipeline=''
+
+    if [[ ${query} != '' ]]; then
+        # top level pipeline starts with query
+        for p in "${top_level_pipelines[@]}"; do
+            if [[ "${p}" == "${query}"* ]]; then
+                pipeline=${p}
+            fi
+        done
+
+        # top level pipeline substring matches query
+        if [[ ${pipeline} = '' && ${#matching_pipelines[@]} -eq 0 ]]; then
+            for p in "${top_level_pipelines[@]}"; do
+                if [[ "${p}" =~ "${query}" ]]; then
+                    pipeline=${p}
+                fi
+            done
+        fi
+
+        # any pipeline substring matches query
+        matching_pipelines=()
+        if [[ ${pipeline} = '' && ${#matching_pipelines[@]} -eq 0 ]]; then
+            for p in "${pipelines[@]}"; do
+                if [[ "${p}" =~ "${query}" ]]; then
+                    matching_pipelines+=("${p}")
+                fi
+            done
+        fi
     fi
 
-    if [[ "${pipeline}" == blackbox* ]] || [[ "${pipeline}" == edge* ]]; then
-        pipeline="pws/edge/${pipeline}"
+    if [[ ${pipeline} = '' ]]; then
+        if [[ ${#matching_pipelines[@]} -eq 1 ]]; then
+            pipeline=${matching_pipelines[0]}
+        elif [[ ${#matching_pipelines[@]} -eq 0 ]]; then
+            echo " found 0 matches for '${query}'. Available pipelines are:"
+            for p in "${top_level_pipelines[@]}"; do
+                echo " - ${p}"
+            done
+            for p in "${pipelines[@]}"; do
+                echo " - ${p}"
+            done
+            exit 1
+        else
+            echo " found ${#matching_pipelines[@]} matches for '${query}':"
+            for p in "${matching_pipelines[@]}"; do
+                echo " - ${p}"
+            done
+            exit 1
+        fi
     fi
 
-    config_path=${pipeline_dir}${pipeline}${pipeline_ext}
+    echo " found ${pipeline}"
+
+    config_path=${pipeline_dir}${pipeline}
 
     if [[ "$pipeline" == pws* ]]; then
         TARGET="${TARGET:-pws}"
-        pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g')
     else
         TARGET="${TARGET:-log-cache}"
-        pipeline_name=${pipeline}
     fi
+
+    pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//')
 }
 
 function validate_usage {
@@ -67,7 +127,7 @@ function print_usage {
 
 function main {
     check_lpass
-    set_globals $1
+    find_pipeline $1
     validate_usage
     sync_fly
     validate_pipeline
