@@ -118,7 +118,7 @@ function reconfigure_pipeline {
       --target ${TARGET} \
       --pipeline ${pipeline_name} \
       --config ${config_path} \
-      --load-vars-from ${pipeline_dir}/acceptance-config.yml
+      --load-vars-from config/env-config.yml
 }
 
 function print_usage {
