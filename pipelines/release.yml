@@ -9,17 +9,23 @@ groups:
   - tag-lcr-for-backports
 - name: log-cache-release
   jobs:
-  - release-patch-version
-  - release-minor-version
-  - release-major-version
+  - lcr-patch-version
+  - lcr-minor-version
+  - lcr-major-version
   - create-lcr-final-release
   - publish-lcr-github-release
-  - tag-for-backports
+  - tag-lcr-for-backports
 - name: metric-store-release
   jobs:
+  - msr-patch-version
+  - msr-minor-version
+  - msr-major-version
+  - create-msr-final-release
+  - publish-msr-github-release
+  - tag-msr-for-backports
 - name: log-cache-cli
   jobs:
-  -  log-cache-cli-bump-minor
+  - log-cache-cli-bump-minor
   - log-cache-cli-bump-major
   - log-cache-cli-create-final-release
 
@@ -155,6 +161,13 @@ resources:
     uri: git@github.com:pivotal-cf/denver-locks
     private_key: ((github-key-ci.yml/Notes/github_key))
 
+- name: log-cache
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: log-cache-release-develop
   type: git
   source:
@@ -166,6 +179,21 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-github-release-drafts
+  type: github-release
+  source:
+    user: cloudfoundry
+    repository: log-cache-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    drafts: true
+
+- name: metric-store
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -183,20 +211,13 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: log-cache-github-release-drafts
+- name: metric-store-github-release-drafts
   type: github-release
   source:
-    user: cloudfoundry
-    repository: log-cache-release
+    user: pivotal
+    repository: metric-store-release
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
-
-- name: log-cache
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: slack-alert
   type: slack-notification
@@ -213,7 +234,7 @@ resources:
     secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
 
 shared:
-  - &send-lcr-alert-message
+  - &send-alert-message
     do:
     - put: slack-alert
       params:
@@ -244,7 +265,7 @@ jobs:
       params: {file: log-cache-release-version-patch/version}
     - put: log-cache-release-version-patch
       params: {file: log-cache-release-version-patch/version}
-    - <<: *send-lcr-alert-message
+    - <<: *send-alert-message
 
 - name: lcr-minor-version
   plan:
@@ -266,7 +287,7 @@ jobs:
       params: {file: log-cache-release-version-minor/version}
     - put: log-cache-release-version-minor
       params: {file: log-cache-release-version-minor/version}
-    - <<: *send-lcr-alert-message
+    - <<: *send-alert-message
 
 - name: lcr-major-version
   plan:
@@ -288,7 +309,7 @@ jobs:
       params: {file: log-cache-release-version-major/version}
     - put: log-cache-release-version-major
       params: {file: log-cache-release-version-major/version}
-    - <<: *send-lcr-alert-message
+    - <<: *send-alert-message
 
 - name: create-lcr-final-release
   serial: true
@@ -296,13 +317,13 @@ jobs:
   plan:
   - get: log-cache-release-version-patch
     trigger: true
-    passed: [release-patch-version]
+    passed: [lcr-patch-version]
   - get: log-cache-release-version-minor
     trigger: true
-    passed: [release-minor-version]
+    passed: [lcr-minor-version]
   - get: log-cache-release-version-major
     trigger: true
-    passed: [release-major-version]
+    passed: [lcr-major-version]
   - aggregate:
     - get: cf-deployment-concourse-tasks
     - get: log-cache-release-develop
@@ -374,11 +395,13 @@ jobs:
     - put: log-cache-deployments
       params:
         repository: log-cache-deployments-modified
+        tag_prefix: log-cache-v
         tag: log-cache-release-version/version
   - put: log-cache-ci
     params:
       repository: log-cache-ci
       tag: log-cache-release-version/version
+      tag_prefix: log-cache-v
       only_tag: true
   on_success:
     do:
@@ -386,7 +409,7 @@ jobs:
       file: log-cache-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
         version: log-cache-release-version
-    - <<: *send-lcr-alert-message
+    - <<: *send-alert-message
 
 - name: msr-patch-version
   plan:
@@ -408,7 +431,7 @@ jobs:
       params: {file: metric-store-release-version-patch/version}
     - put: metric-store-release-version-patch
       params: {file: metric-store-release-version-patch/version}
-    - <<: *send-msr-alert-message
+    - <<: *send-alert-message
 
 - name: msr-minor-version
   plan:
@@ -430,7 +453,7 @@ jobs:
       params: {file: metric-store-release-version-minor/version}
     - put: metric-store-release-version-minor
       params: {file: metric-store-release-version-minor/version}
-    - <<: *send-msr-alert-message
+    - <<: *send-alert-message
 
 - name: msr-major-version
   plan:
@@ -452,7 +475,7 @@ jobs:
       params: {file: metric-store-release-version-major/version}
     - put: metric-store-release-version-major
       params: {file: metric-store-release-version-major/version}
-    - <<: *send-msr-alert-message
+    - <<: *send-alert-message
 
 - name: create-msr-final-release
   serial: true
@@ -460,13 +483,13 @@ jobs:
   plan:
   - get: metric-store-release-version-patch
     trigger: true
-    passed: [release-patch-version]
+    passed: [msr-patch-version]
   - get: metric-store-release-version-minor
     trigger: true
-    passed: [release-minor-version]
+    passed: [msr-minor-version]
   - get: metric-store-release-version-major
     trigger: true
-    passed: [release-major-version]
+    passed: [msr-major-version]
   - aggregate:
     - get: cf-deployment-concourse-tasks
     - get: metric-store-release-develop
@@ -494,6 +517,65 @@ jobs:
     params:
       repository: metric-store-modified
       only_tag: true
+
+- name: publish-msr-github-release
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - aggregate:
+    - get: metric-store-release-version
+      trigger: true
+      passed: [create-msr-final-release]
+    - get: release-tarball
+    - get: log-cache-ci
+  - task: github-publish-release-metadata
+    file: log-cache-ci/tasks/publish-github-release/task.yml
+  - put: metric-store-github-release-drafts
+    params:
+      name: github-release/name
+      tag: github-release/tag
+      body: github-release/body
+      globs:
+      - github-release/*.tgz
+
+- name: tag-msr-for-backports
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - aggregate:
+    - get: metric-store-release-version
+      trigger: true
+      passed: [publish-msr-github-release]
+    - get: log-cache-ci
+    - get: log-cache-deployments
+    - get: denver-locks
+    - get: cf-deployment-concourse-tasks
+  - do:
+    - task: snapshot-acceptance-environment
+      file: log-cache-ci/tasks/snapshot-acceptance-environment/task.yml
+      input_mapping:
+        bbl-state: denver-locks
+        log-cache-deployments: log-cache-deployments
+      params:
+        BBL_STATE_DIR: ((bbl_state_dir))
+    - put: log-cache-deployments
+      params:
+        repository: log-cache-deployments-modified
+        tag: log-cache-release-version/version
+        tag_prefix: metric-store-v
+  - put: log-cache-ci
+    params:
+      repository: log-cache-ci
+      tag: log-cache-release-version/version
+      tag_prefix: metric-store-v
+      only_tag: true
+  on_success:
+    do:
+    - task: create-message
+      file: log-cache-ci/tasks/alert-message-release-end/task.yml
+      input_mapping:
+        version: metric-store-release-version
+    - <<: *send-alert-message
 
 - name: log-cache-cli-bump-major
   serial: true
