@@ -10,6 +10,8 @@ groups:
   - cats
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
+  - metric-store-release-elect-promotion
+  - metric-store-master-promotion
 - name: log-cache
   jobs:
   - log-cache-bump-submodule
@@ -24,6 +26,8 @@ groups:
   jobs:
   - metric-store-bump-submodule
   - cf-deploy
+  - metric-store-release-elect-promotion
+  - metric-store-master-promotion
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -172,18 +176,33 @@ resources:
   source:
     uri: git@github.com:pivotal/metric-store
     branch: master
-    private_key: ((github-key-ci.yml/Notes/temp_github_private_key))
+    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: metric-store-release
   type: git
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: develop
-    private_key: ((github-key-ci.yml/Notes/temp_github_private_key))
+    private_key: ((github-key-ci.yml/Notes/github_key))
     ignore_paths:
     - .final_builds
     - releases
     disable_ci_skip: false
+
+- name: metric-store-release-elect
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: release-elect
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: metric-store-release-master
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+    disable_ci_skip: true
 
 - name: log-cache-cli
   type: git
@@ -1147,6 +1166,42 @@ jobs:
       DEST_BRANCH: master
       FOLLOW_BUMPS_OF: src/code.cloudfoundry.org/log-cache
   - put: log-cache-release-master
+    params:
+      repository: merged-dest
+
+- name: metric-store-release-elect-promotion
+  serial: true
+  plan:
+  - aggregate:
+    - get: develop
+      resource: metric-store-release
+      trigger: true
+      passed: ["cf-deploy"]
+    - get: metric-store-release-elect
+  - put: metric-store-release-elect
+    params:
+      repository: develop
+
+- name: metric-store-master-promotion
+  serial: true
+  plan:
+  - aggregate:
+    - get: metric-store-release-elect
+      passed: ["metric-store-release-elect-promotion"]
+      trigger: true
+    - get: metric-store-release-master
+    - get: bumper-tool
+    - get: log-cache-ci
+  - task: bumper
+    file: log-cache-ci/tasks/bumper/task.yml
+    input_mapping:
+      source: metric-store-release-elect
+      dest: metric-store-release-master
+    params:
+      SOURCE_BRANCH: release-elect
+      DEST_BRANCH: master
+      FOLLOW_BUMPS_OF: src/github.com/pivotal/metric-store
+  - put: metric-store-release-master
     params:
       repository: merged-dest
 

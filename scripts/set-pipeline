@@ -2,6 +2,14 @@
 
 set -e
 
+warning() {
+  YELLOW='\033[0;33m'
+  CLEAR='\033[0m'
+  local message=${1}
+
+  echo -e "${YELLOW}${message}${CLEAR}"
+}
+
 function check_lpass {
     echo -n "Checking lpass ... "
     lpass status
@@ -125,7 +133,17 @@ function print_usage {
     echo "usage: $0 <pipeline>"
 }
 
+function deprecation_warning {
+    query=${1}
+
+    if [[ "${query}" = "log-cache" ]]; then
+        warning "NOTICE: the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
+        exit 1
+    fi
+}
+
 function main {
+    deprecation_warning $1
     check_lpass
     find_pipeline $1
     validate_usage

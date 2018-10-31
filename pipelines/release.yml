@@ -1,4 +1,12 @@
 groups:
+- name: all
+  jobs:
+  - lcr-patch-version
+  - lcr-minor-version
+  - lcr-major-version
+  - create-lcr-final-release
+  - publish-lcr-github-release
+  - tag-lcr-for-backports
 - name: log-cache-release
   jobs:
   - release-patch-version
@@ -7,6 +15,8 @@ groups:
   - create-lcr-final-release
   - publish-lcr-github-release
   - tag-for-backports
+- name: metric-store-release
+  jobs:
 - name: log-cache-cli
   jobs:
   -  log-cache-cli-bump-minor
@@ -81,6 +91,42 @@ resources:
     access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
     secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
 
+- name: metric-store-release-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-versions
+    key: metric-store
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-release-version-major
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-versions
+    key: metric-store
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-release-version-minor
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-versions
+    key: metric-store
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-release-version-patch
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-versions
+    key: metric-store
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
 - name: log-cache-cli-github-release-drafts
   type: github-release
   source:
@@ -123,6 +169,20 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
+- name: metric-store-release-develop
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: metric-store-release-master
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: log-cache-github-release-drafts
   type: github-release
   source:
@@ -153,7 +213,7 @@ resources:
     secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
 
 shared:
-  - &send-release-alert-message
+  - &send-lcr-alert-message
     do:
     - put: slack-alert
       params:
@@ -164,7 +224,7 @@ shared:
         text_file: messages/success.txt
 
 jobs:
-- name: release-patch-version
+- name: lcr-patch-version
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
@@ -184,9 +244,9 @@ jobs:
       params: {file: log-cache-release-version-patch/version}
     - put: log-cache-release-version-patch
       params: {file: log-cache-release-version-patch/version}
-    - <<: *send-release-alert-message
+    - <<: *send-lcr-alert-message
 
-- name: release-minor-version
+- name: lcr-minor-version
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
@@ -206,9 +266,9 @@ jobs:
       params: {file: log-cache-release-version-minor/version}
     - put: log-cache-release-version-minor
       params: {file: log-cache-release-version-minor/version}
-    - <<: *send-release-alert-message
+    - <<: *send-lcr-alert-message
 
-- name: release-major-version
+- name: lcr-major-version
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
@@ -228,7 +288,7 @@ jobs:
       params: {file: log-cache-release-version-major/version}
     - put: log-cache-release-version-major
       params: {file: log-cache-release-version-major/version}
-    - <<: *send-release-alert-message
+    - <<: *send-lcr-alert-message
 
 - name: create-lcr-final-release
   serial: true
@@ -291,7 +351,7 @@ jobs:
       globs:
       - github-release/*.tgz
 
-- name: tag-for-backports
+- name: tag-lcr-for-backports
   serial: true
   disable_manual_trigger: true
   plan:
@@ -326,7 +386,114 @@ jobs:
       file: log-cache-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
         version: log-cache-release-version
-    - <<: *send-release-alert-message
+    - <<: *send-lcr-alert-message
+
+- name: msr-patch-version
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: metric-store-release-version-patch
+      params: {bump: patch}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      version: metric-store-release-version-patch
+    params:
+      LEVEL: patch
+  on_success:
+    do:
+    - put: metric-store-release-version
+      params: {file: metric-store-release-version-patch/version}
+    - put: metric-store-release-version-patch
+      params: {file: metric-store-release-version-patch/version}
+    - <<: *send-msr-alert-message
+
+- name: msr-minor-version
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: metric-store-release-version-minor
+      params: {bump: minor}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      version: metric-store-release-version-minor
+    params:
+      LEVEL: minor
+  on_success:
+    do:
+    - put: metric-store-release-version
+      params: {file: metric-store-release-version-minor/version}
+    - put: metric-store-release-version-minor
+      params: {file: metric-store-release-version-minor/version}
+    - <<: *send-msr-alert-message
+
+- name: msr-major-version
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: metric-store-release-version-major
+      params: {bump: major}
+  - task: create-message
+    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      version: metric-store-release-version-major
+    params:
+      LEVEL: major
+  on_success:
+    do:
+    - put: metric-store-release-version
+      params: {file: metric-store-release-version-major/version}
+    - put: metric-store-release-version-major
+      params: {file: metric-store-release-version-major/version}
+    - <<: *send-msr-alert-message
+
+- name: create-msr-final-release
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - get: metric-store-release-version-patch
+    trigger: true
+    passed: [release-patch-version]
+  - get: metric-store-release-version-minor
+    trigger: true
+    passed: [release-minor-version]
+  - get: metric-store-release-version-major
+    trigger: true
+    passed: [release-major-version]
+  - aggregate:
+    - get: cf-deployment-concourse-tasks
+    - get: metric-store-release-develop
+    - get: metric-store-release-master
+    - get: log-cache-ci
+    - get: metric-store-release-version
+    - get: metric-store
+  - task: create-final-release
+    file: log-cache-ci/tasks/create-final-release/task.yml
+    params:
+      S3_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
+      S3_SECRET_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+  - put: release-tarball
+    params:
+      file: release-tarball/release.tgz
+  - put: metric-store-release-master
+    params:
+      repository: metric-store-release-master-modified
+      rebase: false
+  - put: metric-store-release-develop
+    params:
+      repository: metric-store-release-develop-modified
+      rebase: false
+  - put: metric-store
+    params:
+      repository: metric-store-modified
+      only_tag: true
 
 - name: log-cache-cli-bump-major
   serial: true
