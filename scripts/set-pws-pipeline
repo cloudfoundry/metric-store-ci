@@ -1,4 +1,0 @@
-#!/bin/bash
-
-echo "set-pws-pipeline is deprecated, use set-pipeline for everything"
-echo "# scripts/set-pipeline ${1}"
