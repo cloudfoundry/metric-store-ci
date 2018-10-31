@@ -1,12 +1,4 @@
 groups:
-- name: all
-  jobs:
-  - lcr-patch-version
-  - lcr-minor-version
-  - lcr-major-version
-  - create-lcr-final-release
-  - publish-lcr-github-release
-  - tag-lcr-for-backports
 - name: log-cache-release
   jobs:
   - lcr-patch-version
