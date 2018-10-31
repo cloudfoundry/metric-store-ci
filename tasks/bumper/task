@@ -10,15 +10,14 @@ pushd $bumper_path/cmd/bumper
     go build -o $workspace/bumper/bumper
 popd
 
+pushd dest
+    DEST_COMMIT=$(git rev-parse HEAD)
+popd
+
 bump_sha=""
 pushd source
-    git remote set-url origin $(git remote -v | grep fetch | awk '{print $2}' | sed 's|git@github.com:|https://github.com/|g')
-    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-    git fetch origin
-    git checkout ${DEST_BRANCH}
-
-    $workspace/bumper/bumper --commit-range ${DEST_BRANCH}..${SOURCE_BRANCH} --verbose
-    bump_sha=$($workspace/bumper/bumper --commit-range ${DEST_BRANCH}..${SOURCE_BRANCH})
+    $workspace/bumper/bumper --commit-range ${DEST_COMMIT}..HEAD --verbose
+    bump_sha=$($workspace/bumper/bumper --commit-range ${DEST_COMMIT}..HEAD)
 popd
 
 if [ -z $bump_sha ]; then
@@ -28,16 +27,10 @@ if [ -z $bump_sha ]; then
     exit 0
 fi
 
-pushd dest
-    git remote set-url origin $(git remote -v | grep fetch | awk '{print $2}' | sed 's|git@github.com:|https://github.com/|g')
-    git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*"
-    git fetch origin
-popd
-
 cp -R dest/. merged-dest
 
 pushd merged-dest
-    git checkout ${SOURCE_BRANCH}
-    git checkout ${DEST_BRANCH}
+    git remote add source ../source
+    git fetch source ${SOURCE_BRANCH}
     git merge $bump_sha --ff-only
 popd
