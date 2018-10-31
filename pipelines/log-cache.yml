@@ -1,14 +1,25 @@
 groups:
 - name: all
   jobs:
+  - log-cache-bump-submodule
+  - metric-store-bump-submodule
+  - log-cache-docker-images
   - cf-deploy
+  - log-cache-acceptance-tests-release-bump-submodule
   - lcats
   - cats
-  - log-cache-docker-images
-  - log-cache-bump-submodule
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
+- name: log-cache
+  jobs:
+  - log-cache-bump-submodule
+  - cf-deploy
+  - log-cache-docker-images
   - log-cache-acceptance-tests-release-bump-submodule
+  - lcats
+  - cats
+  - log-cache-release-elect-promotion
+  - log-cache-master-promotion
 - name: metric-store
   jobs:
   - metric-store-bump-submodule
