@@ -772,37 +772,6 @@ jobs:
           - type: replace
             path: /instance_groups/-
             value:
-              name: metric-store-scheduler
-              azs:
-              - z1
-              instances: 2
-              jobs:
-              - name: metric-store-scheduler
-                release: metric-store
-              - name: metric-store-expvar-forwarder
-                release: metric-store
-                properties:
-                  counters: []
-                  gauges: []
-                  maps:
-                  - addr: http://localhost:6064/debug/vars
-                    name: worker-assignments
-                    source_id: metric-store-scheduler
-                    template: "{{.WorkerAssignments | jsonMap}}"
-                  - addr: http://localhost:6064/debug/vars
-                    name: worker-health
-                    source_id: metric-store-scheduler
-                    template: "{{.WorkerHealth | jsonMap}}"
-              networks:
-              - name: default
-              stemcell: default
-              update:
-                serial: true
-              vm_type: minimal
-
-          - type: replace
-            path: /instance_groups/-
-            value:
               name: metric-store
               networks:
               - name: default
