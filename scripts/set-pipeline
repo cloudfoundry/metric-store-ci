@@ -18,13 +18,18 @@ success() {
   echo -e "${GREEN}${message}${CLEAR}"
 }
 
+step() {
+    local message=${1}
+    printf "%-46s ... " "${message}"
+}
+
 function check_lpass {
-    echo -n "Checking lpass ... "
+    step "Checking lpass"
     lpass status
 }
 
 function find_pipeline {
-    echo -n "Finding pipeline ... "
+    step "Finding pipeline"
     query=${1}
     pipeline_dir='pipelines/'
 
@@ -115,7 +120,7 @@ function validate_usage {
 }
 
 function validate_pipeline {
-    echo -n "Validating '${pipeline_name}' pipeline ... "
+    step "Validating '${pipeline_name}' pipeline"
 
     fly -t ${TARGET} validate-pipeline -c ${config_path}
     pipeline_valid=$?
@@ -124,12 +129,12 @@ function validate_pipeline {
 }
 
 function sync_fly {
-    echo -n "Syncing fly CLI ... "
+    step "Syncing fly CLI"
     fly -t $TARGET sync
 }
 
 function login_fly {
-    echo -n "Checking concourse auth status for '${TARGET}' ... "
+    step "Checking concourse auth status for '${TARGET}'"
 
     if [[ `fly -t $TARGET status` != 'logged in successfully' ]]; then
         fly -t $TARGET login -b
@@ -140,7 +145,7 @@ function login_fly {
 
 function preprocess_pipeline {
     if [[ "${pipeline}" == *".erb" ]]; then
-        echo -n "Preprocessing erb pipeline ... "
+        step "Preprocessing erb pipeline"
         command -v erb >/dev/null 2>&1 || { echo >&2 "To process .erb pipelines, erb is required but not installed."; exit 1; }
 
         tmpfile=$(mktemp)
@@ -152,7 +157,7 @@ function preprocess_pipeline {
 }
 
 function reconfigure_pipeline {
-    echo "Reconfiguring '${pipeline_name}' pipeline ..."
+    step "Reconfiguring '${pipeline_name}' pipeline"
 
     reconfigure-pipeline \
       --target ${TARGET} \
