@@ -10,13 +10,21 @@ warning() {
   echo -e "${YELLOW}${message}${CLEAR}"
 }
 
+success() {
+  GREEN='\033[0;32m'
+  CLEAR='\033[0m'
+  local message=${1}
+
+  echo -e "${GREEN}${message}${CLEAR}"
+}
+
 function check_lpass {
     echo -n "Checking lpass ... "
     lpass status
 }
 
 function find_pipeline {
-    echo -n "Finding pipeline ..."
+    echo -n "Finding pipeline ... "
     query=${1}
     pipeline_dir='pipelines/'
 
@@ -86,7 +94,7 @@ function find_pipeline {
         fi
     fi
 
-    echo " found ${pipeline}"
+    success "found ${pipeline}"
 
     config_path=${pipeline_dir}${pipeline}
 
@@ -107,7 +115,7 @@ function validate_usage {
 }
 
 function validate_pipeline {
-    echo -n "Validating '${pipeline}' pipeline ... "
+    echo -n "Validating '${pipeline_name}' pipeline ... "
 
     fly -t ${TARGET} validate-pipeline -c ${config_path}
     pipeline_valid=$?
@@ -116,6 +124,7 @@ function validate_pipeline {
 }
 
 function sync_fly {
+    echo -n "Syncing fly CLI ... "
     fly -t $TARGET sync
 }
 
@@ -186,6 +195,8 @@ function main {
     fi
 
     cleanup
+
+    success "DONE!"
 }
 
 main $1
