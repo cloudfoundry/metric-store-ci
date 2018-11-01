@@ -96,7 +96,7 @@ function find_pipeline {
         TARGET="${TARGET:-log-cache}"
     fi
 
-    pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//')
+    pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')
 }
 
 function validate_usage {
@@ -129,6 +129,19 @@ function login_fly {
     fi
 }
 
+function preprocess_pipeline {
+    if [[ "${pipeline}" == *".erb" ]]; then
+        echo -n "Preprocessing erb pipeline ... "
+        command -v erb >/dev/null 2>&1 || { echo >&2 "To process .erb pipelines, erb is required but not installed."; exit 1; }
+
+        tmpfile=$(mktemp)
+        erb ${config_path} > ${tmpfile}
+        config_path=${tmpfile}
+
+        success "processed"
+    fi
+}
+
 function reconfigure_pipeline {
     echo "Reconfiguring '${pipeline_name}' pipeline ..."
 
@@ -152,6 +165,12 @@ function deprecation_warning {
     fi
 }
 
+function cleanup {
+    if [[ "${pipeline}" == *".erb" ]]; then
+        rm ${tmpfile}
+    fi
+}
+
 function main {
     deprecation_warning $1
     check_lpass
@@ -159,11 +178,14 @@ function main {
     validate_usage
     sync_fly
     login_fly
+    preprocess_pipeline
     validate_pipeline
 
     if [ $? -eq 0 ]; then
         reconfigure_pipeline
     fi
+
+    cleanup
 }
 
 main $1
