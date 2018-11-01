@@ -31,6 +31,6 @@ cp -R dest/. merged-dest
 
 pushd merged-dest
     git remote add source ../source
-    git fetch source ${SOURCE_BRANCH}
+    git fetch source --recurse-submodules=no ${SOURCE_BRANCH}
     git merge $bump_sha --ff-only
 popd

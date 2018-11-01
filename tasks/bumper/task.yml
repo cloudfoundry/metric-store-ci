@@ -30,3 +30,8 @@ params:
   # - Submodules for bumper to follow bumps of.
   # - Relative to dest.
   FOLLOW_BUMPS_OF:
+
+  # - Optional
+  # - API token used to connect to Pivotal Tracker.
+  # - Required for private backlogs.
+  TRACKER_API_TOKEN:
