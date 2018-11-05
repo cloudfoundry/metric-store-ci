@@ -31,6 +31,8 @@ groups:
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
+  - lcats
+  - log-cache-cli-integration-tests
   - log-cache-cli-promotion
 - name: leadership-election
   jobs:
@@ -45,11 +47,6 @@ resource_types:
     tag: latest
 
 resources:
-- name: 10m
-  type: time
-  source:
-    interval: 10m
-
 - name: cf-deployment
   type: git
   source:
@@ -273,6 +270,15 @@ resources:
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
+- name: notification-cli-integration-tests-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-notifications
+    key: log-cache-slack-integration-tests-version
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
 jobs:
 ###############################################################################
 # LOG CACHE
@@ -282,10 +288,9 @@ jobs:
   public: true
   plan:
   - aggregate:
+    - get: cf-deployment-concourse-tasks
     - get: log-cache-ci
     - get: log-cache-cli
-      trigger: true
-    - get: 10m
       trigger: true
     - get: notification-cli-tests-version
       params: { bump: patch }
@@ -295,11 +300,9 @@ jobs:
     params:
       TITLE: Log Cache CLI Tests
   - task: run-tests
-    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
+    file: log-cache-ci/tasks/go-test-module/task.yml
     input_mapping:
       source-repo: log-cache-cli
-    params:
-      IMPORT_PATH: code.cloudfoundry.org/log-cache-cli
   on_failure:
     do:
     - put: notification-cli-tests-version
@@ -1112,6 +1115,97 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
+- name: log-cache-cli-integration-tests
+  serial_groups: [cf-deploy]
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: log-cache-cli
+      passed: [ log-cache-cli-tests ]
+      trigger: true
+    - get: notification-cli-integration-tests-version
+      params: { bump: patch }
+    - get: bbl-state
+      resource: denver-locks
+      passed: [ lcats ]
+      trigger: true
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
+    params:
+      TITLE: Log Cache CLI Integration Tests
+  - task: create-test-space
+    file: log-cache-ci/tasks/create-org-and-space/task.yml
+    params:
+      BBL_STATE_DIR: ((bbl_state_dir))
+      ORG: integration-tests
+      SPACE: integration-tests
+      SYSTEM_DOMAIN: ((sys_domain))
+  - task: run-integration-tests
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: logcache/base
+      inputs:
+        - name: bbl-state
+        - name: cf-deployment-concourse-tasks
+        - name: log-cache-cli
+      params:
+        BBL_STATE_DIR: ((bbl_state_dir))
+        SYSTEM_DOMAIN: ((sys_domain))
+      run:
+        path: bash
+        args:
+          - -c
+          - |
+            #!/bin/bash
+            set -exuo pipefail
+
+            source cf-deployment-concourse-tasks/shared-functions
+
+            setup_bosh_env_vars
+
+            cf api api.${SYSTEM_DOMAIN} --skip-ssl-validation
+            (set +x; cf auth admin "$(get_password_from_credhub cf_admin_password)")
+
+            CF_ORG=integration-tests CF_SPACE=integration-tests \
+              log-cache-cli/scripts/integration-tests.sh
+  on_failure:
+    do:
+    - put: notification-cli-integration-tests-version
+      params: { file: notification-cli-integration-tests-version/version }
+    - task: enable-disable-alert-failure
+      file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
+      input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
+      params: { alert_multiple: 5 }
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text_file: modified-metadata/alert_toggle
+        attachments_file: modified-metadata/alert_message_failure
+  on_success:
+    do:
+    - task: enable-disable-alert-success
+      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+      input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text_file: modified-metadata/alert_toggle
+        attachments_file: modified-metadata/alert_message_success
+    - put: notification-cli-integration-tests-version
+      params: { bump: minor }
+
 - name: log-cache-release-elect-promotion
   serial: true
   plan:
@@ -1130,6 +1224,7 @@ jobs:
   plan:
   - aggregate:
     - get: log-cache-cli
+      passed: [ log-cache-cli-integration-tests ]
       trigger: true
     - get: log-cache-cli-master
     - get: bumper-tool
