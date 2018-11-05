@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -ex
+
+export GOPATH="$PWD/go"
+
+pushd source-repo
+    go get -t -d ./...
+    go test ./... -race
+popd
