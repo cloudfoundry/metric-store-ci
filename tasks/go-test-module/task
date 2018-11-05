@@ -5,6 +5,6 @@ set -ex
 export GOPATH="$PWD/go"
 
 pushd source-repo
-    go get -t -d ./...
+    go get -d ./...
     go test ./... -race
 popd
