@@ -1,0 +1,24 @@
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+platform: linux
+
+inputs:
+- name: release-master
+- name: release-develop
+- name: release-version
+- name: log-cache-ci
+- name: source-repo
+
+outputs:
+- name: release-tarball
+- name: release-master-modified
+- name: release-develop-modified
+- name: source-repo-modified
+
+run:
+  path: log-cache-ci/tasks/create-final-release/task
+
+params:
+  SOURCE_PATH:

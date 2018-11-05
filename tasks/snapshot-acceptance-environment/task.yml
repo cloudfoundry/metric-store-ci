@@ -7,7 +7,7 @@ image_resource:
 inputs:
 - name: bbl-state
 - name: cf-deployment-concourse-tasks
-- name: log-cache-release-version
+- name: release-version
 - name: log-cache-deployments
 - name: log-cache-ci
 
