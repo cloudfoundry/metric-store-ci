@@ -18,7 +18,7 @@ outputs:
 - name: source-repo-modified
 
 run:
-  path: log-cache-ci/tasks/create-private-final-release/task
+  path: log-cache-ci/tasks/create-private-release/task
 
 params:
   SOURCE_PATH:

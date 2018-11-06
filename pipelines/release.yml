@@ -12,7 +12,7 @@ groups:
   - msr-patch-version
   - msr-minor-version
   - msr-major-version
-  - create-msr-final-release
+  - create-msr-private-release
   - publish-msr-github-release
   - tag-msr-for-backports
 - name: log-cache-cli
@@ -474,7 +474,7 @@ jobs:
       params: {file: metric-store-release-version-major/version}
     - <<: *send-alert-message
 
-- name: create-msr-final-release
+- name: create-msr-private-release
   serial: true
   disable_manual_trigger: true
   plan:
@@ -494,8 +494,8 @@ jobs:
     - get: log-cache-ci
     - get: metric-store-release-version
     - get: metric-store
-  - task: create-final-release
-    file: log-cache-ci/tasks/create-private-final-release/task.yml
+  - task: create-private-release
+    file: log-cache-ci/tasks/create-private-release/task.yml
     input_mapping:
       release-master: metric-store-release-master
       release-develop: metric-store-release-develop
@@ -523,7 +523,7 @@ jobs:
   - aggregate:
     - get: metric-store-release-version
       trigger: true
-      passed: [create-msr-final-release]
+      passed: [create-msr-private-release]
     - get: release-tarball
     - get: log-cache-ci
   - task: github-publish-release-metadata

@@ -15,18 +15,19 @@ pushd release-master
   git add .
   git commit -m "Bump version to ${new_version}"
 
-  bosh -n create-release --sha2 --final \
+  # create release
+  bosh -n create-release --sha2 \
     --tarball ../release-tarball/release.tgz \
     --version "${new_version}"
 
   # commit release creation changes
   git add .
-  git commit -m "Create final release"
+  git commit -m "Create release"
 
-  final_release_abbrev=$(git rev-parse --abbrev-ref HEAD)
-  final_release_sha=$(git rev-parse HEAD)
-  release_sha=$(git rev-parse @:./src/${SOURCE_PATH})
-  git tag "${tag_name}" ${final_release_sha}
+  release_abbrev=$(git rev-parse --abbrev-ref HEAD)
+  release_sha=$(git rev-parse HEAD)
+  source_repo_release_sha=$(git rev-parse @:./src/${SOURCE_PATH})
+  git tag "${tag_name}" ${release_sha}
 
   cp -r . ../release-master-modified
 popd
@@ -34,12 +35,12 @@ popd
 pushd release-develop
   git checkout develop
   git remote add -f local_master ../release-master
-  git merge -v -m "Merge final release artifacts" "local_master/${final_release_abbrev}"
+  git merge -v -m "Merge release artifacts" "local_master/${release_abbrev}"
 
   cp -r . ../release-develop-modified
 popd
 
 pushd source-repo
-  git tag "${tag_name}" ${release_sha}
+  git tag "${tag_name}" ${source_repo_release_sha}
   cp -r . ../source-repo-modified
 popd
