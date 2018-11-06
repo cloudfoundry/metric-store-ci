@@ -503,6 +503,7 @@ jobs:
       source-repo: metric-store
     params:
       SOURCE_PATH: github.com/pivotal/metric-store
+      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
   - put: metric-store-release-master
     params:
       repository: release-master-modified
