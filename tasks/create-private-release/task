@@ -16,7 +16,15 @@ pushd release-master
   git commit -m "Bump version to ${new_version}"
 
   # create release
-  bosh -n create-release --sha2 \
+  cat << EOF > config/final.yml
+---
+blobstore:
+  provider: local
+  options:
+    blobstore_path: /tmp/metric-store-release
+EOF
+
+  bosh -n create-release --sha2 --final \
     --tarball ../release-tarball/release.tgz \
     --version "${new_version}"
 
