@@ -18,6 +18,7 @@ pushd release-master
   # create release
   cat << EOF > config/final.yml
 ---
+name: metric-store
 blobstore:
   provider: local
   options:
