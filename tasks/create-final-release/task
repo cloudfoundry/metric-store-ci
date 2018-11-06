@@ -46,7 +46,7 @@ popd
 pushd log-cache-release-develop
   git checkout develop
   git remote add -f local_master ../log-cache-release-master
-  git merge -v -m "Merge final release artifacts" "local_master/${final_release_abbrev}"
+  git merge -v --no-ff -m "Merge final release artifacts" "local_master/${final_release_abbrev}"
 
   cp -r . ../log-cache-release-develop-modified
 popd

@@ -44,7 +44,7 @@ popd
 pushd release-develop
   git checkout develop
   git remote add -f local_master ../release-master
-  git merge -v -m "Merge release artifacts" "local_master/${release_abbrev}"
+  git merge -v --no-ff -m "Merge release artifacts" "local_master/${release_abbrev}"
 
   cp -r . ../release-develop-modified
 popd
