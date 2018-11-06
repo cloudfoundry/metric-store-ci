@@ -25,11 +25,12 @@ blobstore:
     blobstore_path: /tmp/metric-store-release
 EOF
 
-  bosh -n create-release --sha2 --final \
+  bosh -n create-release --sha2 --final --force \
     --tarball ../release-tarball/release.tgz \
     --version "${new_version}"
 
   # commit release creation changes
+  git co config/final.yml
   git add .
   git commit -m "Create release"
 
