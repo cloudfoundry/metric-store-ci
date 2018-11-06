@@ -22,7 +22,7 @@ blobstore:
   options:
     credentials_source: static
     json_key: |
-      ${JSON_KEY}
+      $(echo ${JSON_KEY})
 EOF
 
   bosh -n create-release --sha2 --final \
