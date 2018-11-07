@@ -26,3 +26,5 @@ params:
   # - Optional
   # - Do not rebase the release after upload
   NO_REBASE: false
+
+  JSON_KEY:

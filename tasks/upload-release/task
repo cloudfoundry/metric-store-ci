@@ -8,6 +8,17 @@ pushd "bbl-state/$BBL_STATE_DIR"
 popd
 
 pushd bosh-release-dir
+  if [[ -n ${JSON_KEY} ]]; then
+    cat << EOF > config/private.yml
+---
+blobstore:
+  options:
+    credentials_source: static
+    json_key: |
+      $(echo ${JSON_KEY})
+EOF
+  fi
+
   if [ "$FORCE" == "true" ]; then
     bosh create-release --force
   else
