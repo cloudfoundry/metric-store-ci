@@ -4,18 +4,29 @@ set -e
 
 warning() {
   YELLOW='\033[0;33m'
+  BOLD='\033[1m'
   CLEAR='\033[0m'
   local message=${1}
 
-  echo -e "${YELLOW}${message}${CLEAR}"
+  echo -e "${YELLOW}${BOLD}${message}${CLEAR}"
+}
+
+error() {
+  RED='\033[0;31m'
+  BOLD='\033[1m'
+  CLEAR='\033[0m'
+  local message=${1}
+
+  echo -e "${RED}${BOLD}${message}${CLEAR}"
 }
 
 success() {
   GREEN='\033[0;32m'
+  BOLD='\033[1m'
   CLEAR='\033[0m'
   local message=${1}
 
-  echo -e "${GREEN}${message}${CLEAR}"
+  echo -e "${GREEN}${BOLD}${message}${CLEAR}"
 }
 
 step() {
@@ -24,8 +35,22 @@ step() {
 }
 
 function check_lpass {
-    step "Checking lpass"
-    lpass status
+    step "Checking LastPass"
+
+    set +e
+    lpass_status=$(lpass status --color=never)
+    lpass_logged_in=$?
+    set -e
+
+    if [ $lpass_logged_in -eq 0 ]; then
+        success "${lpass_status}"
+    else
+        error "${lpass_status}"
+        echo
+
+        warning "please login to LastPass and try again"
+        exit 1
+    fi
 }
 
 function find_pipeline {
@@ -34,8 +59,8 @@ function find_pipeline {
     pipeline_dir='pipelines/'
 
     pushd ${pipeline_dir} > /dev/null
-        pipelines=()
         top_level_pipelines=()
+        other_pipelines=()
 
         while IFS=  read -r -d $'\n'; do
             normalized_pipeline=`echo ${REPLY} | cut -c 3-`
@@ -44,7 +69,7 @@ function find_pipeline {
 
         while IFS=  read -r -d $'\0'; do
             normalized_pipeline=`echo ${REPLY} | cut -c 3-`
-            pipelines+=($normalized_pipeline)
+            other_pipelines+=($normalized_pipeline)
         done < <(find . -mindepth 2 -type f \( ! -name . \) -print0)
     popd > /dev/null
 
@@ -59,7 +84,7 @@ function find_pipeline {
         done
 
         # top level pipeline substring matches query
-        if [[ ${pipeline} = '' && ${#matching_pipelines[@]} -eq 0 ]]; then
+        if [[ ${pipeline} = '' ]]; then
             for p in "${top_level_pipelines[@]}"; do
                 if [[ "${p}" =~ "${query}" ]]; then
                     pipeline=${p}
@@ -69,8 +94,8 @@ function find_pipeline {
 
         # any pipeline substring matches query
         matching_pipelines=()
-        if [[ ${pipeline} = '' && ${#matching_pipelines[@]} -eq 0 ]]; then
-            for p in "${pipelines[@]}"; do
+        if [[ ${pipeline} = '' ]]; then
+            for p in "${other_pipelines[@]}"; do
                 if [[ "${p}" =~ "${query}" ]]; then
                     matching_pipelines+=("${p}")
                 fi
@@ -82,19 +107,31 @@ function find_pipeline {
         if [[ ${#matching_pipelines[@]} -eq 1 ]]; then
             pipeline=${matching_pipelines[0]}
         elif [[ ${#matching_pipelines[@]} -eq 0 ]]; then
-            echo " found 0 matches for '${query}'. Available pipelines are:"
+            error "found 0 matches for '${query}'"
+            echo
+
+            echo "Available pipelines are:"
             for p in "${top_level_pipelines[@]}"; do
                 echo " - ${p}"
             done
-            for p in "${pipelines[@]}"; do
+            for p in "${other_pipelines[@]}"; do
                 echo " - ${p}"
             done
+            echo
+
+            warning "Please adjust your query to match the an available pipeline and try again"
             exit 1
         else
-            echo " found ${#matching_pipelines[@]} matches for '${query}':"
+            error "found ${#matching_pipelines[@]} matches for '${query}'"
+            echo
+
+            echo "Matching pipelines were:"
             for p in "${matching_pipelines[@]}"; do
                 echo " - ${p}"
             done
+            echo
+
+            warning "Please adjust your query to match a specific pipeline and try again"
             exit 1
         fi
     fi
@@ -122,43 +159,113 @@ function validate_usage {
 function validate_pipeline {
     step "Validating '${pipeline_name}' pipeline"
 
-    fly -t ${TARGET} validate-pipeline -c ${config_path}
+    set +e
+    pipeline_validation=$(fly -t ${TARGET} validate-pipeline -c ${config_path} 2>&1)
     pipeline_valid=$?
+    set -e
 
-    return $pipeline_valid
+    if [ $pipeline_valid -eq 0 ]; then
+        success "valid"
+    else
+        error "invalid"
+        echo
+
+        error "-- start of validation errors --"
+        echo "${pipeline_validation}"
+        error "-- end of validation errors --"
+        echo
+        warning "Please fix the above errors and try again"
+
+        exit 1
+    fi
 }
 
 function sync_fly {
-    step "Syncing fly CLI"
-    fly -t $TARGET sync
+    step "Checking fly CLI"
+
+    set +e
+    (fly -t $TARGET get-pipeline -p ${pipeline_name} &> /dev/null)
+    noSyncRequired=$?
+    set -e
+
+    if [ $noSyncRequired -eq 0 ]; then
+        success "sync not required"
+    else
+        warning "sync required"
+        echo
+
+        warning "-- start of sync --"
+        fly -t $TARGET sync
+        warning "-- end of sync --"
+        echo
+    fi
 }
 
 function login_fly {
-    step "Checking concourse auth status for '${TARGET}'"
+    step "Checking fly auth status for '${TARGET}'"
 
-    if [[ `fly -t $TARGET status` != 'logged in successfully' ]]; then
-        fly -t $TARGET login -b
+    set +e
+    fly_status=$(fly -t $TARGET status 2>&1)
+    fly_logged_in=$?
+    set -e
+
+    if [ $fly_logged_in -eq 0 ]; then
+        success "logged in"
     else
-        success "already logged in"
+        warning "not logged in"
+        echo
+
+        warning "-- start of fly login --"
+        fly -t $TARGET login -b
+        warning "-- end of fly login --"
+        echo
     fi
 }
 
 function preprocess_pipeline {
     if [[ "${pipeline}" == *".erb" ]]; then
         step "Preprocessing erb pipeline"
-        command -v erb >/dev/null 2>&1 || { echo >&2 "To process .erb pipelines, erb is required but not installed."; exit 1; }
-
         tmpfile=$(mktemp)
-        erb ${config_path} > ${tmpfile}
-        config_path=${tmpfile}
 
-        success "processed"
+        set +e
+        $(command -v erb >/dev/null 2>&1)
+        erb_available=$?
+        set -e
+
+        if [ $erb_available -eq 1 ]; then
+            error "erb not found"
+            echo
+
+            warning "To process .erb pipelines, erb is required but not installed."
+            exit 1
+        fi
+
+        set +e
+        erb_output=$(erb ${config_path} > ${tmpfile} 2>&1)
+        erb_processed=$?
+        set -e
+
+        if [ $erb_processed -eq 0 ]; then
+            success "processed"
+            config_path=${tmpfile}
+        else
+            error "erb failed"
+            echo
+
+            error "-- start of erb errors --"
+            set +e
+            erb ${config_path} > ${tmpfile}
+            set -e
+            error "-- end of erb errors --"
+            echo
+
+            warning "please fix the erb errors then try again"
+            exit 1
+        fi
     fi
 }
 
 function reconfigure_pipeline {
-    step "Reconfiguring '${pipeline_name}' pipeline"
-
     reconfigure-pipeline \
       --target ${TARGET} \
       --pipeline ${pipeline_name} \
@@ -166,15 +273,37 @@ function reconfigure_pipeline {
       --load-vars-from config/env-config.yml
 }
 
+function fly_pipeline {
+    step "Reconfiguring '${pipeline_name}' pipeline"
+
+    set +e
+    (echo "N" | reconfigure_pipeline | grep -Fxq "no changes to apply")
+    noChanges=$?
+    set -e
+
+    if [ $noChanges -eq 0 ]; then
+        success "no changes to apply"
+    else
+        warning "there are changes to apply"
+        echo
+
+        warning "-- start of changes --"
+        reconfigure_pipeline
+        warning "-- end of changes --"
+        echo
+    fi
+}
+
 function print_usage {
     echo "usage: $0 <pipeline>"
+    echo " - where <pipeline> can be a substring of available pipeline paths"
 }
 
 function deprecation_warning {
     query=${1}
 
     if [[ "${query}" = "log-cache" ]]; then
-        warning "NOTICE: the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
+        warning "the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
         exit 1
     fi
 }
@@ -190,13 +319,13 @@ function main {
     check_lpass
     find_pipeline $1
     validate_usage
-    sync_fly
     login_fly
+    sync_fly
     preprocess_pipeline
     validate_pipeline
 
     if [ $? -eq 0 ]; then
-        reconfigure_pipeline
+        fly_pipeline
     fi
 
     cleanup
