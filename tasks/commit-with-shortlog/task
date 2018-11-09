@@ -11,7 +11,7 @@ function has_diff {
 }
 
 function stage_paths {
-    for path in "${paths_to_commit[@]}"; do
+    for path in ${PATHS}; do
         git add ${path}
     done
 }
@@ -52,10 +52,8 @@ function commit {
     git commit -m "${message}"
 }
 
-read -a paths_to_commit <<< ${PATHS}
-
 echo "Paths to be committed:"
-for path in ${paths_to_commit[@]}; do
+for path in ${PATHS}; do
     echo "  $path"
 done
 echo
