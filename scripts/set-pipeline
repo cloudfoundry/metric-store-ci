@@ -2,7 +2,7 @@
 
 set -e
 
-warning() {
+function warning {
   YELLOW='\033[0;33m'
   BOLD='\033[1m'
   CLEAR='\033[0m'
@@ -11,7 +11,7 @@ warning() {
   echo -e "${YELLOW}${BOLD}${message}${CLEAR}"
 }
 
-error() {
+function error {
   RED='\033[0;31m'
   BOLD='\033[1m'
   CLEAR='\033[0m'
@@ -20,7 +20,7 @@ error() {
   echo -e "${RED}${BOLD}${message}${CLEAR}"
 }
 
-success() {
+function success {
   GREEN='\033[0;32m'
   BOLD='\033[1m'
   CLEAR='\033[0m'
@@ -29,9 +29,16 @@ success() {
   echo -e "${GREEN}${BOLD}${message}${CLEAR}"
 }
 
-step() {
+function step {
     local message=${1}
     printf "%-46s ... " "${message}"
+}
+
+function fail {
+    local message=${1}
+
+    warning "> ${message}"
+    exit 1
 }
 
 function check_lpass {
@@ -48,8 +55,7 @@ function check_lpass {
         error "${lpass_status}"
         echo
 
-        warning "please login to LastPass and try again"
-        exit 1
+        fail "please login to LastPass and try again"
     fi
 }
 
@@ -119,8 +125,7 @@ function find_pipeline {
             done
             echo
 
-            warning "Please adjust your query to match the an available pipeline and try again"
-            exit 1
+            fail "Please adjust your query to match the an available pipeline and try again"
         else
             error "found ${#matching_pipelines[@]} matches for '${query}'"
             echo
@@ -131,8 +136,7 @@ function find_pipeline {
             done
             echo
 
-            warning "Please adjust your query to match a specific pipeline and try again"
-            exit 1
+            fail "Please adjust your query to match a specific pipeline and try again"
         fi
     fi
 
@@ -174,9 +178,8 @@ function validate_pipeline {
         echo "${pipeline_validation}"
         error "-- end of validation errors --"
         echo
-        warning "Please fix the above errors and try again"
 
-        exit 1
+        fail "Please fix the above errors and try again"
     fi
 }
 
@@ -236,8 +239,7 @@ function preprocess_pipeline {
             error "erb not found"
             echo
 
-            warning "To process .erb pipelines, erb is required but not installed."
-            exit 1
+            fail "To process .erb pipelines, erb is required but not installed."
         fi
 
         set +e
@@ -259,8 +261,7 @@ function preprocess_pipeline {
             error "-- end of erb errors --"
             echo
 
-            warning "please fix the erb errors then try again"
-            exit 1
+            fail "please fix the erb errors then try again"
         fi
     fi
 }
@@ -303,8 +304,7 @@ function deprecation_warning {
     query=${1}
 
     if [[ "${query}" = "log-cache" ]]; then
-        warning "the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
-        exit 1
+        fail "the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
     fi
 }
 
