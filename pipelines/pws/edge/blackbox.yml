@@ -5,6 +5,13 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 
+- name: log-cache-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-ci
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: log-cache-deployments
   type: git
   source:
@@ -25,6 +32,7 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-release
+    - get: log-cache-ci
     - get: log-cache-deployments
 
   - aggregate:
