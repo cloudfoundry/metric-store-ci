@@ -53,7 +53,6 @@ function step_info {
 
 function fail {
     local message=${1}
-
     warning "> ${message}"
     exit 1
 }
@@ -295,10 +294,10 @@ function fly_pipeline {
 
     set +e
     (echo "N" | reconfigure_pipeline | grep -Fxq "no changes to apply")
-    noChanges=$?
+    no_changes=$?
     set -e
 
-    if [ $noChanges -eq 0 ]; then
+    if [ $no_changes -eq 0 ]; then
         step_ok "no changes to apply"
     else
         step_info "there are changes to apply"
