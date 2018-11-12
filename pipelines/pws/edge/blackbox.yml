@@ -29,29 +29,18 @@ jobs:
 
   - aggregate:
     - task: upload-metric-store
+      file: log-cache-ci/tasks/upload-release/task.yml
       image: cf-deployment-concourse-tasks-image
-      config:
-        platform: linux
-        inputs:
-        - name: metric-store-release
-        params:
-          BOSH_CLIENT: ((bosh-admin-client.username))
-          BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
-          BOSH_CA_CERT: ((bosh-ca-cert.certificate))
-          BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        run:
-          path: bash
-          args:
-          - -c
-          - |
-            #!/bin/bash
-            set -eux
-
-            pushd metric-store-release
-              bosh create-release
-              bosh upload-release --rebase
-            popd
-
+      input_mapping:
+        bosh-release-dir: metric-store-release
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+        FORCE: true
+        REBASE: true
   - task: metric-store-edge-blackbox-deploy
     image: cf-deployment-concourse-tasks-image
     config:

@@ -19,6 +19,13 @@ resources:
     branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
 
+- name: log-cache-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-ci
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: log-cache-deployments
   type: git
   source:
@@ -57,31 +64,22 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-release
+    - get: log-cache-ci
     - get: log-cache-deployments
       params: {pre: dev}
   - task: upload-metric-store
+    file: log-cache-ci/tasks/upload-release/task.yml
     image: cf-deployment-concourse-tasks-image
-    config:
-      platform: linux
-      params:
-        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
-        BOSH_CLIENT: ((bosh-admin-client.username))
-        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
-        BOSH_ENVIRONMENT: bosh.run.pivotal.io
-      run:
-        path: bash
-        args:
-        - -c
-        - |
-          #!/bin/bash
-          set -eux
-
-          pushd metric-store-release
-            bosh create-release --force
-            bosh upload-release --rebase
-          popd
-      inputs:
-      - name: metric-store-release
+    input_mapping:
+      bosh-release-dir: metric-store-release
+    params:
+      BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+      BOSH_CLIENT: ((bosh-admin-client.username))
+      BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+      BOSH_ENVIRONMENT: bosh.run.pivotal.io
+      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+      FORCE: true
+      REBASE: true
   - task: deploy
     image: cf-deployment-concourse-tasks-image
     config:
