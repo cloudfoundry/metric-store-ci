@@ -12,13 +12,12 @@ fi
 
 pushd bosh-release-dir
   if [[ -n ${JSON_KEY:-} ]]; then
-    cat << EOF > config/private.yml
+    bosh int -v "json_key=${JSON_KEY}" /dev/stdin > config/private.yml << EOF
 ---
 blobstore:
   options:
     credentials_source: static
-    json_key: |
-      ${JSON_KEY}
+    json_key: ((json_key))
 EOF
   fi
 
