@@ -34,6 +34,23 @@ function step {
     printf "%-46s ... " "${message}"
 }
 
+function step_ok {
+    local message=${1}
+    success "[OK] ${message}"
+}
+
+function step_error {
+    local message=${1}
+    error "[ERROR] ${message}"
+    echo
+}
+
+function step_info {
+    local message=${1}
+    warning "[INFO] ${message}"
+    echo
+}
+
 function fail {
     local message=${1}
 
@@ -50,11 +67,9 @@ function check_lpass {
     set -e
 
     if [ $lpass_logged_in -eq 0 ]; then
-        success "${lpass_status}"
+        step_ok "${lpass_status}"
     else
-        error "${lpass_status}"
-        echo
-
+        step_error "${lpass_status}"
         fail "please login to LastPass and try again"
     fi
 }
@@ -113,8 +128,7 @@ function find_pipeline {
         if [[ ${#matching_pipelines[@]} -eq 1 ]]; then
             pipeline=${matching_pipelines[0]}
         elif [[ ${#matching_pipelines[@]} -eq 0 ]]; then
-            error "found 0 matches for '${query}'"
-            echo
+            step_error "found 0 matches for '${query}'"
 
             echo "Available pipelines are:"
             for p in "${top_level_pipelines[@]}"; do
@@ -127,8 +141,7 @@ function find_pipeline {
 
             fail "Please adjust your query to match an available pipeline and try again"
         else
-            error "found ${#matching_pipelines[@]} matches for '${query}'"
-            echo
+            step_error "found ${#matching_pipelines[@]} matches for '${query}'"
 
             echo "Matching pipelines were:"
             for p in "${matching_pipelines[@]}"; do
@@ -140,7 +153,7 @@ function find_pipeline {
         fi
     fi
 
-    success "found ${pipeline}"
+    step_ok "found ${pipeline}"
 
     config_path=${pipeline_dir}${pipeline}
 
@@ -169,10 +182,9 @@ function validate_pipeline {
     set -e
 
     if [ $pipeline_valid -eq 0 ]; then
-        success "valid"
+        step_ok "valid"
     else
-        error "invalid"
-        echo
+        step_error "invalid"
 
         error "-- start of validation errors --"
         echo "${pipeline_validation}"
@@ -192,10 +204,9 @@ function sync_fly {
     set -e
 
     if [ $noSyncRequired -eq 0 ]; then
-        success "sync not required"
+        step_ok "sync not required"
     else
         warning "sync required"
-        echo
 
         warning "-- start of sync --"
         fly -t $TARGET sync
@@ -213,10 +224,9 @@ function login_fly {
     set -e
 
     if [ $fly_logged_in -eq 0 ]; then
-        success "logged in"
+        step_ok "logged in"
     else
-        warning "not logged in"
-        echo
+        step_info "not logged in"
 
         warning "-- start of fly login --"
         fly -t $TARGET login -b
@@ -236,9 +246,7 @@ function preprocess_pipeline {
         set -e
 
         if [ $erb_available -eq 1 ]; then
-            error "erb not found"
-            echo
-
+            step_error "erb not found"
             fail "To process .erb pipelines, erb is required but not installed."
         fi
 
@@ -248,11 +256,10 @@ function preprocess_pipeline {
         set -e
 
         if [ $erb_processed -eq 0 ]; then
-            success "processed"
+            step_ok "processed"
             config_path=${tmpfile}
         else
-            error "erb failed"
-            echo
+            step_error "erb failed"
 
             error "-- start of erb errors --"
             set +e
@@ -283,10 +290,9 @@ function fly_pipeline {
     set -e
 
     if [ $noChanges -eq 0 ]; then
-        success "no changes to apply"
+        step_ok "no changes to apply"
     else
-        warning "there are changes to apply"
-        echo
+        step_info "there are changes to apply"
 
         warning "-- start of changes --"
         reconfigure_pipeline
