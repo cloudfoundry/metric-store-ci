@@ -666,7 +666,8 @@ jobs:
           bosh-release-dir: metric-store-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
-          JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+          JSON_KEY: |
+            ((release-credentials.yml/Notes/gcp-service-account-key))
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
