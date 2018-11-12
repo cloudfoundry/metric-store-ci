@@ -57,6 +57,28 @@ function fail {
     exit 1
 }
 
+function info_block {
+    local message=${1}
+    local command=${2}
+
+    warning "-- start of ${message} --"
+    eval "${command}"
+    warning "-- end of ${message} --"
+    echo
+}
+
+function error_block {
+    local message=${1}
+    local command=${2}
+
+    error "-- start of ${message} errors --"
+    set +e
+    eval "${command}"
+    set -e
+    error "-- end of ${message} errors --"
+    echo
+}
+
 function check_lpass {
     step "Checking LastPass"
 
@@ -184,12 +206,7 @@ function validate_pipeline {
         step_ok "valid"
     else
         step_error "invalid"
-
-        error "-- start of validation errors --"
-        echo "${pipeline_validation}"
-        error "-- end of validation errors --"
-        echo
-
+        error_block "validation" "echo \"${pipeline_validation}\""
         fail "Please fix the above errors and try again"
     fi
 }
@@ -206,11 +223,7 @@ function login_fly {
         step_ok "logged in"
     else
         step_info "not logged in"
-
-        warning "-- start of fly login --"
-        fly -t $TARGET login -b
-        warning "-- end of fly login --"
-        echo
+        info_block "fly login" "fly -t $TARGET login -b"
     fi
 }
 
@@ -226,20 +239,11 @@ function check_fly {
         step_ok "ready to go"
     elif [[ "${fly_output}" =~ "out of sync with the target" ]]; then
         step_info "sync required"
-
-        warning "-- start of sync --"
-        fly -t $TARGET sync
-        warning "-- end of sync --"
-        echo
-
+        info_block "sync" "fly -t $TARGET sync"
         login_fly
     else
         step_info "login required"
-
-        warning "-- start of fly login --"
-        fly -t $TARGET login -b
-        warning "-- end of fly login --"
-        echo
+        info_block "fly login" "fly -t $TARGET login -b"
     fi
 }
 
@@ -268,14 +272,7 @@ function preprocess_pipeline {
             config_path=${tmpfile}
         else
             step_error "erb failed"
-
-            error "-- start of erb errors --"
-            set +e
-            erb ${config_path} > ${tmpfile}
-            set -e
-            error "-- end of erb errors --"
-            echo
-
+            error_block "erb" "erb ${config_path} > ${tmpfile}"
             fail "please fix the erb errors then try again"
         fi
     fi
@@ -301,11 +298,7 @@ function fly_pipeline {
         step_ok "no changes to apply"
     else
         step_info "there are changes to apply"
-
-        warning "-- start of changes --"
-        reconfigure_pipeline
-        warning "-- end of changes --"
-        echo
+        warning_block "changes" reconfigure_pipeline
     fi
 }
 
