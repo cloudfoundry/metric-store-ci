@@ -298,7 +298,7 @@ function fly_pipeline {
         step_ok "no changes to apply"
     else
         step_info "there are changes to apply"
-        warning_block "changes" reconfigure_pipeline
+        info_block "changes" reconfigure_pipeline
     fi
 }
 
