@@ -195,31 +195,11 @@ function validate_pipeline {
     fi
 }
 
-function sync_fly {
-    step "Checking fly CLI"
-
-    set +e
-    (fly -t $TARGET get-pipeline -p ${pipeline_name} &> /dev/null)
-    noSyncRequired=$?
-    set -e
-
-    if [ $noSyncRequired -eq 0 ]; then
-        step_ok "sync not required"
-    else
-        warning "sync required"
-
-        warning "-- start of sync --"
-        fly -t $TARGET sync
-        warning "-- end of sync --"
-        echo
-    fi
-}
-
 function login_fly {
     step "Checking fly auth status for '${TARGET}'"
 
     set +e
-    fly_status=$(fly -t $TARGET status 2>&1)
+    fly_status_output=$(fly -t $TARGET status 2>&1)
     fly_logged_in=$?
     set -e
 
@@ -227,6 +207,35 @@ function login_fly {
         step_ok "logged in"
     else
         step_info "not logged in"
+
+        warning "-- start of fly login --"
+        fly -t $TARGET login -b
+        warning "-- end of fly login --"
+        echo
+    fi
+}
+
+function check_fly {
+    step "Checking fly CLI status for '${TARGET}'"
+
+    set +e
+    fly_output=$(fly -t $TARGET get-pipeline -p ${pipeline_name} 2>&1)
+    fly_status=$?
+    set -e
+
+    if [ $fly_status -eq 0 ]; then
+        step_ok "ready to go"
+    elif [[ "${fly_output}" =~ "out of sync with the target" ]]; then
+        step_info "sync required"
+
+        warning "-- start of sync --"
+        fly -t $TARGET sync
+        warning "-- end of sync --"
+        echo
+
+        login_fly
+    else
+        step_info "login required"
 
         warning "-- start of fly login --"
         fly -t $TARGET login -b
@@ -325,8 +334,7 @@ function main {
     check_lpass
     find_pipeline $1
     validate_usage
-    sync_fly
-    login_fly
+    check_fly
     preprocess_pipeline
     validate_pipeline
 
