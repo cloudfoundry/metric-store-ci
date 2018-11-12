@@ -125,7 +125,7 @@ function find_pipeline {
             done
             echo
 
-            fail "Please adjust your query to match the an available pipeline and try again"
+            fail "Please adjust your query to match an available pipeline and try again"
         else
             error "found ${#matching_pipelines[@]} matches for '${query}'"
             echo
