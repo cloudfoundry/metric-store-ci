@@ -58,52 +58,55 @@ function fail {
 }
 
 function info_block {
-    local message=${1}
+    local title=${1}
     local command=${2}
 
-    warning "-- start of ${message} --"
+    warning "-- start of ${title} --"
     eval "${command}"
-    warning "-- end of ${message} --"
+    warning "-- end of ${title} --"
     echo
 }
 
 function error_block {
-    local message=${1}
+    local title=${1}
     local command=${2}
 
-    error "-- start of ${message} errors --"
+    error "-- start of ${title} errors --"
     set +e
     eval "${command}"
     set -e
-    error "-- end of ${message} errors --"
+    error "-- end of ${title} errors --"
     echo
 }
 
 function check_lpass {
     step "Checking LastPass"
+    local output
+    local status
 
     set +e
-    lpass_status=$(lpass status --color=never)
-    lpass_logged_in=$?
+    output=$(lpass status --color=never)
+    status=$?
     set -e
 
-    if [ $lpass_logged_in -eq 0 ]; then
-        step_ok "${lpass_status}"
+    if [ $status -eq 0 ]; then
+        step_ok "${output}"
     else
-        step_error "${lpass_status}"
+        step_error "${output}"
         fail "please login to LastPass and try again"
     fi
 }
 
 function find_pipeline {
     step "Finding pipeline"
-    query=${1}
-    pipeline_dir='pipelines/'
+    local query=${1}
+    local pipeline_dir='pipelines/'
+    local top_level_pipelines=()
+    local other_pipelines=()
+    local matching_pipelines=()
+    local normalized_pipeline
 
     pushd ${pipeline_dir} > /dev/null
-        top_level_pipelines=()
-        other_pipelines=()
-
         while IFS=  read -r -d $'\n'; do
             normalized_pipeline=`echo ${REPLY} | cut -c 3-`
             top_level_pipelines+=("$normalized_pipeline")
@@ -135,7 +138,6 @@ function find_pipeline {
         fi
 
         # any pipeline substring matches query
-        matching_pipelines=()
         if [[ ${pipeline} = '' ]]; then
             for p in "${other_pipelines[@]}"; do
                 if [[ "${p}" =~ "${query}" ]]; then
@@ -196,30 +198,34 @@ function validate_usage {
 
 function validate_pipeline {
     step "Validating '${pipeline_name}' pipeline"
+    local output
+    local status
 
     set +e
-    pipeline_validation=$(fly -t ${TARGET} validate-pipeline -c ${config_path} 2>&1)
-    pipeline_valid=$?
+    output=$(fly -t ${TARGET} validate-pipeline -c ${config_path} 2>&1)
+    status=$?
     set -e
 
-    if [ $pipeline_valid -eq 0 ]; then
+    if [ $status -eq 0 ]; then
         step_ok "valid"
     else
         step_error "invalid"
-        error_block "validation" "echo \"${pipeline_validation}\""
+        error_block "validation" "echo \"${output}\""
         fail "Please fix the above errors and try again"
     fi
 }
 
 function login_fly {
     step "Checking fly auth status for '${TARGET}'"
+    local output
+    local status
 
     set +e
-    fly_status_output=$(fly -t $TARGET status 2>&1)
-    fly_logged_in=$?
+    output=$(fly -t $TARGET status 2>&1)
+    status=$?
     set -e
 
-    if [ $fly_logged_in -eq 0 ]; then
+    if [ $status -eq 0 ]; then
         step_ok "logged in"
     else
         step_info "not logged in"
@@ -229,15 +235,17 @@ function login_fly {
 
 function check_fly {
     step "Checking fly CLI status for '${TARGET}'"
+    local output
+    local status
 
     set +e
-    fly_output=$(fly -t $TARGET get-pipeline -p ${pipeline_name} 2>&1)
-    fly_status=$?
+    output=$(fly -t $TARGET get-pipeline -p ${pipeline_name} 2>&1)
+    status=$?
     set -e
 
-    if [ $fly_status -eq 0 ]; then
+    if [ $status -eq 0 ]; then
         step_ok "ready to go"
-    elif [[ "${fly_output}" =~ "out of sync with the target" ]]; then
+    elif [[ "${output}" =~ "out of sync with the target" ]]; then
         step_info "sync required"
         info_block "sync" "fly -t $TARGET sync"
         login_fly
@@ -248,26 +256,29 @@ function check_fly {
 }
 
 function preprocess_pipeline {
+    local output
+    local status
+
     if [[ "${pipeline}" == *".erb" ]]; then
         step "Preprocessing erb pipeline"
         tmpfile=$(mktemp)
 
         set +e
         $(command -v erb >/dev/null 2>&1)
-        erb_available=$?
+        status=$?
         set -e
 
-        if [ $erb_available -eq 1 ]; then
+        if [ $status -eq 1 ]; then
             step_error "erb not found"
             fail "To process .erb pipelines, erb is required but not installed."
         fi
 
         set +e
-        erb_output=$(erb ${config_path} > ${tmpfile} 2>&1)
-        erb_processed=$?
+        output=$(erb ${config_path} > ${tmpfile} 2>&1)
+        status=$?
         set -e
 
-        if [ $erb_processed -eq 0 ]; then
+        if [ $status -eq 0 ]; then
             step_ok "processed"
             config_path=${tmpfile}
         else
@@ -288,13 +299,14 @@ function reconfigure_pipeline {
 
 function fly_pipeline {
     step "Reconfiguring '${pipeline_name}' pipeline"
+    local status
 
     set +e
     (echo "N" | reconfigure_pipeline | grep -Fxq "no changes to apply")
-    no_changes=$?
+    status=$?
     set -e
 
-    if [ $no_changes -eq 0 ]; then
+    if [ $status -eq 0 ]; then
         step_ok "no changes to apply"
     else
         step_info "there are changes to apply"
@@ -308,7 +320,7 @@ function print_usage {
 }
 
 function deprecation_warning {
-    query=${1}
+    local query=${1}
 
     if [[ "${query}" = "log-cache" ]]; then
         fail "the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
