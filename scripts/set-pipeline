@@ -79,6 +79,13 @@ function error_block {
     echo
 }
 
+function list {
+    local collection=("${@}")
+    for i in "${collection[@]}"; do
+        echo " - ${i}"
+    done
+}
+
 function check_lpass {
     step "Checking LastPass"
     local output
@@ -154,12 +161,8 @@ function find_pipeline {
             step_error "found 0 matches for '${query}'"
 
             echo "Available pipelines are:"
-            for p in "${top_level_pipelines[@]}"; do
-                echo " - ${p}"
-            done
-            for p in "${other_pipelines[@]}"; do
-                echo " - ${p}"
-            done
+            list "${top_level_pipelines[@]}"
+            list "${other_pipelines[@]}"
             echo
 
             fail "Please adjust your query to match an available pipeline and try again"
@@ -167,9 +170,7 @@ function find_pipeline {
             step_error "found ${#matching_pipelines[@]} matches for '${query}'"
 
             echo "Matching pipelines were:"
-            for p in "${matching_pipelines[@]}"; do
-                echo " - ${p}"
-            done
+            list "${matching_pipelines[@]}"
             echo
 
             fail "Please adjust your query to match a specific pipeline and try again"
