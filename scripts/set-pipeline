@@ -2,10 +2,11 @@
 
 set -e
 
+BOLD='\033[1m'
+CLEAR='\033[0m'
+
 function warning {
   YELLOW='\033[0;33m'
-  BOLD='\033[1m'
-  CLEAR='\033[0m'
   local message=${1}
 
   echo -e "${YELLOW}${BOLD}${message}${CLEAR}"
@@ -13,8 +14,6 @@ function warning {
 
 function error {
   RED='\033[0;31m'
-  BOLD='\033[1m'
-  CLEAR='\033[0m'
   local message=${1}
 
   echo -e "${RED}${BOLD}${message}${CLEAR}"
@@ -22,8 +21,6 @@ function error {
 
 function success {
   GREEN='\033[0;32m'
-  BOLD='\033[1m'
-  CLEAR='\033[0m'
   local message=${1}
 
   echo -e "${GREEN}${BOLD}${message}${CLEAR}"
