@@ -188,7 +188,9 @@ function find_pipeline {
 }
 
 function validate_usage {
-    if [ "$pipeline" = "-h" ] || [ "$pipeline" = "--help" ] || [ -z "$pipeline" ]; then
+    local query=${1}
+
+    if [ "$query" = "-h" ] || [ "$query" = "--help" ] || [ -z "$pipeline" ]; then
         print_usage
         exit 1
     fi
@@ -324,9 +326,9 @@ function cleanup {
 }
 
 function main {
+    validate_usage $1
     check_lpass
     find_pipeline $1
-    validate_usage
     check_fly
     preprocess_pipeline
     validate_pipeline
