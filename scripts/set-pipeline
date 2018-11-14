@@ -317,14 +317,6 @@ function print_usage {
     echo " - where <pipeline> can be a substring of available pipeline paths"
 }
 
-function deprecation_warning {
-    local query=${1}
-
-    if [[ "${query}" = "log-cache" ]]; then
-        fail "the log-cache pipeline was renamed to acceptance.  Try that one instead ;)"
-    fi
-}
-
 function cleanup {
     if [[ "${pipeline}" == *".erb" ]]; then
         rm ${tmpfile}
@@ -332,7 +324,6 @@ function cleanup {
 }
 
 function main {
-    deprecation_warning $1
     check_lpass
     find_pipeline $1
     validate_usage
