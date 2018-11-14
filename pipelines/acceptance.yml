@@ -946,7 +946,48 @@ jobs:
                     internal_addr: https://uaa.service.cf.internal:8443
           EOT
 
-          cat <<EOT >> ops-files/cf-deployment-candidate-changes.yml
+          cat <<EOT >> ops-files/cf-deployment-log-cache-candidate-changes.yml
+          - type: replace
+            path: /variables/name=logs_provider
+            value:
+              name: log_cache_to_logs_provider
+              type: certificate
+              options:
+                ca: loggregator_ca
+                common_name: log-cache
+                extended_key_usage:
+                - client_auth
+          - type: replace
+            path: /variables/name=log_cache_to_loggregator_agent?
+            value:
+              name: log_cache_to_loggregator_agent
+              type: certificate
+              options:
+                ca: loggregator_ca
+                common_name: log-cache
+                extended_key_usage:
+                - client_auth
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-nozzle/properties/logs_provider/tls
+            value:
+              ca_cert: "((log_cache_to_logs_provider.ca))"
+              cert: "((log_cache_to_logs_provider.certificate))"
+              key: "((log_cache_to_logs_provider.private_key))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((log_cache_to_loggregator_agent.ca))"
+              cert: "((log_cache_to_loggregator_agent.certificate))"
+              key: "((log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((log_cache_to_loggregator_agent.ca))"
+              cert: "((log_cache_to_loggregator_agent.certificate))"
+              key: "((log_cache_to_loggregator_agent.private_key))"
+          EOT
+
+          cat <<EOT >> ops-files/cf-deployment-metric-store-candidate-changes.yml
           - type: replace
             path: /instance_groups/name=metric-store/jobs/name=metric-store/provides?
             value:
@@ -970,7 +1011,8 @@ jobs:
         bosh-speed.yml
         use-log-cache-latest.yml
         metric-store.yml
-        cf-deployment-candidate-changes.yml
+        cf-deployment-log-cache-candidate-changes.yml
+        cf-deployment-metric-store-candidate-changes.yml
         grafana-in-cf.yml
         metric-registrar-in-cf.yml
   - task: enable-feature-flags
