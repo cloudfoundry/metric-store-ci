@@ -1,0 +1,74 @@
+groups:
+- name: all
+  jobs:
+  - generate-certs
+  - install-certs
+
+resource_types:
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
+
+resources:
+- name: log-cache-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-ci
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: certs
+  type: gcs-resource
+  source:
+    bucket: yuzu-certs
+    json_key: ((yuzu-cert-service-account.json/Notes))
+    regexp: yuzu-certs-(.*).tgz
+
+- name: monthly
+  type: time
+  source:
+    interval: 720h
+
+jobs:
+- name: generate-certs
+  plan:
+  - get: monthly
+    trigger: true
+  - get: log-cache-ci
+  - task: prepare-service-account
+    file: log-cache-ci/tasks/generate-certs/prepare-service-account.yml
+    params:
+      GCP_SERVICE_ACCOUNT_JSON: ((yuzu-cert-service-account.json/Notes))
+  - task: generate-certs
+    file: log-cache-ci/tasks/generate-certs/generate-certs.yml
+    attempts: 3
+    params:
+      CERT_DOMAINS: "*.yuzu.cf-denver.com,yuzu.cf-denver.com"
+      CERT_EMAIL: "cf-log-cache@pivotal.io"
+  - task: archive-certs
+    file: log-cache-ci/tasks/generate-certs/archive-certs.yml
+    params:
+      ENV_NAME: "yuzu"
+  - put: certs
+    params:
+      file: archived-certs/yuzu-certs-*.tgz
+
+- name: install-certs
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: certs
+      trigger: true
+      passed: ["generate-certs"]
+  - task: prepare-service-account
+    file: log-cache-ci/tasks/generate-certs/prepare-service-account.yml
+    params:
+      GCP_SERVICE_ACCOUNT_JSON: ((yuzu-cert-service-account.json/Notes))
+  - task: extract-certs
+    file: log-cache-ci/tasks/generate-certs/extract-certs.yml
+  - task: install-certs
+    file: log-cache-ci/tasks/generate-certs/install-certs.yml
+    params:
+      PROJECT_NAME: "cf-denver"
+      ENV_NAME: "yuzu"

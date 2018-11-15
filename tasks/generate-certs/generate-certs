@@ -1,0 +1,15 @@
+#!/bin/sh
+set -ex
+
+gcp_credentials_json_file="./gcp-service-account/service-account.json"
+cert_api_url="https://acme-v02.api.letsencrypt.org/directory"
+output_dir="./certs"
+cert_directory_name="generated"
+
+certbot certonly -n --server ${cert_api_url} --agree-tos \
+  --dns-google --dns-google-credentials "${gcp_credentials_json_file}" \
+  --dns-google-propagation-seconds 90 \
+  --config-dir "${output_dir}" --logs-dir "${output_dir}" --work-dir "${output_dir}" \
+  --cert-name="${cert_directory_name}" \
+  -d "${CERT_DOMAINS}" \
+  -m "${CERT_EMAIL}"

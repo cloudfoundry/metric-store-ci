@@ -1,0 +1,4 @@
+#!/bin/bash
+set -ex
+
+tar -xzvf certs/*.tgz -C extracted-certs

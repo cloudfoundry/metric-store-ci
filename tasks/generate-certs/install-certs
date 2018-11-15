@@ -1,0 +1,21 @@
+#!/bin/bash
+set -ex
+
+cert_name="${ENV_NAME}-$(date +"%Y-%m-%d-%H-%M-%S")"
+
+pushd gcp-service-account
+  gcloud auth activate-service-account --key-file service-account.json
+popd
+
+pushd extracted-certs
+  gcloud config set project "${PROJECT_NAME}"
+
+  old_cert_url="$(gcloud compute target-https-proxies describe ${ENV_NAME}-https-proxy --format 'value(sslCertificates)')"
+
+  gcloud compute ssl-certificates create "${cert_name}" --certificate fullchain.pem --private-key privkey.pem
+  gcloud compute target-https-proxies list
+  gcloud compute target-https-proxies update ${ENV_NAME}-https-proxy --ssl-certificates "${cert_name}"
+
+  gcloud compute ssl-certificates delete -q "${old_cert_url}"
+  gcloud compute ssl-certificates list | grep "${ENV_NAME}"
+popd

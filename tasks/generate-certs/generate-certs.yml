@@ -1,0 +1,22 @@
+---
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: certbot/dns-google
+    tag: latest
+
+inputs:
+  - name: gcp-service-account
+  - name: log-cache-ci
+
+outputs:
+  - name: certs
+
+params:
+  CERT_DOMAINS:
+  CERT_EMAIL:
+
+run:
+  path: log-cache-ci/tasks/generate-certs/generate-certs

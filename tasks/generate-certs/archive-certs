@@ -1,0 +1,9 @@
+#!/bin/bash
+set -ex
+
+cert_directory_name="generated"
+timestamp=$(date +"%Y_%m_%d_%H_%M_%S")
+
+tar -chzvf archived-certs/${ENV_NAME}-certs-${timestamp}.tgz \
+    -C certs/live/${cert_directory_name} \
+    fullchain.pem privkey.pem
