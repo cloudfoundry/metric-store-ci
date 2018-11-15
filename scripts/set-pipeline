@@ -190,7 +190,7 @@ function find_pipeline {
 function validate_usage {
     local query=${1}
 
-    if [ "$query" = "-h" ] || [ "$query" = "--help" ] || [ -z "$pipeline" ]; then
+    if [ "$query" = "-h" ] || [ "$query" = "--help" ] || [ -z "$query" ]; then
         print_usage
         exit 1
     fi
