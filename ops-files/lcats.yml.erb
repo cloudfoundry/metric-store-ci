@@ -7,3 +7,7 @@
     uaa_url: https://uaa.<%= ENV["SYS_DOMAIN"] %>
     skip_cert_verify: true
 
+- type: replace
+  path: /instance_groups/name=lcats/jobs/name=lcats/consumes?/log-cache?
+  value:
+    from: log-cache
