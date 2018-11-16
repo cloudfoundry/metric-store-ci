@@ -53,6 +53,12 @@ resources:
     uri: https://github.com/cloudfoundry/cf-deployment
     branch: master
 
+- name: iso-cf-d
+  type: git
+  source:
+    branch: loggregator-iso-segments-2
+    uri: https://github.com/cloudfoundry/cf-deployment
+
 - name: cf-deployment-concourse-tasks
   type: git
   source:
@@ -637,6 +643,7 @@ jobs:
     - get: bbl-state
       resource: denver-locks
     - get: cf-deployment
+    - get: iso-cf-d
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
   - task: create-slack-message
@@ -694,6 +701,7 @@ jobs:
       inputs:
       - name: bbl-state
       - name: cf-deployment
+      - name: iso-cf-d
       - name: log-cache-ci
       outputs:
       - name: ops-files
@@ -707,6 +715,9 @@ jobs:
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
+          cp cf-deployment/operations/test/add-persistent-isolation-segment-router.yml ops-files
+          cp cf-deployment/operations/test/add-persistent-isolation-segment-diego-cell.yml ops-files
+          cp iso-cf-d/operations/test/add-persistent-isolation-segment-logging-system.yml ops-files
 
           cat <<EOT >> ops-files/test-clients.yml
           - type: replace
@@ -968,6 +979,16 @@ jobs:
                 extended_key_usage:
                 - client_auth
           - type: replace
+            path: /variables/name=isolated_log_cache_to_loggregator_agent?
+            value:
+              name: isolated_log_cache_to_loggregator_agent
+              type: certificate
+              options:
+                ca: isolated_loggregator_ca
+                common_name: log-cache
+                extended_key_usage:
+                - client_auth
+          - type: replace
             path: /instance_groups/name=doppler/jobs/name=log-cache-nozzle/properties/logs_provider/tls
             value:
               ca_cert: "((log_cache_to_logs_provider.ca))"
@@ -985,6 +1006,34 @@ jobs:
               ca_cert: "((log_cache_to_loggregator_agent.ca))"
               cert: "((log_cache_to_loggregator_agent.certificate))"
               key: "((log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=isolated-doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((isolated_log_cache_to_loggregator_agent.ca))"
+              cert: "((isolated_log_cache_to_loggregator_agent.certificate))"
+              key: "((isolated_log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=isolated-scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((isolated_log_cache_to_loggregator_agent.ca))"
+              cert: "((isolated_log_cache_to_loggregator_agent.certificate))"
+              key: "((isolated_log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: loggregator
+          - type: replace
+            path: /instance_groups/name=isolated-doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: isolated_loggregator
+          - type: replace
+            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: loggregator
+          - type: replace
+            path: /instance_groups/name=isolated-scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: isolated_loggregator
           EOT
 
           cat <<EOT >> ops-files/cf-deployment-metric-store-candidate-changes.yml
@@ -1011,10 +1060,13 @@ jobs:
         bosh-speed.yml
         use-log-cache-latest.yml
         metric-store.yml
-        cf-deployment-log-cache-candidate-changes.yml
-        cf-deployment-metric-store-candidate-changes.yml
         grafana-in-cf.yml
         metric-registrar-in-cf.yml
+        add-persistent-isolation-segment-router.yml
+        add-persistent-isolation-segment-diego-cell.yml
+        add-persistent-isolation-segment-logging-system.yml
+        cf-deployment-log-cache-candidate-changes.yml
+        cf-deployment-metric-store-candidate-changes.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
