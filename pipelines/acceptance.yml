@@ -12,7 +12,6 @@ groups:
   - log-cache-master-promotion
   - metric-store-release-elect-promotion
   - metric-store-master-promotion
-  - generate-certs
 - name: log-cache
   jobs:
   - log-cache-bump-submodule
@@ -102,7 +101,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
-    branch: mg-hw-certs
+    branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-ci-docker-images
@@ -1459,15 +1458,3 @@ jobs:
     params:
       rebase: true
       repository: committed-leadership-election-release
-
-- name: generate-certs
-  plan:
-  - get: log-cache-ci
-  - task: prepare-service-account
-    file: log-cache-ci/tasks/generate-certs/prepare-service-account.yml
-    params:
-      GCP_SERVICE_ACCOUNT_JSON: ((envs-gcp-service-account.json/Notes))
-  - task: generate-certs
-    file: log-cache-ci/tasks/generate-certs/certs.yml
-  - task: show-me-the-certs
-    file: log-cache-ci/tasks/generate-certs/show-certs.yml
