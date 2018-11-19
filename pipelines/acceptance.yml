@@ -715,8 +715,8 @@ jobs:
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
-          cp cf-deployment/operations/test/add-persistent-isolation-segment-router.yml ops-files
-          cp cf-deployment/operations/test/add-persistent-isolation-segment-diego-cell.yml ops-files
+          cp iso-cf-d/operations/test/add-persistent-isolation-segment-router.yml ops-files
+          cp iso-cf-d/operations/test/add-persistent-isolation-segment-diego-cell.yml ops-files
           cp iso-cf-d/operations/test/add-persistent-isolation-segment-logging-system.yml ops-files
 
           cat <<EOT >> ops-files/test-clients.yml
