@@ -851,64 +851,6 @@ jobs:
                       ca_cert: ((logs_provider.ca))
                       cert: ((logs_provider.certificate))
                       key: ((logs_provider.private_key))
-              - name: metric-store-expvar-forwarder
-                release: metric-store
-                properties:
-                  counters:
-                  - addr: http://localhost:6060/debug/vars
-                    name: egress
-                    source_id: metric-store
-                    template: "{{.LogCache.Egress}}"
-                  - addr: http://localhost:6060/debug/vars
-                    name: ingress
-                    source_id: metric-store
-                    template: "{{.LogCache.Ingress}}"
-                  - addr: http://localhost:6060/debug/vars
-                    name: dropped
-                    source_id: metric-store
-                    template: "{{.LogCache.Dropped}}"
-                  - addr: http://localhost:6060/debug/vars
-                    name: promql-timeout
-                    source_id: metric-store
-                    template: "{{.LogCache.PromQLTimeout}}"
-                  - addr: http://localhost:6061/debug/vars
-                    name: egress
-                    source_id: metric-store-nozzle
-                    template: "{{.Nozzle.Egress}}"
-                  - addr: http://localhost:6061/debug/vars
-                    name: ingress
-                    source_id: metric-store-nozzle
-                    template: "{{.Nozzle.Ingress}}"
-                  - addr: http://localhost:6061/debug/vars
-                    name: err
-                    source_id: metric-store-nozzle
-                    template: "{{.Nozzle.Err}}"
-                  - addr: http://localhost:6061/debug/vars
-                    name: dropped
-                    source_id: metric-store-nozzle
-                    template: "{{.Nozzle.Dropped}}"
-                  gauges:
-                  - addr: http://localhost:6065/debug/vars
-                    name: last-uaa-latency
-                    source_id: metric-store-cf-auth-proxy
-                    template: "{{.CFAuthProxy.LastUAALatency}}"
-                  - addr: http://localhost:6065/debug/vars
-                    name: last-capi-v3-apps-latency
-                    source_id: metric-store-cf-auth-proxy
-                    template: "{{.CFAuthProxy.LastCAPIV3AppsLatency}}"
-                  - addr: http://localhost:6065/debug/vars
-                    name: last-capi-v2-list-service-instances-latency
-                    source_id: metric-store-cf-auth-proxy
-                    template: "{{.CFAuthProxy.LastCAPIV2ListServiceInstancesLatency}}"
-                  - addr: http://localhost:6065/debug/vars
-                    name: last-capi-v4-log-access-latency
-                    source_id: metric-store-cf-auth-proxy
-                    template: "{{.CFAuthProxy.LastCAPIV4LogAccessLatency}}"
-                  - addr: http://localhost:6065/debug/vars
-                    name: last-capi-v2-service-instances-latency
-                    source_id: metric-store-cf-auth-proxy
-                    template: "{{.CFAuthProxy.LastCAPIV2ServiceInstancesLatency}}"
-                  maps: []
               - name: route_registrar
                 release: routing
                 properties:
@@ -974,46 +916,6 @@ jobs:
               ca_cert: "((log_cache_to_logs_provider.ca))"
               cert: "((log_cache_to_logs_provider.certificate))"
               key: "((log_cache_to_logs_provider.private_key))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
-            value:
-              ca_cert: "((log_cache_to_loggregator_agent.ca))"
-              cert: "((log_cache_to_loggregator_agent.certificate))"
-              key: "((log_cache_to_loggregator_agent.private_key))"
-          - type: replace
-            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
-            value:
-              ca_cert: "((log_cache_to_loggregator_agent.ca))"
-              cert: "((log_cache_to_loggregator_agent.certificate))"
-              key: "((log_cache_to_loggregator_agent.private_key))"
-          - type: replace
-            path: /instance_groups/name=isolated-doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
-            value:
-              ca_cert: "((isolated_log_cache_to_loggregator_agent.ca))"
-              cert: "((isolated_log_cache_to_loggregator_agent.certificate))"
-              key: "((isolated_log_cache_to_loggregator_agent.private_key))"
-          - type: replace
-            path: /instance_groups/name=isolated-scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
-            value:
-              ca_cert: "((isolated_log_cache_to_loggregator_agent.ca))"
-              cert: "((isolated_log_cache_to_loggregator_agent.certificate))"
-              key: "((isolated_log_cache_to_loggregator_agent.private_key))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
-            value:
-              from: loggregator
-          - type: replace
-            path: /instance_groups/name=isolated-doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
-            value:
-              from: isolated_loggregator
-          - type: replace
-            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
-            value:
-              from: loggregator
-          - type: replace
-            path: /instance_groups/name=isolated-scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
-            value:
-              from: isolated_loggregator
           EOT
 
           cat <<EOT >> ops-files/cf-deployment-metric-store-candidate-changes.yml
