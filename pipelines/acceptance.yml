@@ -864,10 +864,6 @@ jobs:
                     source_id: metric-store
                     template: "{{.LogCache.Ingress}}"
                   - addr: http://localhost:6060/debug/vars
-                    name: expired
-                    source_id: metric-store
-                    template: "{{.LogCache.Expired}}"
-                  - addr: http://localhost:6060/debug/vars
                     name: dropped
                     source_id: metric-store
                     template: "{{.LogCache.Dropped}}"
@@ -892,22 +888,6 @@ jobs:
                     source_id: metric-store-nozzle
                     template: "{{.Nozzle.Dropped}}"
                   gauges:
-                  - addr: http://localhost:6060/debug/vars
-                    name: cache-period
-                    source_id: metric-store
-                    template: "{{.LogCache.CachePeriod}}"
-                  - addr: http://localhost:6060/debug/vars
-                    name: store-size
-                    source_id: metric-store
-                    template: "{{.LogCache.StoreSize}}"
-                  - addr: http://localhost:6060/debug/vars
-                    name: total-system-memory
-                    source_id: metric-store
-                    template: "{{.LogCache.TotalSystemMemory}}"
-                  - addr: http://localhost:6060/debug/vars
-                    name: available-system-memory
-                    source_id: metric-store
-                    template: "{{.LogCache.AvailableSystemMemory}}"
                   - addr: http://localhost:6065/debug/vars
                     name: last-uaa-latency
                     source_id: metric-store-cf-auth-proxy
