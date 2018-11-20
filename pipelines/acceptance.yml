@@ -285,6 +285,15 @@ resources:
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
+- name: notification-cf-deploy-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-notifications
+    key: log-cache-slack-cf-deploy-version
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
 jobs:
 ###############################################################################
 # LOG CACHE
@@ -646,8 +655,11 @@ jobs:
     - get: iso-cf-d
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
+    - get: notification-cf-deploy-version
+      params: { bump: patch }
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
+    input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
     params:
       TITLE: Log Cache CF Deploy
   - aggregate:
@@ -968,6 +980,8 @@ jobs:
       SYSTEM_DOMAIN: ((sys_domain))
   on_failure:
     do:
+    - put: notification-cf-deploy-version
+      params: { file: notification-cf-deploy-version/version }
     - put: slack-alert
       params:
         silent: true
@@ -975,6 +989,21 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - task: enable-disable-alert-success
+      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+      input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text_file: modified-metadata/alert_toggle
+        attachments_file: modified-metadata/alert_message_success
+    - put: notification-cf-deploy-version
+      params: { bump: minor }
 
 - name: lcats
   serial_groups: [cf-deploy]
