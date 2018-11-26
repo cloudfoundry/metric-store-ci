@@ -935,6 +935,46 @@ jobs:
               ca_cert: "((log_cache_to_logs_provider.ca))"
               cert: "((log_cache_to_logs_provider.certificate))"
               key: "((log_cache_to_logs_provider.private_key))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((log_cache_to_loggregator_agent.ca))"
+              cert: "((log_cache_to_loggregator_agent.certificate))"
+              key: "((log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((log_cache_to_loggregator_agent.ca))"
+              cert: "((log_cache_to_loggregator_agent.certificate))"
+              key: "((log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=isolated-doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((isolated_log_cache_to_loggregator_agent.ca))"
+              cert: "((isolated_log_cache_to_loggregator_agent.certificate))"
+              key: "((isolated_log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=isolated-scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
+            value:
+              ca_cert: "((isolated_log_cache_to_loggregator_agent.ca))"
+              cert: "((isolated_log_cache_to_loggregator_agent.certificate))"
+              key: "((isolated_log_cache_to_loggregator_agent.private_key))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: loggregator
+          - type: replace
+            path: /instance_groups/name=isolated-doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: isolated_loggregator
+          - type: replace
+            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: loggregator
+          - type: replace
+            path: /instance_groups/name=isolated-scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
+            value:
+              from: isolated_loggregator
           EOT
 
           cat <<EOT >> ops-files/cf-deployment-metric-store-candidate-changes.yml
