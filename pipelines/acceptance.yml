@@ -863,6 +863,13 @@ jobs:
                       ca_cert: ((logs_provider.ca))
                       cert: ((logs_provider.certificate))
                       key: ((logs_provider.private_key))
+              - name: prom_scraper
+                release: loggregator-agent
+                consumes:
+                  loggregator:
+                    from: loggregator
+                properties:
+                  metrics_urls: "http://localhost:6060/metrics,http://localhost:6061/metrics,http://localhost:6065/metrics"
               - name: route_registrar
                 release: routing
                 properties:
