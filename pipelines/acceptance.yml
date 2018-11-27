@@ -836,7 +836,7 @@ jobs:
               vm_type: minimal
               azs:
               - z1
-              instances: 2
+              instances: 3
               persistent_disk_type: 5GB
               jobs:
               - name: metric-store
