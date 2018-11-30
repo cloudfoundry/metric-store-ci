@@ -80,6 +80,9 @@ jobs:
             path: /instance_groups/name=metric-store-blackbox/azs
             value: [z2, z3]
           - type: replace
+            path: /instance_groups/name=metric-store-blackbox/instances
+            value: 2
+          - type: replace
             path: /instance_groups/name=metric-store-blackbox/networks
             value: [{name: pws-cf}]
           - type: replace
