@@ -704,7 +704,7 @@ jobs:
           release-tarball: metric-registrar-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
-          RELEASE_TARBALL_GLOB: "metric-registrar-*"
+          RELEASE_TARBALL_GLOB: "metric-*"
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
