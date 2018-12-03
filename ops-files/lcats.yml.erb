@@ -6,9 +6,3 @@
     log_cache_cf_auth_proxy: https://log-cache.<%= ENV["SYS_DOMAIN"] %>
     uaa_url: https://uaa.<%= ENV["SYS_DOMAIN"] %>
     skip_cert_verify: true
-
-- type: replace
-  path: /instance_groups/name=lcats/jobs/name=lcats/consumes?/log-cache?
-  value:
-    from: log_cache
-    deployment: cf
