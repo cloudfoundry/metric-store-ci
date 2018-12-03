@@ -672,6 +672,7 @@ jobs:
           bosh-release-dir: log-cache-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
+          JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - do:
       - get: metric-store-release
         trigger: true
