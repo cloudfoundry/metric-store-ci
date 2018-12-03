@@ -16,6 +16,7 @@ outputs:
 
 params:
   alert_multiple:
+  ignore_first:
 
 run:
   path: log-cache-ci/tasks/enable-disable-alert-failure/run.sh

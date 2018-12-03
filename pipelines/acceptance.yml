@@ -252,6 +252,11 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
+- name: slack-high-visibility-alert
+  type: slack-notification
+  source:
+    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+
 - name: notification-log-cache-tests-version
   type: semver
   source:
@@ -992,6 +997,18 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
+    - task: enable-disable-alert-failure
+      file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
+      input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
+      params: { alert_multiple: 5, ignore_first: true }
+    - put: slack-high-visibility-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        text_file: modified-metadata/alert_toggle
+        attachments_file: modified-metadata/alert_message_failure
   on_success:
     do:
     - task: enable-disable-alert-success
