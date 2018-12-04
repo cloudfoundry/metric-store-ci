@@ -64,6 +64,7 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-release
+      trigger: true
     - get: log-cache-ci
     - get: log-cache-deployments
       params: {pre: dev}
@@ -122,6 +123,88 @@ jobs:
         text: ":broken_heart: Failed to deploy :metric: Metric Store: to :knife: PWS Edge
           Details here: https://log-cache.ci.cf-app.com/teams/main/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
 
+- name: blackbox-deploy
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: metric-store-release
+      passed: [metric-store-edge-deploy]
+      trigger: true
+    - get: log-cache-ci
+    - get: log-cache-deployments
+  - aggregate:
+    - task: upload-metric-store
+      file: log-cache-ci/tasks/upload-release/task.yml
+      image: cf-deployment-concourse-tasks-image
+      input_mapping:
+        bosh-release-dir: metric-store-release
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+        FORCE: true
+  - task: metric-store-edge-blackbox-deploy
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: metric-store-release
+      - name: log-cache-deployments
+      params:
+        DEPLOYMENT_NAME: metric-store-edge-blackbox
+        MANIFEST_FILE: manifests/metric-store-blackbox.yml
+        SECRETS_FILE: shared-secrets.yml
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        DATADOG_API_KEY: ((datadog-api-key-pws.yml/Notes/datadog_api_key))
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          cat > on-the-fly.yml <<EOF
+          - type: replace
+            path: /name
+            value: "metric-store-edge-blackbox"
+          - type: replace
+            path: /instance_groups/name=metric-store-blackbox/azs
+            value: [z2, z3]
+          - type: replace
+            path: /instance_groups/name=metric-store-blackbox/instances
+            value: 2
+          - type: replace
+            path: /instance_groups/name=metric-store-blackbox/networks
+            value: [{name: pws-cf}]
+          - type: replace
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/consumes
+            value:
+              metric-store: {from: metric-store-edge, deployment: metric-store-edge}
+              cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
+          - type: replace
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties?
+            value:
+              source_id: metric-store-edge
+              cf_blackbox:
+                enabled: true
+                metric_store_address: https://metric-store-edge.run.pivotal.io
+                client_id: ((pws-datadog-forwarder-client/Username))
+                client_secret: ((pws-datadog-forwarder-client/Password))
+          EOF
+
+          bosh \
+            deploy "metric-store-release/$MANIFEST_FILE" \
+            --deployment "$DEPLOYMENT_NAME" \
+            --non-interactive \
+            --ops-file on-the-fly.yml
+
 - name: metric-store-edge-nightly-redeploy
   serial_groups: [chaos]
   plan:
@@ -135,7 +218,7 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-release
-      passed: [metric-store-edge-deploy]
+      passed: [blackbox-deploy]
     - get: nightly
       trigger: true
   - task: redeploy
@@ -191,7 +274,7 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-release
-      passed: [metric-store-edge-deploy]
+      passed: [blackbox-deploy]
     - get: every-23-hours
       trigger: true
   - task: kill-vm
