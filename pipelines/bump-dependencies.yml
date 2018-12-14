@@ -90,7 +90,7 @@ jobs:
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
     params:
-      VERSION: &log-cache-golang-version "1.11.1"
+      VERSION: &log-cache-golang-version 1.11.3
   - do:
     - task: bump-log-cache-release
       image: cf-deployment-concourse-tasks-image
