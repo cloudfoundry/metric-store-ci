@@ -86,6 +86,25 @@ def remove_blobs(from_version)
 end
 
 def create_config_private
+  if ENV.fetch("JSON_KEY", "").empty?
+    create_s3_config_private
+  else
+    create_gcs_config_private
+  end
+end
+
+def create_gcs_config_private
+  p = %Q@---
+blobstore:
+  options:
+    credentials_source: static
+    json_key: |
+      #{ENV.fetch("JSON_KEY").tr("\n", "")}@
+
+  File.open("config/private.yml", "w") { |f| f.write(p) }
+end
+
+def create_s3_config_private
   p = %Q|---
 blobstore:
   provider: s3
