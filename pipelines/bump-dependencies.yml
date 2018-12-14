@@ -140,9 +140,7 @@ jobs:
         updated-release-repo: updated-metric-store-release
       params:
         VERSION: *golang-version
-        ACCESS_KEY_ID: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
-        SECRET_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
-        BUCKET_NAME: log-cache-release-blobs
+        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - task: commit-metric-store-release
       image: cf-deployment-concourse-tasks-image
       file: log-cache-ci/tasks/commit/task.yml
