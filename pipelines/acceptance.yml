@@ -723,6 +723,7 @@ jobs:
           set -e
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
+          cp cf-deployment/operations/scale-to-one-az.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
 
@@ -962,6 +963,7 @@ jobs:
       SYSTEM_DOMAIN: ((sys_domain))
       OPS_FILES: |
         use-compiled-releases.yml
+        scale-to-one-az.yml
         test-clients.yml
         bosh-speed.yml
         use-log-cache-latest.yml
