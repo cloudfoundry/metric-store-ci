@@ -90,7 +90,7 @@ jobs:
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
     params:
-      VERSION: &golang-version "1.11.1"
+      VERSION: &log-cache-golang-version "1.11.1"
   - do:
     - task: bump-log-cache-release
       image: cf-deployment-concourse-tasks-image
@@ -100,7 +100,7 @@ jobs:
       output_mapping:
         updated-release-repo: updated-log-cache-release
       params:
-        VERSION: *golang-version
+        VERSION: *log-cache-golang-version
         ACCESS_KEY_ID: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
         SECRET_ACCESS_KEY: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
         BUCKET_NAME: log-cache-release-blobs
@@ -129,7 +129,7 @@ jobs:
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
     params:
-      VERSION: &golang-version 1.11.1
+      VERSION: &metric-store-golang-version 1.11.3
   - do:
     - task: bump-metric-store-release
       image: cf-deployment-concourse-tasks-image
@@ -139,7 +139,7 @@ jobs:
       output_mapping:
         updated-release-repo: updated-metric-store-release
       params:
-        VERSION: *golang-version
+        VERSION: *metric-store-golang-version
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - task: commit-metric-store-release
       image: cf-deployment-concourse-tasks-image
