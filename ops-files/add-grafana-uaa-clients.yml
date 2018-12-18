@@ -11,7 +11,7 @@
     authorities: uaa.none
     scope: openid
     secret: "((uaa_clients_grafana_secret))"
-    redirect-uri: http://grafana.((system_domain))/
+    redirect-uri: http://grafana.((system_domain))/login/generic_oauth
 
 - type: replace
   path: /variables/-
