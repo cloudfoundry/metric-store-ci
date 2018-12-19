@@ -1,3 +1,10 @@
+<%
+  LOG_CACHE_GOLANG_VERSION    = '1.11.3'
+  METRIC_STORE_GOLANG_VERSION = '1.11.3'
+
+  LOG_CACHE_GOLANG_MINOR_VERSION = LOG_CACHE_GOLANG_VERSION.split(".").take(2).join(".")
+%>
+
 resources:
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
@@ -49,7 +56,7 @@ jobs:
       - name: updated-log-cache-ci
       - name: log-cache-base-build
       params:
-        GO_VERSION: &golang-minor-version "1.11"
+        GO_VERSION: <%= LOG_CACHE_GOLANG_MINOR_VERSION %>
       run:
         path: bash
         args:
@@ -90,7 +97,7 @@ jobs:
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
     params:
-      VERSION: &log-cache-golang-version 1.11.3
+      VERSION: <%= LOG_CACHE_GOLANG_VERSION %>
   - do:
     - task: bump-log-cache-release
       image: cf-deployment-concourse-tasks-image
@@ -100,7 +107,7 @@ jobs:
       output_mapping:
         updated-release-repo: updated-log-cache-release
       params:
-        VERSION: *log-cache-golang-version
+        VERSION: <%= LOG_CACHE_GOLANG_VERSION %>
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - task: commit-log-cache-release
       image: cf-deployment-concourse-tasks-image
@@ -127,7 +134,7 @@ jobs:
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/download-golang/task.yml
     params:
-      VERSION: &metric-store-golang-version 1.11.3
+      VERSION: <%= METRIC_STORE_GOLANG_VERSION %>
   - do:
     - task: bump-metric-store-release
       image: cf-deployment-concourse-tasks-image
@@ -137,7 +144,7 @@ jobs:
       output_mapping:
         updated-release-repo: updated-metric-store-release
       params:
-        VERSION: *metric-store-golang-version
+        VERSION: <%= METRIC_STORE_GOLANG_VERSION %>
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - task: commit-metric-store-release
       image: cf-deployment-concourse-tasks-image
