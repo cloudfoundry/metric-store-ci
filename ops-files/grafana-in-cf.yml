@@ -35,7 +35,7 @@
 - path: /releases/-
   type: replace
   value:
-    name: prometheus
+    name: grafana
     version: latest
 
 - path: /variables/-
