@@ -15,12 +15,12 @@
     instances: 1
     jobs:
     - name: grafana
-      release: grafana
+      release: prometheus
       properties:
         grafana:
-          admin_password: "((grafana_admin_password))"
-          admin_username: admin
-          root_url: http://grafana.((system_domain))/
+          security:
+            admin_password: "((grafana_admin_password))"
+            admin_username: admin
     - name: route_registrar
       release: routing
       properties:
