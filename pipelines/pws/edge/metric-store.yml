@@ -53,6 +53,7 @@ resources:
 
 jobs:
 - name: metric-store-edge-deploy
+  serial: true
   plan:
   - put: slack-alert
     params:
