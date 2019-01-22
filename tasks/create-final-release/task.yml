@@ -21,5 +21,4 @@ run:
   path: log-cache-ci/tasks/create-final-release/task
 
 params:
-  S3_ACCESS_KEY:
-  S3_SECRET_KEY:
+  JSON_KEY:
