@@ -636,23 +636,17 @@ jobs:
 
             export WORKSPACE="$PWD"
 
-            mkdir -p go
-            pushd go
-              export GOPATH="$PWD"
-              mkdir -p src/code.cloudfoundry.org
-              cp -R "$WORKSPACE/log-cache-cli/" src/code.cloudfoundry.org
-              GOOS=linux go get -d ./...
-              GOOS=darwin go get -d ./...
-              GOOS=windows go get -d ./...
+            pushd log-cache-cli
+              go mod download
             popd
 
             mkdir github-release/builds
-            pushd "$GOPATH/src/code.cloudfoundry.org/log-cache-cli/cmd/cf-lc-plugin"
+            pushd "log-cache-cli/cmd/cf-lc-plugin"
               GOOS=linux go build -ldflags "-X main.version=$version" -o $WORKSPACE/github-release/builds/log-cache-cf-plugin-linux
               GOOS=darwin go build -ldflags "-X main.version=$version" -o $WORKSPACE/github-release/builds/log-cache-cf-plugin-darwin
               GOOS=windows go build -ldflags "-X main.version=$version" -o $WORKSPACE/github-release/builds/log-cache-cf-plugin-windows
             popd
-            pushd "$GOPATH/src/code.cloudfoundry.org/log-cache-cli/cmd/lc"
+            pushd "log-cache-cli/cmd/lc"
               GOOS=linux go build -ldflags "-X main.version=$version" -o $WORKSPACE/github-release/builds/log-cache-linux
               GOOS=darwin go build -ldflags "-X main.version=$version" -o $WORKSPACE/github-release/builds/log-cache-darwin
               GOOS=windows go build -ldflags "-X main.version=$version" -o $WORKSPACE/github-release/builds/log-cache-windows
