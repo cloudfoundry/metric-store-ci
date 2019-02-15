@@ -56,6 +56,12 @@ resources:
     uri: https://github.com/cloudfoundry/cf-deployment
     branch: master
 
+- name: cf-deployment-delete-me-when-merged
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/cf-deployment
+    branch: add-system-metrics-agent
+
 - name: cf-deployment-concourse-tasks
   type: git
   source:
@@ -669,6 +675,7 @@ jobs:
     - get: bbl-state
       resource: denver-locks
     - get: cf-deployment
+    - get: cf-deployment-delete-me-when-merged
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
     - get: notification-cf-deploy-version
@@ -730,6 +737,7 @@ jobs:
       inputs:
       - name: bbl-state
       - name: cf-deployment
+      - name: cf-deployment-delete-me-when-merged
       - name: log-cache-ci
       outputs:
       - name: ops-files
@@ -742,6 +750,7 @@ jobs:
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
+          cp cf-deployment-delete-me-when-merged/operations/experimental/add-system-metrics-agent.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
 
@@ -968,6 +977,7 @@ jobs:
               metric-store:
                 shared: true
           EOT
+
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
     params:
@@ -984,6 +994,7 @@ jobs:
         scale-to-one-az.yml
         test-clients.yml
         bosh-speed.yml
+        add-system-metrics-agent.yml
         use-log-cache-latest.yml
         metric-store.yml
         grafana-in-cf.yml
