@@ -92,6 +92,7 @@ alert_disable() {
 
 setup_github_ssh() {
   local github_private_key=${1}
+  echo 'setting up ssh for github ...'
 
   mkdir -p ~/.ssh/
 

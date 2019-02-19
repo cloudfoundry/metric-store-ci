@@ -8,7 +8,7 @@ export GOPATH="$PWD/go"
 
 set +x
 if ! [[ -z "${GITHUB_PRIVATE_KEY}" ]]; then
-  setup_github_ssh ${GITHUB_PRIVATE_KEY}
+  setup_github_ssh "${GITHUB_PRIVATE_KEY}"
 fi
 set -x
 
