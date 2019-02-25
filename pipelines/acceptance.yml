@@ -56,6 +56,8 @@ resources:
     uri: https://github.com/cloudfoundry/cf-deployment
     branch: master
 
+# TODO: this is a PR to cf-d branch. CI will break when it is merged + deleted
+# shift over to cf-deployment resource and if merged, the cf-deploy job should not change
 - name: cf-deployment-delete-me-when-merged
   type: git
   source:
@@ -754,6 +756,52 @@ jobs:
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
 
+          # TODO: delete these ops when cf-d contains them by default
+          cat <<EOT >> ops-files/cf-PR-add-log-cache-uptime-metric.yml
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/properties/gauges/-
+            value:
+              name: uptime
+              source_id: log-cache
+              addr: http://localhost:6060/debug/vars
+              template: "{{.LogCache.Uptime}}"
+          EOT
+
+          cat <<EOT >> ops-files/cf-PR-log-cache-router-tls.yml
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/external_cert?
+            value: "((logcache_ssl.certificate))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/external_key?
+            value: "((logcache_ssl.private_key))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=route_registrar?
+            value:
+              name: route_registrar
+              release: routing
+              properties:
+                route_registrar:
+                  routes:
+                  - name: log-cache-reverse-proxy
+                    tls_port: 8083
+                    registration_interval: 20s
+                    server_cert_domain_san: log-cache.((system_domain))
+                    uris:
+                    - log-cache.((system_domain))
+                    - "*.log-cache.((system_domain))"
+          - type: replace
+            path: /variables/name=logcache_ssl?
+            value:
+              name: logcache_ssl
+              type: certificate
+              options:
+                ca: service_cf_internal_ca
+                common_name: log-cache
+                alternative_names:
+                - log-cache.((system_domain))
+                - "*.log-cache.((system_domain))"
+          EOT
+
           cat <<EOT >> ops-files/test-clients.yml
           - type: replace
             path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/lcats?
@@ -995,6 +1043,8 @@ jobs:
         test-clients.yml
         bosh-speed.yml
         add-system-metrics-agent.yml
+        cf-PR-add-log-cache-uptime-metric.yml
+        cf-PR-log-cache-router-tls.yml
         use-log-cache-latest.yml
         metric-store.yml
         grafana-in-cf.yml
