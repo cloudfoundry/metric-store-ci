@@ -12,6 +12,7 @@ groups:
   - log-cache-master-promotion
   - metric-store-release-elect-promotion
   - metric-store-master-promotion
+  - create-metric-store-dev-release
 - name: log-cache
   jobs:
   - log-cache-bump-submodule
@@ -48,6 +49,11 @@ resource_types:
   source:
     repository: cfcommunity/slack-notification-resource
     tag: latest
+
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
 
 resources:
 - name: cf-deployment
@@ -318,6 +324,22 @@ resources:
     key: log-cache-slack-cf-deploy-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-dev-release-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-notifications
+    key: metric-store-dev-release-version
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-dev-release
+  type: gcs-resource
+  source:
+    bucket: log-cache-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: metric-store-dev-releases/release-(.*).tgz
 
 jobs:
 ###############################################################################
@@ -668,6 +690,31 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
+
+- name: create-metric-store-dev-release
+  plan:
+    - aggregate:
+      - get: log-cache-ci
+      - get: metric-store-release
+        trigger: true
+        passed: ["metric-store-bump-submodule"]
+      - get: metric-store-dev-release-version
+        params: { pre: dev }
+      - get: cf-deployment-concourse-tasks-image
+    - task: create-dev-release
+      file: log-cache-ci/tasks/create-dev-release/task.yml
+      image: cf-deployment-concourse-tasks-image
+      input_mapping:
+        bosh-dev-release-dir: metric-store-release
+        bosh-dev-release-version: metric-store-dev-release-version
+      params:
+        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+    - put: metric-store-dev-release
+      params:
+        file: metric-store-dev-release/release-*.tgz
+        content_type: application/octet-stream
+    - put: metric-store-dev-release-version
+      params: { file: metric-store-dev-release-version/version }
 
 - name: cf-deploy
   serial_groups: [cf-deploy]

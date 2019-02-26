@@ -1,0 +1,16 @@
+---
+platform: linux
+
+inputs:
+- name: log-cache-ci
+- name: bosh-dev-release-dir
+- name: bosh-dev-release-version
+
+outputs:
+- name: metric-store-dev-release
+
+run:
+  path: log-cache-ci/tasks/create-dev-release/task
+
+params:
+  JSON_KEY:

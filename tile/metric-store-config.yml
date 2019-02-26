@@ -1,7 +1,4 @@
 product-name: observability-store
-product-properties:
-  .telegraf_rlp.scrape_port:
-    value: 9090
 network-properties:
   network:
     name: optimus-pas-subnet
@@ -11,12 +8,3 @@ network-properties:
     - name: us-central1-c
   singleton_availability_zone:
     name: us-central1-a
-resource-config:
-  grafana:
-    instances: 0
-  primus_data:
-    instances: 0
-  primus_query:
-    instances: 0
-  telegraf_rlp:
-    instances: 0

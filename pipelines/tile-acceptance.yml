@@ -6,22 +6,24 @@ resource_types:
       repository: frodenas/gcs-resource
 
 resources:
+  - name: pcf-observability-ci-image
+    type: docker-image
+    source:
+      repository: gcr.io/cf-denver/pcf-observability-ci
+      username: _json_key
+      password: ((release-credentials.yml/Notes/gcp-service-account-key))
+
   - name: log-cache-ci
     type: git
     source:
       uri: git@github.com:cloudfoundry/log-cache-ci
       branch: master
+      private_key: ((github-key-ci.yml/Notes/github_key))
 
   - name: log-cache-deployments
     type: git
     source:
       uri: git@github.com:cloudfoundry/log-cache-deployments
-      branch: master
-
-  - name: p-o11y-store-src
-    type: git
-    source:
-      uri: git@github.com:pivotal/p-o11y-store
       branch: master
       private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -54,6 +56,13 @@ resources:
       branch: master
       private_key: ((github-key-ci.yml/Notes/github_key))
 
+  - name: metric-store-dev-release
+    type: gcs-resource
+    source:
+      bucket: log-cache-ci-notifications
+      json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+      regexp: metric-store-dev-releases/release-(.*).tgz
+
 jobs:
   - name: "🥓 Bake and Install Tile 🥓"
     serial: true
@@ -61,27 +70,16 @@ jobs:
       - aggregate:
         - get: bobble
         - get: concourse-tasks
-        - get: p-o11y-store-src
         - get: log-cache-ci
         - get: log-cache-deployments
         - get: metric-store-release
-          trigger: true
-          params:
-            submodules: all
-            submodule_recursive: true
         - get: p-metric-store-version
           params:
             pre: build
+        - get: metric-store-dev-release
+          trigger: true
+        - get: pcf-observability-ci-image
         attempts: 3
-      - task: "bump metric-store-release"
-        file: concourse-tasks/pipeline/bump-submodule/task.yml
-        input_mapping:
-          release-repo: p-o11y-store-src
-          submodule-repo: metric-store-release
-        params:
-          SUBMODULE_PATH: "metric-store-release"
-          GIT_USER_EMAIL: cf-log-cache@pivotal.io
-          GIT_USER_NAME: Log Cache CI
       - task: "prepare deployment environment"
         file: bobble/ci-tasks/prepare-environment/prepare-environment.yml
         input_mapping:
@@ -89,20 +87,18 @@ jobs:
         params:
           ENV_PATH: gcp/optimus
       - task: "bake and install"
-        file: p-o11y-store-src/ci/tasks/bake_and_install.yml
+        image: pcf-observability-ci-image
+        file: log-cache-ci/tasks/bake_and_install/task.yml
         input_mapping:
           deployment-tools: bobble
-          tile-src: bumped-release-repo
           tile-config: log-cache-ci
           tile-version: p-metric-store-version
         params:
+          OPSMAN_USER: ((log-cache-ops-manager/Username))
+          OPSMAN_PASSWORD: ((log-cache-ops-manager/Password))
           STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
           STEMCELL_SHA: 9bb3663ee35f795f466a65a5fb185c4b650049cd
           PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
-      - put: p-o11y-store-src
-        params:
-          repository: bumped-release-repo
-          rebase: true
     ensure:
       put: p-metric-store-version
       params:

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -exu
+
+dev_version=$(cat bosh-dev-release-version/version)
+
+pushd bosh-dev-release-dir
+  if [[ -n ${JSON_KEY:-} ]]; then
+    cat << EOF > config/private.yml
+---
+blobstore:
+  options:
+    credentials_source: static
+    json_key: |
+      $(echo ${JSON_KEY})
+EOF
+  fi
+
+  bosh create-release --force \
+    --tarball ../metric-store-dev-release/release-${dev_version}.tgz \
+    --version "${dev_version}"
+popd
