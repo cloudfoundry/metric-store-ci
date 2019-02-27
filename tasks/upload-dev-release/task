@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -exu
+
+if [[ -n ${BBL_STATE_DIR:-} ]]; then
+  pushd "bbl-state/$BBL_STATE_DIR"
+    eval "$(bbl print-env)"
+  popd
+fi
+
+: ${BOSH_ENVIRONMENT:?must provide BOSH_* environment variables or BBL_STATE_DIR}
+
+bosh upload-release bosh-release-tarball/$( ls -1 bosh-release-tarball/ | grep tgz)

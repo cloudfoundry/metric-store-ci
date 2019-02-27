@@ -1,0 +1,27 @@
+---
+platform: linux
+
+caches:
+- path: bosh-release-dir/blobs
+
+inputs:
+- name: log-cache-ci
+- name: bbl-state
+  optional: true
+- name: bosh-release-tarball
+
+run:
+  path: log-cache-ci/tasks/upload-dev-release/task
+
+params:
+  # - Optional; must provide this OR the BOSH_* variables below
+  # - Path to the directory containing the `bbl-state.json` file
+  # - The path is relative to root of the `bbl-state` input
+  # - Defaults to the root of the `bbl-state` input
+  BBL_STATE_DIR:
+
+  # - Optional
+  BOSH_ENVIRONMENT:
+  BOSH_CA_CERT:
+  BOSH_CLIENT:
+  BOSH_CLIENT_SECRET:

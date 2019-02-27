@@ -749,16 +749,17 @@ jobs:
           JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - do:
       - get: metric-store-release
+        passed: ["create-metric-store-dev-release"]
+      - get: metric-store-dev-release
         trigger: true
-        passed: ["metric-store-bump-submodule"]
+        passed: ["create-metric-store-dev-release"]
       - task: upload-metric-store-release
-        file: log-cache-ci/tasks/upload-release/task.yml
+        file: log-cache-ci/tasks/upload-dev-release/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          bosh-release-dir: metric-store-release
+          bosh-release-tarball: metric-store-dev-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
-          JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
