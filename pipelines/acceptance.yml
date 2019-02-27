@@ -5,6 +5,7 @@ groups:
   - metric-store-bump-submodule
   - log-cache-docker-images
   - cf-deploy
+  - "🥓 Bake and Install Tile 🥓"
   - log-cache-acceptance-tests-release-bump-submodule
   - lcats
   - cats
@@ -27,6 +28,7 @@ groups:
   jobs:
   - metric-store-bump-submodule
   - cf-deploy
+  - "🥓 Bake and Install Tile 🥓"
   - metric-store-release-elect-promotion
   - metric-store-master-promotion
 - name: log-cache-cli
@@ -115,6 +117,13 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
+- name: log-cache-deployments
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-deployments
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: log-cache-ci-docker-images
   type: git
   source:
@@ -151,6 +160,13 @@ resources:
     repository: logcache/log-cache-gateway
     username: ((docker-hub-ci.yml/Notes/docker-hub-username))
     password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+
+- name: pcf-observability-ci-image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-denver/pcf-observability-ci
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: log-cache-release
   type: git
@@ -270,6 +286,19 @@ resources:
   source:
     uri: https://github.com/vito/grafana-boshrelease
 
+- name: concourse-tasks
+  type: git
+  source:
+    uri: https://github.com/pivotal-cf/concourse-tasks
+    branch: master
+
+- name: bobble
+  type: git
+  source:
+    uri: git@github.com:pivotal/bobble
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: slack-alert
   type: slack-notification
   source:
@@ -333,6 +362,15 @@ resources:
     key: metric-store-dev-release-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: p-metric-store-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-versions
+    key: metric-store-release-acceptance-tile
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    initial_version: 0.0.0
 
 - name: metric-store-dev-release
   type: gcs-resource
@@ -1157,6 +1195,46 @@ jobs:
     - put: notification-cf-deploy-version
       params: { bump: minor }
 
+- name: "🥓 Bake and Install Tile 🥓"
+  plan:
+    - aggregate:
+      - get: bobble
+      - get: concourse-tasks
+      - get: log-cache-ci
+      - get: log-cache-deployments
+      - get: metric-store-release
+      - get: p-metric-store-version
+        params:
+          pre: build
+      - get: metric-store-dev-release
+        trigger: true
+        passed: ["create-metric-store-dev-release"]
+      - get: pcf-observability-ci-image
+      attempts: 3
+    - task: "prepare deployment environment"
+      file: bobble/ci-tasks/prepare-environment/prepare-environment.yml
+      input_mapping:
+        src: log-cache-deployments
+      params:
+        ENV_PATH: gcp/optimus
+    - task: "bake and install"
+      image: pcf-observability-ci-image
+      file: log-cache-ci/tasks/bake_and_install/task.yml
+      input_mapping:
+        deployment-tools: bobble
+        tile-config: log-cache-ci
+        tile-version: p-metric-store-version
+      params:
+        OPSMAN_USER: ((log-cache-ops-manager/Username))
+        OPSMAN_PASSWORD: ((log-cache-ops-manager/Password))
+        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
+        STEMCELL_SHA: 9bb3663ee35f795f466a65a5fb185c4b650049cd
+        PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
+  ensure:
+    put: p-metric-store-version
+    params:
+      file: p-metric-store-version/version
+
 - name: lcats
   serial_groups: [cf-deploy]
   plan:
@@ -1429,7 +1507,7 @@ jobs:
     - get: develop
       resource: metric-store-release
       trigger: true
-      passed: ["cf-deploy"]
+      passed: ["cf-deploy", "🥓 Bake and Install Tile 🥓"]
     - get: metric-store-release-elect
   - put: metric-store-release-elect
     params:
