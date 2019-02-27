@@ -114,7 +114,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
-    branch: master
+    branch: jr-mg-version-2
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-deployments
@@ -1233,7 +1233,7 @@ jobs:
   ensure:
     put: p-metric-store-version
     params:
-      file: p-metric-store-version/version
+      file: new-tile-version/version
 
 - name: lcats
   serial_groups: [cf-deploy]

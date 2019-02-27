@@ -13,6 +13,7 @@ inputs:
 
 outputs:
   - name: baked-tile
+  - name: new-tile-version
 
 params:
   OPSMAN_USER:
