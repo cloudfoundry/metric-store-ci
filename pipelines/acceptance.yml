@@ -714,7 +714,7 @@ jobs:
         file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
     - put: metric-store-dev-release-version
-      params: { file: metric-store-dev-release-version/version }
+      params: { file: bosh-new-dev-release-version/version }
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
