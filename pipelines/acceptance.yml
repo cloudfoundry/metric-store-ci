@@ -842,15 +842,12 @@ jobs:
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
 
-          # TODO: delete these ops when cf-d contains them by default
-          cat <<EOT >> ops-files/cf-PR-add-log-cache-uptime-metric.yml
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/properties/gauges/-
-            value:
-              name: uptime
-              source_id: log-cache
-              addr: http://localhost:6060/debug/vars
-              template: "{{.LogCache.Uptime}}"
+          # TODO - remove this when cf-d has this by default
+          cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
+          - type: remove
+            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder
+          - type: remove
+            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder
           EOT
 
           cat <<EOT >> ops-files/cf-PR-log-cache-router-tls.yml
@@ -1084,26 +1081,6 @@ jobs:
               ca_cert: "((log_cache_to_logs_provider.ca))"
               cert: "((log_cache_to_logs_provider.certificate))"
               key: "((log_cache_to_logs_provider.private_key))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
-            value:
-              ca_cert: "((log_cache_to_loggregator_agent.ca))"
-              cert: "((log_cache_to_loggregator_agent.certificate))"
-              key: "((log_cache_to_loggregator_agent.private_key))"
-          - type: replace
-            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/properties/loggregator_agent?/tls
-            value:
-              ca_cert: "((log_cache_to_loggregator_agent.ca))"
-              cert: "((log_cache_to_loggregator_agent.certificate))"
-              key: "((log_cache_to_loggregator_agent.private_key))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
-            value:
-              from: loggregator
-          - type: replace
-            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder/consumes?/loggregator?
-            value:
-              from: loggregator
           EOT
 
           cat <<EOT >> ops-files/cf-deployment-metric-store-candidate-changes.yml
@@ -1131,8 +1108,8 @@ jobs:
         test-clients.yml
         bosh-speed.yml
         add-system-metrics-agent.yml
-        cf-PR-add-log-cache-uptime-metric.yml
         cf-PR-log-cache-router-tls.yml
+        cf-PR-log-cache-remove-expvar-forwarder.yml
         use-log-cache-latest.yml
         metric-store.yml
         grafana-in-cf.yml
