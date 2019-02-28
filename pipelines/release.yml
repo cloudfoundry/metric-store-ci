@@ -264,6 +264,7 @@ jobs:
       version: log-cache-release-version-patch
     params:
       LEVEL: patch
+      APP: log-cache
   on_success:
     do:
     - put: log-cache-release-version
@@ -286,6 +287,7 @@ jobs:
       version: log-cache-release-version-minor
     params:
       LEVEL: minor
+      APP: log-cache
   on_success:
     do:
     - put: log-cache-release-version
@@ -308,6 +310,7 @@ jobs:
       version: log-cache-release-version-major
     params:
       LEVEL: major
+      APP: log-cache
   on_success:
     do:
     - put: log-cache-release-version
@@ -435,6 +438,7 @@ jobs:
       version: metric-store-release-version-patch
     params:
       LEVEL: patch
+      APP: metric-store
   - task: sync-versioning
     file: log-cache-ci/tasks/sync_versions/patch.yml
     input_mapping:
@@ -463,6 +467,7 @@ jobs:
       version: metric-store-release-version-minor
     params:
       LEVEL: minor
+      APP: metric-store
   - task: sync-versioning
     file: log-cache-ci/tasks/sync_versions/minor.yml
     input_mapping:
@@ -490,6 +495,7 @@ jobs:
       version: metric-store-release-version-major
     params:
       LEVEL: major
+      APP: metric-store
   on_success:
     do:
     - put: metric-store-release-version

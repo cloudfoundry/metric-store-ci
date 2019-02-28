@@ -5,4 +5,4 @@
 set -ex
 
 new_version=`cat version/version`
-echo ":axe: Releasing a new '${LEVEL}' version as ${new_version} ..." > messages/success.txt
+echo ":axe: Releasing a new '${LEVEL}' version as '${APP}' ${new_version} ..." > messages/success.txt
