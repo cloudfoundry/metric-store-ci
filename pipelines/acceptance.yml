@@ -379,6 +379,13 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: metric-store-dev-releases/release-(.*).tgz
 
+- name: temp-baked-tile
+  type: gcs-resource
+  source:
+    bucket: log-cache-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: temp-baked-tiles/(.*).pivotal
+
 jobs:
 ###############################################################################
 # LOG CACHE
@@ -1208,6 +1215,10 @@ jobs:
         STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
         STEMCELL_SHA: 9bb3663ee35f795f466a65a5fb185c4b650049cd
         PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
+    - put: temp-baked-tile
+      params:
+        file: baked-tile/*.pivotal
+        content_type: application/octet-stream
   ensure:
     put: p-metric-store-version
     params:
