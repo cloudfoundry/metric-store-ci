@@ -1,0 +1,13 @@
+#!/bin/bash -euf
+. ./log-cache-ci/tasks/shared_bash
+
+this_major=$(major_from_semver `cat this-version/version`)
+main_major=$(major_from_semver `cat main-version/version`)
+
+if [[ "$this_major" == "$main_major" ]]; then
+  echo "major version matches"
+  cp this-version/version new-main-version/
+else
+  echo "major version mis-match"
+  echo "${main_major}.1.0" > new-main-version/version
+fi

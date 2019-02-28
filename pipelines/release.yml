@@ -95,7 +95,6 @@ resources:
     driver: gcs
     bucket: log-cache-ci-versions
     key: metric-store
-    initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: metric-store-release-version-major
@@ -104,7 +103,6 @@ resources:
     driver: gcs
     bucket: log-cache-ci-versions
     key: metric-store
-    initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: metric-store-release-version-minor
@@ -113,7 +111,6 @@ resources:
     driver: gcs
     bucket: log-cache-ci-versions
     key: metric-store
-    initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: metric-store-release-version-patch
@@ -122,7 +119,6 @@ resources:
     driver: gcs
     bucket: log-cache-ci-versions
     key: metric-store
-    initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: log-cache-cli-github-release-drafts
@@ -412,6 +408,7 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
+    - get: metric-store-release-version
     - get: metric-store-release-version-patch
       params: {bump: patch}
   - task: create-message
@@ -421,12 +418,17 @@ jobs:
       version: metric-store-release-version-patch
     params:
       LEVEL: patch
+  - task: sync-versioning
+    file: log-cache-ci/tasks/sync_versions/patch.yml
+    input_mapping:
+      this-version: metric-store-release-version-patch
+      main-version: metric-store-release-version
   on_success:
     do:
     - put: metric-store-release-version
-      params: {file: metric-store-release-version-patch/version}
+      params: {file: new-main-version/version}
     - put: metric-store-release-version-patch
-      params: {file: metric-store-release-version-patch/version}
+      params: {file: new-main-version/version}
     - <<: *send-alert-message
 
 - name: msr-minor-version
@@ -434,6 +436,7 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
+    - get: metric-store-release-version
     - get: metric-store-release-version-minor
       params: {bump: minor}
   - task: create-message
@@ -443,12 +446,17 @@ jobs:
       version: metric-store-release-version-minor
     params:
       LEVEL: minor
+  - task: sync-versioning
+    file: log-cache-ci/tasks/sync_versions/minor.yml
+    input_mapping:
+      this-version: metric-store-release-version-minor
+      main-version: metric-store-release-version
   on_success:
     do:
     - put: metric-store-release-version
-      params: {file: metric-store-release-version-minor/version}
+      params: {file: new-main-version/version}
     - put: metric-store-release-version-minor
-      params: {file: metric-store-release-version-minor/version}
+      params: {file: new-main-version/version}
     - <<: *send-alert-message
 
 - name: msr-major-version

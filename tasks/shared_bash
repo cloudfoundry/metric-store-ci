@@ -78,6 +78,12 @@ major_minor_from_semver() {
   echo ${version} | cut -d. -f1,2
 }
 
+major_from_semver() {
+  local version=${1}
+
+  echo ${version} | cut -d. -f1
+}
+
 alert_enable() {
   cp metadata/alert_message_failure modified-metadata/alert_message_failure
   cp metadata/alert_message_success modified-metadata/alert_message_success
