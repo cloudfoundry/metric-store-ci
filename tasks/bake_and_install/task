@@ -36,6 +36,7 @@ kiln bake \
     --metadata metric-store-release/tile/metadata.yml \
     --icon metric-store-release/tile/icon.png \
     --releases-directory releases \
+    --properties-directory metric-store-release/tile/properties \
     --jobs-directory metric-store-release/tile/jobs \
     --instance-groups-directory metric-store-release/tile/instance_groups \
     --bosh-variables-directory metric-store-release/tile/variables \
