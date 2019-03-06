@@ -855,6 +855,16 @@ jobs:
             path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder
           - type: remove
             path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=prom_scraper?
+            value:
+              name: prom_scraper
+              consumes:
+                loggregator:
+                  from: loggregator
+              properties:
+                metrics_urls: "http://localhost:6060/metrics,http://localhost:6061/metrics,http://localhost:6065/metrics"
+              release: loggregator-agent
           EOT
 
           cat <<EOT >> ops-files/cf-PR-log-cache-router-tls.yml
