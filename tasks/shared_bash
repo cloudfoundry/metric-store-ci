@@ -117,7 +117,7 @@ setup_github_ssh() {
 }
 
 calculate_version() {
-  local current_metric_store_release=${1}
+  local current_metric_store_release_version_file=${1}
   local current_dev_version_dir=${2}
   local new_version_dir=${3}
   local postfix=${4}
@@ -125,7 +125,7 @@ calculate_version() {
   dev_version=$(cat $current_dev_version_dir/version)
 
   metric_store_dev_version_semver=$(cat $current_dev_version_dir/version | sed s/-.*//)
-  metric_store_release_version_semver=$(cat $current_metric_store_release/src/version)
+  metric_store_release_version_semver=$(cat $current_metric_store_release_version_file)
 
   if [[ "${metric_store_dev_version_semver}" != "${metric_store_release_version_semver}" ]]; then
     dev_version="${metric_store_release_version_semver}-${postfix}.0"

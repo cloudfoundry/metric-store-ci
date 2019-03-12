@@ -2,7 +2,7 @@ groups:
 - name: all
   jobs:
   - log-cache-bump-submodule
-  - metric-store-bump-submodule
+  - p-metric-store-bump-submodule
   - log-cache-docker-images
   - cf-deploy
   - "🥓 Bake and Install Tile 🥓"
@@ -11,9 +11,11 @@ groups:
   - cats
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
-  - metric-store-release-elect-promotion
-  - metric-store-master-promotion
-  - create-metric-store-dev-release
+  - p-metric-store-release-elect-promotion
+  - p-metric-store-master-promotion
+  - create-p-metric-store-dev-release
+  - oss-metric-store-unit-tests
+  - create-oss-metric-store-dev-release
 - name: log-cache
   jobs:
   - log-cache-bump-submodule
@@ -24,13 +26,18 @@ groups:
   - cats
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
-- name: metric-store
+- name: oss-metric-store
   jobs:
-  - metric-store-bump-submodule
+  - oss-metric-store-unit-tests
+  - create-oss-metric-store-dev-release
+  - cf-deploy
+- name: p-metric-store
+  jobs:
+  - p-metric-store-bump-submodule
   - cf-deploy
   - "🥓 Bake and Install Tile 🥓"
-  - metric-store-release-elect-promotion
-  - metric-store-master-promotion
+  - p-metric-store-release-elect-promotion
+  - p-metric-store-master-promotion
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -114,7 +121,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
-    branch: master
+    branch: rh-mg-ci
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-deployments
@@ -201,14 +208,14 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: metric-store
+- name: p-metric-store
   type: git
   source:
     uri: git@github.com:pivotal/metric-store
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: metric-store-release
+- name: p-metric-store-release
   type: git
   source:
     uri: git@github.com:pivotal/metric-store-release
@@ -219,20 +226,46 @@ resources:
     - releases
     disable_ci_skip: false
 
-- name: metric-store-release-elect
+- name: p-metric-store-release-elect
   type: git
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: release-elect
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: metric-store-release-master
+- name: p-metric-store-release-master
   type: git
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
     disable_ci_skip: true
+
+- name: oss-metric-store
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store
+    private_key: ((github-key-ci.yml/Notes/github_key))
+    ignore_paths:
+    - .final_builds
+    - releases
+    disable_ci_skip: false
+
+- name: oss-metric-store-dev-release-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: log-cache-ci-notifications
+    key: oss-metric-store-dev-release-version
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: oss-metric-store-dev-release
+  type: gcs-resource
+  source:
+    bucket: log-cache-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: oss-metric-store-dev-releases/release-(.*).tgz
 
 - name: log-cache-cli
   type: git
@@ -354,7 +387,7 @@ resources:
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: metric-store-dev-release-version
+- name: p-metric-store-dev-release-version
   type: semver
   source:
     driver: gcs
@@ -372,7 +405,7 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     initial_version: 0.0.0
 
-- name: metric-store-dev-release
+- name: p-metric-store-dev-release
   type: gcs-resource
   source:
     bucket: log-cache-ci-notifications
@@ -607,57 +640,57 @@ jobs:
     - put: notification-log-cache-tests-version
       params: { bump: minor }
 
-- name: metric-store-bump-submodule
+- name: p-metric-store-bump-submodule
   serial: true
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
-    - get: metric-store-release
+    - get: p-metric-store-release
       trigger: true
-    - get: metric-store
+    - get: p-metric-store
       trigger: true
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Metric Store Bump Submodule
-  - task: update-metric-store-submodule
+  - task: update-p-metric-store-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
-      release-repo: metric-store-release
-      source-repo: metric-store
+      release-repo: p-metric-store-release
+      source-repo: p-metric-store
     output_mapping:
-      bumped-release-repo: bumped-metric-store-release
+      bumped-release-repo: bumped-p-metric-store-release
     params:
       SUBMODULE_PATH: src/github.com/pivotal/metric-store
   - task: sync-package-specs
     file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
-      release-repo: bumped-metric-store-release
+      release-repo: bumped-p-metric-store-release
     output_mapping:
-      updated-release-repo: synced-metric-store-release
+      updated-release-repo: synced-p-metric-store-release
     params:
       SCRIPT: scripts/sync-package-specs
   - task: run-tests
     file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
-      release-repo: synced-metric-store-release
+      release-repo: synced-p-metric-store-release
     params:
       SCRIPT: scripts/test
   - task: commit
     file: log-cache-ci/tasks/commit-with-shortlog/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      release-repo: synced-metric-store-release
+      release-repo: synced-p-metric-store-release
     output_mapping:
-      committed-repo: committed-metric-store-release
+      committed-repo: committed-p-metric-store-release
     params:
       PATHS: |
         src/github.com/pivotal/metric-store
         packages
-  - put: metric-store-release
+  - put: p-metric-store-release
     params:
-      repository: committed-metric-store-release
+      repository: committed-p-metric-store-release
       rebase: true
   on_failure:
     do:
@@ -736,29 +769,94 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
-- name: create-metric-store-dev-release
+- name: create-p-metric-store-dev-release
   plan:
     - aggregate:
       - get: log-cache-ci
-      - get: metric-store-release
+      - get: p-metric-store-release
         trigger: true
-        passed: ["metric-store-bump-submodule"]
-      - get: metric-store-dev-release-version
+        passed: ["p-metric-store-bump-submodule"]
+      - get: p-metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
     - task: create-dev-release
       file: log-cache-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
-        bosh-dev-release-dir: metric-store-release
-        bosh-dev-release-version: metric-store-dev-release-version
+        bosh-dev-release-dir: p-metric-store-release
+        bosh-dev-release-version: p-metric-store-dev-release-version
       params:
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-    - put: metric-store-dev-release
+    - put: p-metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
-    - put: metric-store-dev-release-version
+    - put: p-metric-store-dev-release-version
+      params: { file: bosh-new-dev-release-version/version }
+
+- name: oss-metric-store-unit-tests
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-cache-ci
+    - get: oss-metric-store
+      trigger: true
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: OSS Metric Store Unit Tests
+  - task: run-tests
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: logcache/base
+      inputs:
+        - name: oss-metric-store
+      run:
+        path: bash
+        args:
+          - -c
+          - |
+            #!/bin/bash
+            pushd oss-metric-store
+              scripts/test
+            popd
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_failure
+
+- name: create-oss-metric-store-dev-release
+  plan:
+    - aggregate:
+      - get: log-cache-ci
+      - get: oss-metric-store
+        trigger: true
+        passed: ["oss-metric-store-unit-tests"]
+      - get: oss-metric-store-dev-release-version
+        params: { pre: dev }
+      - get: cf-deployment-concourse-tasks-image
+    - task: create-dev-release
+      file: log-cache-ci/tasks/create-oss-dev-release/task.yml
+      image: cf-deployment-concourse-tasks-image
+      input_mapping:
+        bosh-dev-release-dir: oss-metric-store
+        bosh-dev-release-version: oss-metric-store-dev-release-version
+      params:
+        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+    - put: oss-metric-store-dev-release
+      params:
+        file: oss-metric-store-dev-release/release-*.tgz
+        content_type: application/octet-stream
+    - put: oss-metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
 
 - name: cf-deploy
@@ -793,16 +891,27 @@ jobs:
           BBL_STATE_DIR: ((bbl_state_dir))
           JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
     - do:
-      - get: metric-store-release
-        passed: ["create-metric-store-dev-release"]
-      - get: metric-store-dev-release
+      - get: p-metric-store-release
+        passed: ["create-p-metric-store-dev-release"]
+      - get: p-metric-store-dev-release
         trigger: true
-        passed: ["create-metric-store-dev-release"]
-      - task: upload-metric-store-release
+        passed: ["create-p-metric-store-dev-release"]
+      - task: upload-p-metric-store-release
         file: log-cache-ci/tasks/upload-dev-release/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          bosh-release-tarball: metric-store-dev-release
+          bosh-release-tarball: p-metric-store-dev-release
+        params:
+          BBL_STATE_DIR: ((bbl_state_dir))
+    - do:
+      - get: oss-metric-store-dev-release
+        trigger: true
+        passed: ["create-oss-metric-store-dev-release"]
+      - task: upload-oss-metric-store-release
+        file: log-cache-ci/tasks/upload-dev-release/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          bosh-release-tarball: oss-metric-store-dev-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
     - do:
@@ -848,6 +957,8 @@ jobs:
           cp cf-deployment-delete-me-when-merged/operations/experimental/add-system-metrics-agent.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
+          cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
+          cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
 
           # TODO - remove this when cf-d has this by default
           cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
@@ -958,119 +1069,6 @@ jobs:
               version: latest
           EOT
 
-          cat <<EOT >> ops-files/metric-store.yml
-          - type: replace
-            path: /releases/-
-            value:
-              name: metric-store
-              version: latest
-
-          - type: replace
-            path: /variables/-
-            value:
-              name: metric_store_ca
-              type: certificate
-              options:
-                common_name: metric-store
-                is_ca: true
-
-          - type: replace
-            path: /variables/-
-            value:
-              name: metric_store
-              type: certificate
-              options:
-                ca: metric_store_ca
-                common_name: metric-store
-                extended_key_usage:
-                - client_auth
-                - server_auth
-
-          - type: replace
-            path: /variables/-
-            value:
-              name: metricstore_ssl
-              type: certificate
-              options:
-                ca: service_cf_internal_ca
-                common_name: metric-store
-                alternative_names:
-                - metric-store.((system_domain))
-                - "*.metric-store.((system_domain))"
-
-          - type: replace
-            path: /instance_groups/-
-            value:
-              name: metric-store
-              networks:
-              - name: default
-              stemcell: default
-              vm_type: minimal
-              azs:
-              - z1
-              instances: 3
-              persistent_disk_type: 5GB
-              jobs:
-              - name: metric-store
-                release: metric-store
-                properties:
-                  egress_port: 8080
-                  health_addr: localhost:6060
-                  tls:
-                    ca_cert: ((metric_store.ca))
-                    cert: ((metric_store.certificate))
-                    key: ((metric_store.private_key))
-              - name: metric-store-gateway
-                release: metric-store
-                properties:
-                  gateway_addr: localhost:8081
-              - name: metric-store-nozzle
-                release: metric-store
-                consumes:
-                  reverse_log_proxy:
-                    from: reverse_log_proxy
-                properties:
-                  logs_provider:
-                    tls:
-                      ca_cert: ((logs_provider.ca))
-                      cert: ((logs_provider.certificate))
-                      key: ((logs_provider.private_key))
-              - name: prom_scraper
-                release: loggregator-agent
-                consumes:
-                  loggregator:
-                    from: loggregator
-                properties:
-                  metrics_urls: "http://localhost:6060/metrics,http://localhost:6061/metrics,http://localhost:6065/metrics"
-              - name: route_registrar
-                release: routing
-                properties:
-                  route_registrar:
-                    routes:
-                    - name: metric-store-reverse-proxy
-                      port: 8083
-                      tls_port: 8083
-                      registration_interval: 20s
-                      server_cert_domain_san: metric-store.((system_domain))
-                      uris:
-                      - metric-store.((system_domain))
-                      - "*.metric-store.((system_domain))"
-              - name: metric-store-cf-auth-proxy
-                release: metric-store
-                properties:
-                  cc:
-                    ca_cert: ((service_cf_internal_ca.certificate))
-                    common_name: cloud-controller-ng.service.cf.internal
-                  proxy_port: 8083
-                  external_cert: ((metricstore_ssl.certificate))
-                  external_key: ((metricstore_ssl.private_key))
-                  uaa:
-                    ca_cert: ((uaa_ca.certificate))
-                    client_id: doppler
-                    client_secret: ((uaa_clients_doppler_secret))
-                    internal_addr: https://uaa.service.cf.internal:8443
-          EOT
-
           cat <<EOT >> ops-files/cf-deployment-log-cache-candidate-changes.yml
           - type: replace
             path: /variables/name=logs_provider
@@ -1128,8 +1126,9 @@ jobs:
         cf-PR-log-cache-router-tls.yml
         cf-PR-log-cache-remove-expvar-forwarder.yml
         use-log-cache-latest.yml
-        metric-store.yml
         grafana-in-cf.yml
+        metric-store-in-cf.yml
+        p-metric-store-in-cf.yml
         metric-registrar-in-cf.yml
         cf-deployment-log-cache-candidate-changes.yml
         cf-deployment-metric-store-candidate-changes.yml
@@ -1196,14 +1195,14 @@ jobs:
       - get: concourse-tasks
       - get: log-cache-ci
       - get: log-cache-deployments
-      - get: metric-store-release
-        passed: ["create-metric-store-dev-release"]
+      - get: p-metric-store-release
+        passed: ["create-p-metric-store-dev-release"]
       - get: p-metric-store-version
         params:
           pre: build
-      - get: metric-store-dev-release
+      - get: p-metric-store-dev-release
         trigger: true
-        passed: ["create-metric-store-dev-release"]
+        passed: ["create-p-metric-store-dev-release"]
       - get: pcf-observability-ci-image
       attempts: 3
     - task: "prepare deployment environment"
@@ -1499,40 +1498,40 @@ jobs:
     params:
       repository: merged-dest
 
-- name: metric-store-release-elect-promotion
+- name: p-metric-store-release-elect-promotion
   serial: true
   plan:
   - aggregate:
     - get: develop
-      resource: metric-store-release
+      resource: p-metric-store-release
       trigger: true
       passed: ["cf-deploy", "🥓 Bake and Install Tile 🥓"]
-    - get: metric-store-release-elect
-  - put: metric-store-release-elect
+  - get: p-metric-store-release-elect
+  - put: p-metric-store-release-elect
     params:
       repository: develop
 
-- name: metric-store-master-promotion
+- name: p-metric-store-master-promotion
   serial: true
   plan:
   - aggregate:
-    - get: metric-store-release-elect
-      passed: ["metric-store-release-elect-promotion"]
+    - get: p-metric-store-release-elect
+      passed: ["p-metric-store-release-elect-promotion"]
       trigger: true
-    - get: metric-store-release-master
+    - get: p-metric-store-release-master
     - get: bumper-tool
     - get: log-cache-ci
   - task: bumper
     file: log-cache-ci/tasks/bumper/task.yml
     input_mapping:
-      source: metric-store-release-elect
-      dest: metric-store-release-master
+      source: p-metric-store-release-elect
+      dest: p-metric-store-release-master
     params:
       SOURCE_BRANCH: release-elect
       DEST_BRANCH: master
       FOLLOW_BUMPS_OF: src/github.com/pivotal/metric-store
       TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
-  - put: metric-store-release-master
+  - put: p-metric-store-release-master
     params:
       repository: merged-dest
 
