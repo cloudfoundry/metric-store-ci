@@ -7,11 +7,11 @@ inputs:
 - name: bosh-dev-release-version
 
 outputs:
-- name: metric-store-dev-release
+- name: oss-metric-store-dev-release
 - name: bosh-new-dev-release-version
 
 run:
-  path: log-cache-ci/tasks/create-dev-release/task
+  path: log-cache-ci/tasks/create-oss-dev-release/task
 
 params:
   JSON_KEY:

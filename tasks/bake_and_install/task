@@ -8,7 +8,7 @@ set +f
 mv metric-store-dev-release/*.tgz releases
 set -f
 
-calculate_version metric-store-release tile-version new-tile-version "build"
+calculate_version metric-store-release/src/version tile-version new-tile-version "build"
 export RELEASE_VERSION=$(cat new-tile-version/version)
 
 RELEASE_URLS=(
