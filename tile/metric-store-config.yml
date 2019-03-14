@@ -1,4 +1,4 @@
-product-name: observability-store
+product-name: p-metric-store
 network-properties:
   network:
     name: optimus-pas-subnet
