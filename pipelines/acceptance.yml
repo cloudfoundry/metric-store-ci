@@ -34,6 +34,9 @@ groups:
 - name: p-metric-store
   jobs:
   - p-metric-store-bump-submodule
+  - p-metric-store-release-elect-promotion
+  - p-metric-store-master-promotion
+  - create-p-metric-store-dev-release
   - cf-deploy
   - "🥓 Bake and Install Tile 🥓"
   - p-metric-store-release-elect-promotion
@@ -1098,14 +1101,6 @@ jobs:
               key: "((log_cache_to_logs_provider.private_key))"
           EOT
 
-          cat <<EOT >> ops-files/cf-deployment-metric-store-candidate-changes.yml
-          - type: replace
-            path: /instance_groups/name=metric-store/jobs/name=metric-store/provides?
-            value:
-              metric-store:
-                shared: true
-          EOT
-
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
     params:
@@ -1123,15 +1118,14 @@ jobs:
         test-clients.yml
         bosh-speed.yml
         add-system-metrics-agent.yml
+        metric-store-in-cf.yml
+        p-metric-store-in-cf.yml
         cf-PR-log-cache-router-tls.yml
         cf-PR-log-cache-remove-expvar-forwarder.yml
         use-log-cache-latest.yml
         grafana-in-cf.yml
-        metric-store-in-cf.yml
-        p-metric-store-in-cf.yml
         metric-registrar-in-cf.yml
         cf-deployment-log-cache-candidate-changes.yml
-        cf-deployment-metric-store-candidate-changes.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
@@ -1216,6 +1210,8 @@ jobs:
       file: log-cache-ci/tasks/bake_and_install/task.yml
       input_mapping:
         deployment-tools: bobble
+        metric-store-release: p-metric-store-release
+        metric-store-dev-release: p-metric-store-dev-release
         tile-config: log-cache-ci
         tile-version: p-metric-store-version
       params:
