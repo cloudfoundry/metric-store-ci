@@ -124,7 +124,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
-    branch: rh-mg-ci
+    branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-deployments
