@@ -49,6 +49,7 @@
         metric-store-nozzle: {from: p-metric-store-nozzle}
         metric-store: {from: p-metric-store}
       properties:
+        shard_id: p-metric-store
         logs_provider:
           tls:
             ca_cert: ((p_metric_store_to_logs_provider.ca))
