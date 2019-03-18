@@ -23,12 +23,10 @@ pushd log-cache-release-backport
   cat << EOF > config/private.yml
 ---
 blobstore:
-  provider: s3
   options:
-    bucket_name: log-cache-release-blobs
-    access_key_id: ${S3_ACCESS_KEY}
-    secret_access_key: ${S3_SECRET_KEY}
     credentials_source: static
+    json_key: |
+      $(echo ${JSON_KEY})
 EOF
 
   bosh -n create-release --sha2 --final \

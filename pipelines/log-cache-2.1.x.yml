@@ -18,18 +18,18 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 
-- name: log-cache-2.0.x
+- name: log-cache-2.1.x
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache
-    branch: v2.0.x
+    branch: v2.1.x
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: log-cache-release-2.0.x
+- name: log-cache-release-2.1.x
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-release
-    branch: v2.0.x
+    branch: v2.1.x
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-release-develop
@@ -61,13 +61,13 @@ resources:
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
 
-- name: log-cache-release-version-2.0.x
+- name: log-cache-release-version-2.1.x
   type: semver
   source:
     driver: gcs
     bucket: log-cache-ci-resources
-    key: log-cache-2.0.x
-    initial_version: 2.0.2
+    key: log-cache-2.1.x
+    initial_version: 2.1.1
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: slack-alert
@@ -96,47 +96,47 @@ jobs:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
-    - get: log-cache-release-2.0.x
+    - get: log-cache-release-2.1.x
       trigger: true
-    - get: log-cache-2.0.x
+    - get: log-cache-2.1.x
       trigger: true
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
-      release-repo: log-cache-release-2.0.x
-      source-repo: log-cache-2.0.x
+      release-repo: log-cache-release-2.1.x
+      source-repo: log-cache-2.1.x
     output_mapping:
-      bumped-release-repo: bumped-log-cache-release-2.0.x
+      bumped-release-repo: bumped-log-cache-release-2.1.x
     params:
       SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
   - task: sync-package-specs
     file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
-      release-repo: bumped-log-cache-release-2.0.x
+      release-repo: bumped-log-cache-release-2.1.x
     output_mapping:
-      updated-release-repo: synced-log-cache-release-2.0.x
+      updated-release-repo: synced-log-cache-release-2.1.x
     params:
       SCRIPT: scripts/sync-package-specs
   - task: run-tests
     file: log-cache-ci/tasks/run-release-script/task.yml
     input_mapping:
-      release-repo: synced-log-cache-release-2.0.x
+      release-repo: synced-log-cache-release-2.1.x
     params:
       SCRIPT: scripts/test
   - task: commit
     file: log-cache-ci/tasks/commit-with-shortlog/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      release-repo: synced-log-cache-release-2.0.x
+      release-repo: synced-log-cache-release-2.1.x
     output_mapping:
-      committed-repo: committed-log-cache-release-2.0.x
+      committed-repo: committed-log-cache-release-2.1.x
     params:
       PATHS: |
         src/code.cloudfoundry.org/log-cache
         packages
-  - put: log-cache-release-2.0.x
+  - put: log-cache-release-2.1.x
     params:
-      repository: committed-log-cache-release-2.0.x
+      repository: committed-log-cache-release-2.1.x
       rebase: true
   on_failure:
     do:
@@ -160,31 +160,31 @@ jobs:
       params:
         submodules: none
     - get: log-cache-ci
-    - get: log-cache-release-2.0.x
+    - get: log-cache-release-2.1.x
       passed: [bump-submodule]
-    - get: log-cache-release-version-2.0.x
+    - get: log-cache-release-version-2.1.x
       params: {bump: patch}
   - task: create-message
     file: log-cache-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      version: log-cache-release-version-2.0.x
+      version: log-cache-release-version-2.1.x
     params:
       LEVEL: patch
   - <<: *send-release-alert-message
-  - task: create-final-release-2.0.x
+  - task: create-final-release-2.1.x
     file: log-cache-ci/tasks/create-final-backport-release/task.yml
     input_mapping:
-      log-cache-release-version-backport: log-cache-release-version-2.0.x
-      log-cache-release-backport: log-cache-release-2.0.x
+      log-cache-release-version-backport: log-cache-release-version-2.1.x
+      log-cache-release-backport: log-cache-release-2.1.x
     output_mapping:
-      log-cache-release-backport-modified: log-cache-release-2.0.x-modified
+      log-cache-release-backport-modified: log-cache-release-2.1.x-modified
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-      BACKPORT_BRANCH: v2.0.x
-  - put: log-cache-release-2.0.x
+      BACKPORT_BRANCH: v2.1.x
+  - put: log-cache-release-2.1.x
     params:
-      repository: log-cache-release-2.0.x-modified
+      repository: log-cache-release-2.1.x-modified
       rebase: false
       get_params: {submodules: none}
   - put: log-cache-release-develop
@@ -211,10 +211,10 @@ jobs:
       only_tag: true
   on_success:
     do:
-    - put: log-cache-release-version-2.0.x
-      params: {file: log-cache-release-version-2.0.x/version}
+    - put: log-cache-release-version-2.1.x
+      params: {file: log-cache-release-version-2.1.x/version}
     - task: create-message
       file: log-cache-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
-        version: log-cache-release-version-2.0.x
+        version: log-cache-release-version-2.1.x
     - <<: *send-release-alert-message
