@@ -47,10 +47,6 @@ groups:
   - lcats
   - log-cache-cli-integration-tests
   - log-cache-cli-promotion
-- name: leadership-election
-  jobs:
-  - leadership-election-tests
-  - leadership-election-bump-submodule
 - name: log-cache-tools
   jobs:
   - log-cache-tools-tests
@@ -293,22 +289,6 @@ resources:
   type: git
   source:
     uri: https://github.com/loggregator/bumper
-
-- name: leadership-election
-  type: git
-  source:
-    branch: master
-    uri: https://github.com/cloudfoundry/leadership-election
-
-- name: leadership-election-release
-  type: git
-  source:
-    branch: develop
-    ignore_paths:
-    - .final_builds
-    - releases
-    private_key: ((github-key-ci.yml/Notes/github_key))
-    uri: git@github.com:cloudfoundry/leadership-election-release
 
 - name: metric-registrar-release
   type: github-release
@@ -1530,70 +1510,6 @@ jobs:
   - put: p-metric-store-release-master
     params:
       repository: merged-dest
-
-- name: leadership-election-tests
-  public: true
-  serial: true
-  plan:
-  - aggregate:
-    - get: log-cache-ci
-    - get: leadership-election
-      trigger: true
-  - task: run-tests
-    file: log-cache-ci/tasks/go-test-with-latest-packages/task.yml
-    params:
-      IMPORT_PATH: code.cloudfoundry.org/leadership-election
-    input_mapping:
-      source-repo: leadership-election
-
-- name: leadership-election-bump-submodule
-  serial: true
-  plan:
-  - aggregate:
-    - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
-    - get: leadership-election-release
-      trigger: true
-    - get: leadership-election
-      passed:
-      - leadership-election-tests
-      trigger: true
-  - task: update-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/leadership-election
-    input_mapping:
-      release-repo: leadership-election-release
-      source-repo: leadership-election
-    output_mapping:
-      bumped-release-repo: updated-leadership-election-release
-  - task: sync-package-specs
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    params:
-      SCRIPT: scripts/sync-package-specs
-    input_mapping:
-      release-repo: updated-leadership-election-release
-    output_mapping:
-      updated-release-repo: synced-leadership-election-release
-  - task: run-tests
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    params:
-      SCRIPT: scripts/test
-    input_mapping:
-      release-repo: synced-leadership-election-release
-  - task: commit
-    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
-    image: cf-deployment-concourse-tasks-image
-    params:
-      PATHS: src/code.cloudfoundry.org/leadership-election packages
-    input_mapping:
-      release-repo: synced-leadership-election-release
-    output_mapping:
-      committed-repo: committed-leadership-election-release
-  - put: leadership-election-release
-    params:
-      rebase: true
-      repository: committed-leadership-election-release
 
 - name: log-cache-tools-tests
   serial: true
