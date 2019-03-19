@@ -247,7 +247,7 @@ resources:
 - name: oss-metric-store
   type: git
   source:
-    uri: git@github.com:cloudfoundry/metric-store
+    uri: git@github.com:cloudfoundry/metric-store-release
     private_key: ((github-key-ci.yml/Notes/github_key))
     ignore_paths:
     - .final_builds
