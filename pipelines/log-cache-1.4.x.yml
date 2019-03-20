@@ -208,6 +208,7 @@ jobs:
     params:
       repository: log-cache-ci
       tag: github-release/tag
+      tag_prefix: log-cache-
       only_tag: true
   on_success:
     do:
