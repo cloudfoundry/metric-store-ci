@@ -2,7 +2,7 @@ groups:
 - name: all
   jobs:
   - log-cache-bump-submodule
-  - p-metric-store-bump-submodule
+  - p-metric-store-unit-tests
   - log-cache-docker-images
   - cf-deploy
   - "🥓 Bake and Install Tile 🥓"
@@ -33,7 +33,7 @@ groups:
   - cf-deploy
 - name: p-metric-store
   jobs:
-  - p-metric-store-bump-submodule
+  - p-metric-store-unit-tests
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
   - create-p-metric-store-dev-release
@@ -623,7 +623,7 @@ jobs:
     - put: notification-log-cache-tests-version
       params: { bump: minor }
 
-- name: p-metric-store-bump-submodule
+- name: p-metric-store-unit-tests
   serial: true
   plan:
   - aggregate:
@@ -636,45 +636,25 @@ jobs:
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
-      TITLE: Metric Store Bump Submodule
-  - task: update-p-metric-store-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    input_mapping:
-      release-repo: p-metric-store-release
-      source-repo: p-metric-store
-    output_mapping:
-      bumped-release-repo: bumped-p-metric-store-release
-    params:
-      SUBMODULE_PATH: src/github.com/pivotal/metric-store
-  - task: sync-package-specs
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    input_mapping:
-      release-repo: bumped-p-metric-store-release
-    output_mapping:
-      updated-release-repo: synced-p-metric-store-release
-    params:
-      SCRIPT: scripts/sync-package-specs
+      TITLE: Pivotal Metric Store Unit Tests
   - task: run-tests
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    input_mapping:
-      release-repo: synced-p-metric-store-release
-    params:
-      SCRIPT: scripts/test
-  - task: commit
-    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
-    image: cf-deployment-concourse-tasks-image
-    input_mapping:
-      release-repo: synced-p-metric-store-release
-    output_mapping:
-      committed-repo: committed-p-metric-store-release
-    params:
-      PATHS: |
-        src/github.com/pivotal/metric-store
-        packages
-  - put: p-metric-store-release
-    params:
-      repository: committed-p-metric-store-release
-      rebase: true
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: logcache/base
+      inputs:
+        - name: p-metric-store-release
+      run:
+        path: bash
+        args:
+          - -c
+          - |
+            #!/bin/bash
+            pushd p-metric-store-release
+              scripts/test
+            popd
   on_failure:
     do:
     - put: slack-alert
@@ -758,7 +738,7 @@ jobs:
       - get: log-cache-ci
       - get: p-metric-store-release
         trigger: true
-        passed: ["p-metric-store-bump-submodule"]
+        passed: ["p-metric-store-unit-tests"]
       - get: p-metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image

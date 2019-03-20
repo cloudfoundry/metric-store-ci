@@ -19,6 +19,12 @@ blobstore:
 EOF
   fi
 
+  # put go source files in src directory so go build is pleased.
+  mkdir -p src/github.com/pivotal/metric-store-release/src/{internal,cmd}
+  cp -r vendor/* src/
+  cp -r src/internal src/github.com/pivotal/metric-store-release/src
+  cp -r src/cmd src/github.com/pivotal/metric-store-release/src
+
   bosh create-release --force \
     --tarball ../metric-store-dev-release/release-${dev_version}.tgz \
     --version "${dev_version}"
