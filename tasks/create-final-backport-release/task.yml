@@ -8,14 +8,12 @@ inputs:
 - name: log-cache-ci
 - name: log-cache-release-backport
 - name: log-cache-release-develop
-- name: log-cache-release-master
 - name: log-cache-release-version-backport
 
 outputs:
 - name: github-release
 - name: log-cache-release-backport-modified
 - name: log-cache-release-develop-modified
-- name: log-cache-release-master-modified
 
 run:
   path: log-cache-ci/tasks/create-final-backport-release/task

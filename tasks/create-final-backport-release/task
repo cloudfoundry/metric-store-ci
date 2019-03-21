@@ -42,16 +42,6 @@ EOF
   cp -r . ../log-cache-release-backport-modified
 popd
 
-pushd log-cache-release-master
-  git checkout master
-  git remote add -f local_backport ../log-cache-release-backport
-  echo '** merge=union' >> .gitattributes
-  git cherry-pick "local_backport/${BACKPORT_BRANCH}"
-  rm .gitattributes
-
-  cp -r . ../log-cache-release-master-modified
-popd
-
 pushd log-cache-release-develop
   git checkout develop
   git remote add -f local_master ../log-cache-release-master
