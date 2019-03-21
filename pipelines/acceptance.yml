@@ -652,6 +652,7 @@ jobs:
           - -c
           - |
             #!/bin/bash
+            set -ex
             pushd p-metric-store-release
               scripts/test
             popd
@@ -784,6 +785,7 @@ jobs:
           - -c
           - |
             #!/bin/bash
+            set -ex
             pushd oss-metric-store
               scripts/test
             popd
