@@ -654,7 +654,7 @@ jobs:
             #!/bin/bash
             set -ex
             pushd p-metric-store-release
-              scripts/test
+              scripts/test unit
             popd
   on_failure:
     do:
@@ -787,7 +787,7 @@ jobs:
             #!/bin/bash
             set -ex
             pushd oss-metric-store
-              scripts/test
+              scripts/test unit
             popd
   on_failure:
     do:
