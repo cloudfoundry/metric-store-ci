@@ -13,6 +13,8 @@ groups:
   - log-cache-master-promotion
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
+  - oss-metric-store-release-elect-promotion
+  - oss-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - oss-metric-store-unit-tests
   - create-oss-metric-store-dev-release
@@ -31,6 +33,8 @@ groups:
   - oss-metric-store-unit-tests
   - create-oss-metric-store-dev-release
   - cf-deploy
+  - oss-metric-store-release-elect-promotion
+  - oss-metric-store-master-promotion
 - name: p-metric-store
   jobs:
   - p-metric-store-unit-tests
@@ -249,6 +253,21 @@ resources:
     - .final_builds
     - releases
     disable_ci_skip: false
+
+- name: oss-metric-store-release-elect
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-release
+    branch: release-elect
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: oss-metric-store-release-master
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+    disable_ci_skip: true
 
 - name: oss-metric-store-dev-release-version
   type: semver
@@ -869,6 +888,8 @@ jobs:
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
     - do:
+      - get: oss-metric-store
+        passed: ["create-oss-metric-store-dev-release"]
       - get: oss-metric-store-dev-release
         trigger: true
         passed: ["create-oss-metric-store-dev-release"]
@@ -1490,6 +1511,43 @@ jobs:
       FOLLOW_BUMPS_OF: src/github.com/pivotal/metric-store
       TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
   - put: p-metric-store-release-master
+    params:
+      repository: merged-dest
+
+- name: oss-metric-store-release-elect-promotion
+  serial: true
+  plan:
+  - aggregate:
+    - get: develop
+      resource: oss-metric-store
+      trigger: true
+      passed: ["cf-deploy"]
+  - get: oss-metric-store-release-elect
+  - put: oss-metric-store-release-elect
+    params:
+      repository: develop
+
+- name: oss-metric-store-master-promotion
+  serial: true
+  plan:
+  - aggregate:
+    - get: oss-metric-store-release-elect
+      passed: ["oss-metric-store-release-elect-promotion"]
+      trigger: true
+    - get: oss-metric-store-release-master
+    - get: bumper-tool
+    - get: log-cache-ci
+  - task: bumper
+    file: log-cache-ci/tasks/bumper/task.yml
+    input_mapping:
+      source: oss-metric-store-release-elect
+      dest: oss-metric-store-release-master
+    params:
+      SOURCE_BRANCH: release-elect
+      DEST_BRANCH: master
+      FOLLOW_BUMPS_OF: src/github.com/pivotal/metric-store
+      TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
+  - put: oss-metric-store-release-master
     params:
       repository: merged-dest
 
