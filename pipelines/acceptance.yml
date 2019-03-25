@@ -327,6 +327,8 @@ resources:
     uri: https://github.com/pivotal-cf/concourse-tasks
     branch: master
 
+# currently pinned to af6ff5c02f8e4e9e495dba5b3faf8095c92bc0fb
+# while observability-store iterates - RH
 - name: bobble
   type: git
   source:
