@@ -17,6 +17,7 @@ groups:
   - oss-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - oss-metric-store-unit-tests
+  - oss-msats
   - create-oss-metric-store-dev-release
 - name: log-cache
   jobs:
@@ -33,6 +34,7 @@ groups:
   - oss-metric-store-unit-tests
   - create-oss-metric-store-dev-release
   - cf-deploy
+  - oss-msats
   - oss-metric-store-release-elect-promotion
   - oss-metric-store-master-promotion
 - name: p-metric-store
@@ -73,14 +75,6 @@ resources:
   source:
     uri: https://github.com/cloudfoundry/cf-deployment
     branch: master
-
-# TODO: this is a PR to cf-d branch. CI will break when it is merged + deleted
-# shift over to cf-deployment resource and if merged, the cf-deploy job should not change
-- name: cf-deployment-delete-me-when-merged
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/cf-deployment
-    branch: add-system-metrics-agent
 
 - name: cf-deployment-concourse-tasks
   type: git
@@ -124,7 +118,6 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
-    branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-deployments
@@ -755,6 +748,7 @@ jobs:
         attachments_file: metadata/alert_message_failure
 
 - name: create-p-metric-store-dev-release
+  serial: true
   plan:
     - aggregate:
       - get: log-cache-ci
@@ -821,6 +815,7 @@ jobs:
         attachments_file: metadata/alert_message_failure
 
 - name: create-oss-metric-store-dev-release
+  serial: true
   plan:
     - aggregate:
       - get: log-cache-ci
@@ -853,7 +848,6 @@ jobs:
     - get: bbl-state
       resource: denver-locks
     - get: cf-deployment
-    - get: cf-deployment-delete-me-when-merged
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
     - get: notification-cf-deploy-version
@@ -929,10 +923,12 @@ jobs:
       inputs:
       - name: bbl-state
       - name: cf-deployment
-      - name: cf-deployment-delete-me-when-merged
       - name: log-cache-ci
       outputs:
       - name: ops-files
+      params:
+        ENV_NAME: ((env_name))
+        SYS_DOMAIN: ((sys_domain))
       run:
         path: /bin/bash
         args:
@@ -942,11 +938,11 @@ jobs:
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
-          cp cf-deployment-delete-me-when-merged/operations/experimental/add-system-metrics-agent.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
           cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
+          erb log-cache-ci/ops-files/oss-msats.yml.erb > ops-files/oss-msats.yml
 
           # TODO - remove this when cf-d has this by default
           cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
@@ -1114,7 +1110,6 @@ jobs:
         scale-to-one-az.yml
         test-clients.yml
         bosh-speed.yml
-        add-system-metrics-agent.yml
         metric-store-in-cf.yml
         p-metric-store-in-cf.yml
         cf-PR-log-cache-router-tls.yml
@@ -1123,6 +1118,7 @@ jobs:
         grafana-in-cf.yml
         metric-registrar-in-cf.yml
         cf-deployment-log-cache-candidate-changes.yml
+        oss-msats.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
@@ -1528,6 +1524,42 @@ jobs:
     params:
       repository: merged-dest
 
+- name: oss-msats
+  serial: true
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: cf-deployment-concourse-tasks-image
+    - get: denver-locks
+    - get: cf-deployment-concourse-tasks
+    - get: oss-metric-store-release
+      resource: oss-metric-store
+      trigger: true
+      passed: ["cf-deploy"]
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: OSS Metric Store Acceptance Tests
+  - task: run-msats
+    file: log-cache-ci/tasks/run-errand/task.yml
+    image: cf-deployment-concourse-tasks-image
+    params:
+      BBL_STATE_DIR: ((bbl_state_dir))
+      DEPLOYMENT_NAME: cf
+      ERRAND: metric-store-acceptance-tests
+      KEEP_ALIVE: true
+    input_mapping:
+      bbl-state: denver-locks
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_failure
+
 - name: oss-metric-store-release-elect-promotion
   serial: true
   plan:
@@ -1535,7 +1567,7 @@ jobs:
     - get: develop
       resource: oss-metric-store
       trigger: true
-      passed: ["cf-deploy"]
+      passed: ["oss-msats"]
   - get: oss-metric-store-release-elect
   - put: oss-metric-store-release-elect
     params:
