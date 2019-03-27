@@ -9,17 +9,14 @@ inputs:
 - name: release-develop
 - name: release-version
 - name: log-cache-ci
-- name: source-repo
 
 outputs:
 - name: release-tarball
 - name: release-master-modified
 - name: release-develop-modified
-- name: source-repo-modified
 
 run:
   path: log-cache-ci/tasks/create-private-release/task
 
 params:
-  SOURCE_PATH:
   JSON_KEY:

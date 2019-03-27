@@ -7,11 +7,13 @@ set -ex
 new_version=`cat release-version/version`
 tag_name="v${new_version}"
 
+git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
+
 pushd release-master
   git checkout master
 
   # commit version bump
-  echo $new_version > src/version
+  echo $new_version > version
   git add .
   git commit -m "Bump version to ${new_version}"
 
@@ -35,7 +37,6 @@ EOF
 
   release_abbrev=$(git rev-parse --abbrev-ref HEAD)
   release_sha=$(git rev-parse HEAD)
-  source_repo_release_sha=$(git rev-parse @:./src/${SOURCE_PATH})
   git tag "${tag_name}" ${release_sha}
 
   cp -r . ../release-master-modified
@@ -47,9 +48,4 @@ pushd release-develop
   git merge -v --no-ff -m "Merge release artifacts" "local_master/${release_abbrev}"
 
   cp -r . ../release-develop-modified
-popd
-
-pushd source-repo
-  git tag "${tag_name}" ${source_repo_release_sha}
-  cp -r . ../source-repo-modified
 popd
