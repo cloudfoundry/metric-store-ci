@@ -578,7 +578,6 @@ jobs:
     - get: metric-store-release-master
     - get: log-cache-ci
     - get: metric-store-release-version
-    - get: metric-store
   - task: create-private-release
     file: log-cache-ci/tasks/create-private-release/task.yml
     input_mapping:
@@ -595,10 +594,6 @@ jobs:
     params:
       repository: release-develop-modified
       rebase: false
-  - put: metric-store
-    params:
-      repository: source-repo-modified
-      only_tag: true
 
 - name: publish-msr-github-release
   serial: true
