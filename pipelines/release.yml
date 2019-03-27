@@ -235,13 +235,6 @@ resources:
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
 
-- name: metric-store
-  type: git
-  source:
-    uri: git@github.com:pivotal/metric-store
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: metric-store-release-develop
   type: git
   source:
@@ -592,9 +585,7 @@ jobs:
       release-master: metric-store-release-master
       release-develop: metric-store-release-develop
       release-version: metric-store-release-version
-      source-repo: metric-store
     params:
-      SOURCE_PATH: github.com/pivotal/metric-store
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
   - put: metric-store-release-master
     params:
