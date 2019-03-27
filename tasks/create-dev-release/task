@@ -4,7 +4,7 @@ set -exu
 
 . ./log-cache-ci/tasks/shared_bash
 
-calculate_version bosh-dev-release-dir/src/version bosh-dev-release-version bosh-new-dev-release-version "dev"
+calculate_version bosh-dev-release-dir/version bosh-dev-release-version bosh-new-dev-release-version "dev"
 dev_version=$(cat bosh-new-dev-release-version/version)
 
 pushd bosh-dev-release-dir
