@@ -10,6 +10,23 @@ RUN apt-get update; apt-get install --yes \
     psmisc \
     vim
 
+RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz \
+  && tar -xzvf chruby-0.3.9.tar.gz \
+  && cd chruby-0.3.9/ \
+  && sudo make install
+
+RUN wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz \
+  && tar -xzvf ruby-install-0.7.0.tar.gz \
+  && cd ruby-install-0.7.0/ \
+  && sudo make install
+
+RUN rm ruby-install-0.7.0.tar.gz \
+  && rm -rf ruby-install-0.7.0 \
+  && rm chruby-0.3.9.tar.gz \
+  && rm -rf chruby-0.3.9
+
+RUN ruby-install --no-reinstall ruby-2.6.2
+
 # get v3 protoc from github, it was in beta at the time of writing
 RUN cd /tmp \
   && wget https://github.com/google/protobuf/releases/download/v3.0.0-beta-2/protoc-3.0.0-beta-2-linux-x86_64.zip \
