@@ -19,6 +19,7 @@ groups:
   - oss-metric-store-unit-tests
   - oss-msats
   - create-oss-metric-store-dev-release
+  - bump-oss-metric-store
 - name: log-cache
   jobs:
   - log-cache-bump-submodule
@@ -119,6 +120,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/log-cache-ci
     private_key: ((github-key-ci.yml/Notes/github_key))
+    branch: master
 
 - name: log-cache-deployments
   type: git
@@ -680,6 +682,67 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
+- name: bump-oss-metric-store
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: p-metric-store-release
+      passed: [p-metric-store-unit-tests]
+    - get: oss-metric-store
+      passed: [oss-metric-store-unit-tests]
+      trigger: true
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Pivotal Metric Store Bump OSS Metric Store
+  - task: bump-oss-metric-store
+    file: log-cache-ci/tasks/bump-oss-metric-store/task.yml
+    params:
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/github_key))
+  - put: p-metric-store-release
+    params:
+      repository: bumped-p-metric-store-release
+  - try:
+      task: run-tests
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: logcache/base
+        inputs:
+          - name: bumped-p-metric-store-release
+        run:
+          path: bash
+          args:
+            - -c
+            - |
+              #!/bin/bash
+              set -ex
+              pushd bumped-p-metric-store-release
+                scripts/test unit
+              popd
+      on_failure:
+        do:
+        - task: create-tracker-story
+          file: log-cache-ci/tasks/create-tracker-story/task.yml
+          input_mapping:
+            linked-repo: bumped-p-metric-store-release
+          params:
+            TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
+            TRACKER_PROJECT_ID: "2205790"
+            TRACKER_STORY_TYPE: bug
+            TRACKER_STORY_NAME: "Fix p-metric-store-release tests due to OSS Metric Store auto-bump"
+            TRACKER_STORY_DESCRIPTION: "The tests are failing due to an OSS Metric Store auto-bump."
+            GITHUB_REPO: "pivotal/metric-store-release"
+        - put: slack-alert
+          params:
+            silent: true
+            username: ((slack-ci.yml/Notes/slack_alert_username))
+            icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+            channel: ((slack-ci.yml/Notes/slack_alert_channel))
+            attachments_file: metadata/alert_message_failure
+
 - name: log-cache-acceptance-tests-release-bump-submodule
   serial: true
   plan:
@@ -754,7 +817,7 @@ jobs:
       - get: log-cache-ci
       - get: p-metric-store-release
         trigger: true
-        passed: ["p-metric-store-unit-tests"]
+        passed: ["bump-oss-metric-store"]
       - get: p-metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
