@@ -8,9 +8,18 @@ pushd linked-repo
   linked_repo_sha=$(git rev-parse HEAD)
 popd
 
+top_of_the_backlog_id=$(
+  curl -X GET \
+    -H "X-TrackerToken: $TRACKER_API_TOKEN" \
+    -H "Content-Type: application/json" \
+    https://www.pivotaltracker.com/services/v5/projects/$TRACKER_PROJECT_ID/stories\?limit\=1\&with_state\=unstarted | jq '.[0]["id"]'
+)
+
 cat << EOF > new_story.json
   {
     "story_type":"${TRACKER_STORY_TYPE}",
+    "current_state": "unstarted",
+    "before_id": ${top_of_the_backlog_id},
     "name":"${TRACKER_STORY_NAME}",
     "description":"
       ${TRACKER_STORY_DESCRIPTION}
