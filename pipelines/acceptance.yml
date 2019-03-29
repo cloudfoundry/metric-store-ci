@@ -1113,6 +1113,15 @@ jobs:
               type: password
           EOT
 
+          cat <<EOT >> ops-files/scale-loggregator-components-up.yml
+          - type: replace
+            path: /instance_groups/name=doppler/instances
+            value: 2
+          - type: replace
+            path: /instance_groups/name=log-api/instances
+            value: 2
+          EOT
+
           cat <<EOT >> ops-files/bosh-speed.yml
           - type: replace
             path: /update/max_in_flight
@@ -1174,6 +1183,7 @@ jobs:
         use-compiled-releases.yml
         scale-to-one-az.yml
         add-system-metrics-agent.yml
+        scale-loggregator-components-up.yml
         test-clients.yml
         bosh-speed.yml
         add-metric-store-to-cfd.yml
