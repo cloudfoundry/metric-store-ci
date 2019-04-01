@@ -764,14 +764,10 @@ jobs:
     - get: p-metric-store-release
       trigger: true
       passed: ["bump-oss-metric-store"]
-  - task: tidy-dependencies
-    file: log-cache-ci/tasks/tidy-dependencies/task.yml
-    input_mapping:
-      repo: p-metric-store-release
   - task: bump-dependencies
     file: log-cache-ci/tasks/bump-dependencies/task.yml
     input_mapping:
-      repo: tidy-repo
+      repo: p-metric-store-release
     params:
       GITHUB_REPO: "pivotal/metric-store-release"
       GITHUB_USER: "metric-store-ci"
@@ -923,14 +919,10 @@ jobs:
     - get: oss-metric-store
       trigger: true
       passed: ["oss-metric-store-unit-tests"]
-  - task: tidy-dependencies
-    file: log-cache-ci/tasks/tidy-dependencies/task.yml
-    input_mapping:
-      repo: oss-metric-store
   - task: bump-dependencies
     file: log-cache-ci/tasks/bump-dependencies/task.yml
     input_mapping:
-      repo: tidy-repo
+      repo: oss-metric-store
     params:
       GITHUB_REPO: "cloudfoundry/metric-store-release"
       GITHUB_USER: "metric-store-ci"
