@@ -24,6 +24,6 @@ pushd bumped-p-metric-store-release
   go mod tidy
   go mod vendor
 
-  git add go.mod go.sum vendor/github.com/cloudfoundry/metric-store-release
+  git add go.mod go.sum vendor
   git commit -m "Bump OSS Metric Store"
 popd
