@@ -1,0 +1,20 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+
+inputs:
+- name: log-cache-ci
+- name: repo
+
+run:
+  path: log-cache-ci/tasks/bump-dependencies/task
+
+params:
+  GITHUB_REPO:
+  GITHUB_USER:
+  GITHUB_AUTH_TOKEN:
+  GITHUB_PRIVATE_KEY:
+  EXCEPT:

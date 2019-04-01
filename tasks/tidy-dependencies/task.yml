@@ -1,0 +1,19 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+
+inputs:
+- name: log-cache-ci
+- name: repo
+
+output:
+- name: tidy-repo
+
+run:
+  path: log-cache-ci/tasks/tidy-dependencies/task
+
+params:
+  GITHUB_PRIVATE_KEY:
