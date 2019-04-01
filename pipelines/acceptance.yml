@@ -762,7 +762,6 @@ jobs:
   - aggregate:
     - get: log-cache-ci
     - get: p-metric-store-release
-      trigger: true
       passed: ["bump-oss-metric-store"]
   - task: bump-dependencies
     file: log-cache-ci/tasks/bump-dependencies/task.yml
