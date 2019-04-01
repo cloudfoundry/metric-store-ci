@@ -40,6 +40,7 @@ groups:
   - oss-msats
   - oss-metric-store-release-elect-promotion
   - oss-metric-store-master-promotion
+  - bump-oss-metric-store-dependencies
 - name: p-metric-store
   jobs:
   - p-metric-store-unit-tests
@@ -50,6 +51,8 @@ groups:
   - "🥓 Bake and Install Tile 🥓"
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
+  - bump-oss-metric-store
+  - bump-p-metric-store-dependencies
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
