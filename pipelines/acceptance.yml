@@ -425,6 +425,7 @@ resources:
   source:
     location: America/Denver
     start: 5:00 PM
+    stop: 6:00 PM
     days: [Sunday]
 
 jobs:
