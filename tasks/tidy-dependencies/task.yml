@@ -9,7 +9,7 @@ inputs:
 - name: log-cache-ci
 - name: repo
 
-output:
+outputs:
 - name: tidy-repo
 
 run:
