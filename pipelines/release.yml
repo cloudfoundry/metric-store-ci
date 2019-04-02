@@ -762,7 +762,7 @@ jobs:
   - task: create-private-release
     file: log-cache-ci/tasks/create-private-release/task.yml
     input_mapping:
-      release-master: oss-metric-store-release-develop
+      release-master: oss-metric-store-release-master
       release-develop: oss-metric-store-release-develop
       release-version: oss-metric-store-release-version
     params:
