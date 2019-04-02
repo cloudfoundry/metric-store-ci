@@ -8,6 +8,11 @@ new_version=`cat release-version/version`
 tag_name="v${new_version}"
 
 git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
+set +x
+if ! [[ -z "${GITHUB_PRIVATE_KEY}" ]]; then
+  setup_github_ssh "${GITHUB_PRIVATE_KEY}"
+fi
+set -x
 
 pushd release-master
   git checkout master

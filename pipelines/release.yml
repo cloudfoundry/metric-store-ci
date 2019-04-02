@@ -767,6 +767,7 @@ jobs:
       release-version: oss-metric-store-release-version
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
   - put: oss-metric-store-release-master
     params:
       repository: release-master-modified
