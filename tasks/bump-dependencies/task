@@ -41,7 +41,7 @@ EOF
   set -e
 
   bundle exec lapidarist -d . -t 'scripts/test unit' --debug --go --except ${EXCEPT} | tee lapidarist.out
-  pull_request_body=$(cat lapidarist.out | sed -n '/Summary/,$p' | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g')
+  pull_request_body=$(cat lapidarist.out | sed -n '/Summary/,$p' | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g' | grep -v "\- skipped")
 
   git push origin bump-dependencies-${timestamp}
 popd
