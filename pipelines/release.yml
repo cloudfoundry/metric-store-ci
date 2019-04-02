@@ -768,10 +768,6 @@ jobs:
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-  - put: oss-metric-store-release-master
-    params:
-      repository: release-master-modified
-      rebase: false
   - put: oss-metric-store-release-develop
     params:
       repository: release-develop-modified
