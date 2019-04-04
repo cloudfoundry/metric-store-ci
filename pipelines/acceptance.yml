@@ -1171,7 +1171,7 @@ jobs:
           cat <<EOT >> ops-files/scale-loggregator-components-up.yml
           - type: replace
             path: /instance_groups/name=doppler/instances
-            value: 2
+            value: 3
           - type: replace
             path: /instance_groups/name=log-api/instances
             value: 2
