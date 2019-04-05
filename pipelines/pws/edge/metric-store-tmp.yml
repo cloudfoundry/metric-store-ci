@@ -16,7 +16,7 @@ resources:
   type: git
   source:
     uri: git@github.com:pivotal/metric-store-release
-    branch: hashing-spike
+    branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: log-cache-ci
@@ -94,6 +94,9 @@ jobs:
           - type: replace
             path: /name
             value: metric-store-edge-tmp
+          - type: replace
+            path: /instance_groups/name=metric-store/vm_type
+            value: minimal
           - type: replace
             path: /instance_groups/name=metric-store/jobs/name=route_registrar/properties
             value:
