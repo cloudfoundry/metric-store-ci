@@ -35,7 +35,9 @@ EOF
 
   # commit release creation changes
   git add .
-  git commit -m "Create final release"
+  git commit -m "Create final backport release"
+
+  backport_release_abbrev=$(git rev-parse --abbrev-ref HEAD)
 
   git tag "${tag_name}" HEAD
 
@@ -44,8 +46,8 @@ popd
 
 pushd log-cache-release-develop
   git checkout develop
-  git remote add -f local_master ../log-cache-release-master
-  git merge -v -m "Merge final release artifacts" local_master/master
+  git remote add -f local_backport ../log-cache-release-backport
+  git merge -v -m "Merge final backport release artifacts" "local_backport/${backport_release_abbrev}"
 
   cp -r . ../log-cache-release-develop-modified
 popd
