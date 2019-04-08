@@ -12,6 +12,8 @@
     client_secret: "((uaa_clients_grafana_secret))"
     scopes:
     - openid
+    - logs.admin
+    - doppler.firehose
     auth_url: https://login.((system_domain))/oauth/authorize
     token_url: https://login.((system_domain))/oauth/token
     api_url: https://login.((system_domain))/userinfo

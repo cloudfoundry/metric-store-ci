@@ -1067,6 +1067,8 @@ jobs:
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
           cp cf-deployment/operations/experimental/add-system-metrics-agent.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
+          cp log-cache-ci/ops-files/add-grafana-uaa-clients.yml ops-files
+          cp log-cache-ci/ops-files/enable-grafana-uaa.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp cfd-PR-for-add-metric-store/operations/experimental/add-metric-store.yml ops-files
           cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
@@ -1255,6 +1257,8 @@ jobs:
         cf-PR-log-cache-remove-expvar-forwarder.yml
         use-log-cache-latest.yml
         grafana-in-cf.yml
+        add-grafana-uaa-clients.yml
+        enable-grafana-uaa.yml
         metric-registrar-in-cf.yml
         cf-deployment-log-cache-candidate-changes.yml
         oss-msats.yml
