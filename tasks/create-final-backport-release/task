@@ -47,7 +47,8 @@ popd
 pushd log-cache-release-develop
   git checkout develop
   git remote add -f local_backport ../log-cache-release-backport
-  git merge -v -m "Merge final backport release artifacts" "local_backport/${backport_release_abbrev}"
+  git cherry-pick "local_backport/${backport_release_abbrev}"
+  git commit --amend -m "Merge final backport ${new_version} release artifacts"
 
   cp -r . ../log-cache-release-develop-modified
 popd
