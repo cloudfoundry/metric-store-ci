@@ -925,7 +925,6 @@ jobs:
   - aggregate:
     - get: log-cache-ci
     - get: oss-metric-store
-      trigger: true
       passed: ["oss-metric-store-unit-tests"]
   - task: bump-dependencies
     file: log-cache-ci/tasks/bump-dependencies/task.yml
