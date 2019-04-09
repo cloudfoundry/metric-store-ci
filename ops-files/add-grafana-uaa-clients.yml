@@ -1,14 +1,14 @@
-# From
-# https://github.com/bosh-prometheus/prometheus-boshrelease/blob/master/manifests/operators/cf/add-grafana-uaa-clients.yml
-# Apply to your cf-deployment based Cloud Foundry
+# Borrowed from https://github.com/bosh-prometheus/prometheus-boshrelease/blob/master/manifests/operators/cf/add-grafana-uaa-clients.yml
 
-# UAA client for grafana
+# This sets up a UAA client for Grafana
+# Note: The logs.admin and doppler.firehose authorizations are required
+# to make sure they are correctly passed through on user tokens.
 - type: replace
   path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/grafana?
   value:
     override: true
     authorized-grant-types: authorization_code
-    authorities: uaa.none
+    authorities: [logs.admin, doppler.firehose]
     scope: openid
     secret: "((uaa_clients_grafana_secret))"
     redirect-uri: http://grafana.((system_domain))/login/generic_oauth

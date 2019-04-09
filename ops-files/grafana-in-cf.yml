@@ -1,7 +1,3 @@
-- path: /instance_groups/name=metric-store/jobs/name=metric-store-gateway/properties/gateway_addr
-  type: replace
-  value: "0.0.0.0:8081"
-
 - path: /instance_groups/-
   type: replace
   value:
