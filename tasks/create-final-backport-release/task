@@ -48,8 +48,10 @@ pushd log-cache-release-develop
   git checkout develop
   git remote add -f local_backport ../log-cache-release-backport
 
+  set +e
   git cherry-pick "local_backport/${backport_release_abbrev}"
   cherry_pick_status=$?
+  set -e
 
   if [ $cherry_pick_status -eq 0 ]; then
     git commit --amend -m "Merge final backport ${new_version} release artifacts"
