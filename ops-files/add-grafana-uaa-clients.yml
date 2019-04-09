@@ -8,7 +8,11 @@
   value:
     override: true
     authorized-grant-types: authorization_code
-    authorities: [logs.admin, doppler.firehose]
+    authorities:
+    - logs.admin
+    - doppler.firehose
+    - cloud_controller.read
+    - cloud_controller.write
     scope: openid
     secret: "((uaa_clients_grafana_secret))"
     redirect-uri: http://grafana.((system_domain))/login/generic_oauth

@@ -9,7 +9,12 @@
     allow_sign_up: true
     client_id: grafana
     client_secret: "((uaa_clients_grafana_secret))"
-    scopes: [openid, logs.admin, doppler.firehose]
+    scopes:
+    - openid
+    - logs.admin
+    - doppler.firehose
+    - cloud_controller.read
+    - cloud_controller.write
     auth_url: https://login.((system_domain))/oauth/authorize
     token_url: https://login.((system_domain))/oauth/token
     api_url: https://login.((system_domain))/userinfo
