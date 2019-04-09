@@ -169,6 +169,8 @@ jobs:
       params:
         submodules: none
     - get: log-cache-ci
+    - get: log-cache-<%= version %>.x
+      passed: [bump-submodule-v<%= version %>.x]
     - get: log-cache-release-<%= version %>.x
       passed: [bump-submodule-v<%= version %>.x]
     - get: log-cache-release-version-<%= version %>.x
@@ -186,6 +188,7 @@ jobs:
     input_mapping:
       log-cache-release-version-backport: log-cache-release-version-<%= version %>.x
       log-cache-release-backport: log-cache-release-<%= version %>.x
+      log-cache-backport: log-cache-<%= version %>.x
     output_mapping:
       log-cache-release-backport-modified: log-cache-release-<%= version %>.x-modified
     params:
@@ -201,6 +204,10 @@ jobs:
       repository: log-cache-release-develop-modified
       rebase: false
       get_params: {submodules: none}
+  - put: log-cache-<%= version %>.x
+    params:
+      repository: log-cache-backport-modified
+      only_tag: true
   - put: log-cache-github-release-drafts
     params:
       name: github-release/name

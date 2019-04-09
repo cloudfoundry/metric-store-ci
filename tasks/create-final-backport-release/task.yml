@@ -6,12 +6,14 @@ platform: linux
 
 inputs:
 - name: log-cache-ci
+- name: log-cache-backport
 - name: log-cache-release-backport
 - name: log-cache-release-develop
 - name: log-cache-release-version-backport
 
 outputs:
 - name: github-release
+- name: log-cache-backport-modified
 - name: log-cache-release-backport-modified
 - name: log-cache-release-develop-modified
 

@@ -38,6 +38,7 @@ EOF
   git commit -m "Create final backport release"
 
   backport_release_abbrev=$(git rev-parse --abbrev-ref HEAD)
+  log_cache_backport_sha=$(git rev-parse @:./src/code.cloudfoundry.org/log-cache)
 
   git tag "${tag_name}" HEAD
 
@@ -66,4 +67,9 @@ pushd log-cache-release-develop
   fi
 
   cp -r . ../log-cache-release-develop-modified
+popd
+
+pushd log-cache-backport
+  git tag "${tag_name}" ${log_cache_backport_sha}
+  cp -r . ../log-cache-backport-modified
 popd
