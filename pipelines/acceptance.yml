@@ -1066,6 +1066,15 @@ jobs:
           erb log-cache-ci/ops-files/oss-msats.yml.erb > ops-files/oss-msats.yml
 
           # TODO - remove this when cf-d has this by default
+          cat <<EOT >> ops-files/this-should-already-exist-delete-soon.yml
+          - type: replace
+            path: /releases/name=metric-store/version?
+            value: 1.0.0
+          - type: replace
+            path: /releases/name=metric-store/sha1?
+            value: fca1a466746c82dca2c8d43041b45fbf3dd1e5c2
+          EOT
+
           cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
           - type: remove
             path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder
@@ -1243,6 +1252,7 @@ jobs:
         test-clients.yml
         bosh-speed.yml
         add-metric-store.yml
+        this-should-already-exist-delete-soon.yml
         p-metric-store-in-cf.yml
         cf-PR-log-cache-router-tls.yml
         cf-PR-log-cache-remove-expvar-forwarder.yml
