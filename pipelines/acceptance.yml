@@ -80,13 +80,7 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/cf-deployment
-    branch: master
-
-- name: cfd-PR-for-add-metric-store
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/cf-deployment
-    branch: add-metric-store-ops-file
+    branch: release-candidate
 
 - name: cf-deployment-concourse-tasks
   type: git
@@ -971,7 +965,6 @@ jobs:
     - get: bbl-state
       resource: denver-locks
     - get: cf-deployment
-    - get: cfd-PR-for-add-metric-store
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
     - get: notification-cf-deploy-version
@@ -1049,7 +1042,6 @@ jobs:
       - name: cf-deployment
       - name: log-cache-ci
       - name: oss-metric-store
-      - name: cfd-PR-for-add-metric-store
       outputs:
       - name: ops-files
       params:
@@ -1065,11 +1057,11 @@ jobs:
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
           cp cf-deployment/operations/experimental/add-system-metrics-agent.yml ops-files
+          cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/add-grafana-uaa-clients.yml ops-files
           cp log-cache-ci/ops-files/enable-grafana-uaa.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
-          cp cfd-PR-for-add-metric-store/operations/experimental/add-metric-store.yml ops-files
           cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
           erb log-cache-ci/ops-files/oss-msats.yml.erb > ops-files/oss-msats.yml
 
