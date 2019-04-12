@@ -22,10 +22,6 @@ params:
   # - GCS JSON key for blob storage.
   JSON_KEY:
 
-  # - Optional
-  # - Whether to bump windows golang version.
-  INCLUDE_WINDOWS: false
-
 run:
   path: ../log-cache-ci/tasks/bump-golang/task
   dir: updated-release-repo

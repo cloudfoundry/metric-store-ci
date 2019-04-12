@@ -23,12 +23,5 @@ def linux_filename(version)
   @linux_filename ||= "go#{version}.linux-amd64.tar.gz"
 end
 
-def windows_filename(version)
-  @windows_filename ||= "go#{version}.windows-amd64.zip"
-end
-
 header "Downloading Linux blob..."
 download_blob(linux_filename(to_version))
-
-header "Downloading Windows blob..."
-download_blob(windows_filename(to_version))

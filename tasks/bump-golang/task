@@ -28,10 +28,6 @@ def linux_filename(version)
   @linux_filename ||= "go#{version}.linux-amd64.tar.gz"
 end
 
-def windows_filename(version)
-  @windows_filename ||= "go#{version}.windows-amd64.zip"
-end
-
 def check_process(process, action)
   if !process.success?
     raise "Command execution failed for #{action}"
@@ -113,11 +109,6 @@ create_config_private
 
 header "Adding Linux blob..."
 add_blob(linux_filename(to_version))
-
-if ENV["INCLUDE_WINDOWS"] == "true"
-  header "Adding Windows blob..."
-  add_blob(windows_filename(to_version))
-end
 
 header "Uploading blobs..."
 upload_blobs
