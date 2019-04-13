@@ -1092,6 +1092,26 @@ jobs:
               release: loggregator-agent
           EOT
 
+          cat <<EOT >> ops-files/cf-PR-log-cache-proxy-tls.yml
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-gateway/properties/proxy_cert?
+            value: "((log_cache_proxy_tls.certificate))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-gateway/properties/proxy_key?
+            value: "((log_cache_proxy_tls.private_key))"
+          - type: replace
+            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxt/properties/proxy_ca_cert?
+            value: "((log_cache_ca.certificate))"
+          - type: replace
+            path: /variables/name=log_cache_proxy_tls?
+            value:
+              name: log_cache_proxy_tls
+              type: certificate
+              options:
+                ca: log_cache_ca
+                common_name: localhost
+          EOT
+
           cat <<EOT >> ops-files/cf-PR-log-cache-router-tls.yml
           - type: replace
             path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/external_cert?
@@ -1255,6 +1275,7 @@ jobs:
         this-should-already-exist-delete-soon.yml
         p-metric-store-in-cf.yml
         cf-PR-log-cache-router-tls.yml
+        cf-PR-log-cache-proxy-tls.yml
         cf-PR-log-cache-remove-expvar-forwarder.yml
         use-log-cache-latest.yml
         grafana-in-cf.yml
