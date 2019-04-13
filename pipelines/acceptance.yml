@@ -1100,7 +1100,7 @@ jobs:
             path: /instance_groups/name=doppler/jobs/name=log-cache-gateway/properties/proxy_key?
             value: "((log_cache_proxy_tls.private_key))"
           - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxt/properties/proxy_ca_cert?
+            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/proxy_ca_cert?
             value: "((log_cache_ca.certificate))"
           - type: replace
             path: /variables/name=log_cache_proxy_tls?
