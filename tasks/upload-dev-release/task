@@ -10,4 +10,4 @@ fi
 
 : ${BOSH_ENVIRONMENT:?must provide BOSH_* environment variables or BBL_STATE_DIR}
 
-bosh upload-release --rebase bosh-release-tarball/$( ls -1 bosh-release-tarball/ | grep tgz)
+bosh upload-release bosh-release-tarball/$( ls -1 bosh-release-tarball/ | grep tgz)
