@@ -1,7 +1,7 @@
 # Deploy Metric Store (OSS) as a part of cf-d
 
 - type: replace
-  path: /releases/-
+  path: /releases/name=metric-store?
   value:
     name: metric-store
     version: latest
