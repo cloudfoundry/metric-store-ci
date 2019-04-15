@@ -17,7 +17,7 @@ groups:
   - oss-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - oss-metric-store-unit-tests
-  - oss-msats
+  - ooss-ms-🚬
   - create-oss-metric-store-dev-release
   - bump-oss-metric-store
   - bump-p-metric-store-dependencies
@@ -37,7 +37,7 @@ groups:
   - oss-metric-store-unit-tests
   - create-oss-metric-store-dev-release
   - cf-deploy
-  - oss-msats
+  - oss-ms-🚬
   - oss-metric-store-release-elect-promotion
   - oss-metric-store-master-promotion
   - bump-oss-metric-store-dependencies
@@ -1689,7 +1689,7 @@ jobs:
     params:
       repository: merged-dest
 
-- name: oss-msats
+- name: oss-ms-🚬
   serial: true
   plan:
   - aggregate:
@@ -1704,14 +1704,14 @@ jobs:
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
-      TITLE: OSS Metric Store Acceptance Tests
+      TITLE: OSS Metric Store Smoke Tests
   - task: run-msats
     file: log-cache-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
       DEPLOYMENT_NAME: cf
-      ERRAND: metric-store-acceptance-tests
+      ERRAND: metric-store-smoke-tests
       KEEP_ALIVE: true
     input_mapping:
       bbl-state: denver-locks
@@ -1732,7 +1732,7 @@ jobs:
     - get: develop
       resource: oss-metric-store
       trigger: true
-      passed: ["oss-msats"]
+      passed: ["oss-ms-🚬"]
   - get: oss-metric-store-release-elect
   - put: oss-metric-store-release-elect
     params:

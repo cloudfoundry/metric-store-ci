@@ -1,7 +1,7 @@
 - type: replace
   path: /instance_groups/name=metric-store/jobs/-
   value:
-    name: metric-store-acceptance-tests
+    name: metric-store-smoke-tests
     release: metric-store
     consumes:
       metric-store: {from: metric-store}
