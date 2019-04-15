@@ -7,7 +7,7 @@
     version: latest
 
 - type: replace
-  path: /instance_groups/-
+  path: /instance_groups/name=metric-store?
   value:
     name: metric-store
     azs:
@@ -99,7 +99,7 @@
           internal_addr: https://uaa.service.cf.internal:8443
 
 - type: replace
-  path: /variables/-
+  path: /variables/name=metric_store_to_logs_provider?
   value:
     name: metric_store_to_logs_provider
     type: certificate
@@ -111,7 +111,7 @@
       - server_auth
 
 - type: replace
-  path: /variables/-
+  path: /variables/name=metric_store_ca?
   value:
     name: metric_store_ca
     type: certificate
@@ -120,7 +120,7 @@
       common_name: metric-store
 
 - type: replace
-  path: /variables/-
+  path: /variables/name=metric_store?
   value:
     name: metric_store
     type: certificate
@@ -135,7 +135,7 @@
       - server_auth
 
 - type: replace
-  path: /variables/-
+  path: /variables/name=metricstore_ssl?
   value:
     name: metricstore_ssl
     type: certificate
@@ -147,7 +147,7 @@
       - "*.metric-store.((system_domain))"
 
 - type: replace
-  path: /variables/-
+  path: /variables/metric_store_proxy_tls?
   value:
     name: metric_store_proxy_tls
     type: certificate
