@@ -1062,6 +1062,7 @@ jobs:
           cp log-cache-ci/ops-files/add-grafana-uaa-clients.yml ops-files
           cp log-cache-ci/ops-files/enable-grafana-uaa.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
+          cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
           cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
           erb log-cache-ci/ops-files/oss-msats.yml.erb > ops-files/oss-msats.yml
 
@@ -1273,6 +1274,7 @@ jobs:
         bosh-speed.yml
         add-metric-store.yml
         this-should-already-exist-delete-soon.yml
+        metric-store-in-cf.yml
         p-metric-store-in-cf.yml
         cf-PR-log-cache-router-tls.yml
         cf-PR-log-cache-proxy-tls.yml
