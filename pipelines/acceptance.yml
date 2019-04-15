@@ -1217,11 +1217,16 @@ jobs:
             value: 5
           EOT
 
-          cat <<EOT >> ops-files/use-log-cache-latest.yml
+          cat <<EOT >> ops-files/use-latest.yml
           - type: replace
             path: /releases/name=log-cache
             value:
               name: log-cache
+              version: latest
+          - type: replace
+            path: /releases/name=metric-store?
+            value:
+              name: metric-store
               version: latest
           EOT
 
@@ -1279,7 +1284,7 @@ jobs:
         cf-PR-log-cache-router-tls.yml
         cf-PR-log-cache-proxy-tls.yml
         cf-PR-log-cache-remove-expvar-forwarder.yml
-        use-log-cache-latest.yml
+        use-latest.yml
         grafana-in-cf.yml
         add-grafana-uaa-clients.yml
         enable-grafana-uaa.yml
