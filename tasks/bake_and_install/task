@@ -6,6 +6,7 @@ echo "running build and install"
 mkdir -p releases
 set +f
 mv metric-store-dev-release/*.tgz releases
+mv oss-metric-store-release/*.tgz releases
 set -f
 
 calculate_version metric-store-release/version tile-version new-tile-version "build"

@@ -10,6 +10,7 @@ inputs:
   - name: tile-version
   - name: metric-store-dev-release
   - name: metric-store-release
+  - name: oss-metric-store-release
 
 outputs:
   - name: baked-tile
