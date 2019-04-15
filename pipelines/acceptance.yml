@@ -17,7 +17,7 @@ groups:
   - oss-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - oss-metric-store-unit-tests
-  - ooss-ms-🚬
+  - oss-ms-🚬
   - create-oss-metric-store-dev-release
   - bump-oss-metric-store
   - bump-p-metric-store-dependencies
