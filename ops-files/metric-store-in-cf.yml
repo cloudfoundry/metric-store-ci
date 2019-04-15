@@ -147,7 +147,7 @@
       - "*.metric-store.((system_domain))"
 
 - type: replace
-  path: /variables/metric_store_proxy_tls?
+  path: /variables/name=metric_store_proxy_tls?
   value:
     name: metric_store_proxy_tls
     type: certificate
