@@ -89,7 +89,7 @@
         cc:
           ca_cert: ((service_cf_internal_ca.certificate))
           common_name: cloud-controller-ng.service.cf.internal
-        proxy_ca_cert: "((metric_store_ca.certificate))"
+        proxy_ca_cert: "((p_metric_store_ca.certificate))"
         proxy_port: 8083
         external_cert: ((p_metricstore_ssl.certificate))
         external_key: ((p_metricstore_ssl.private_key))
