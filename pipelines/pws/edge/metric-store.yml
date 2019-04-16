@@ -68,7 +68,6 @@ jobs:
       trigger: true
     - get: log-cache-ci
     - get: log-cache-deployments
-      params: {pre: dev}
   - task: upload-metric-store
     file: log-cache-ci/tasks/upload-release/task.yml
     image: cf-deployment-concourse-tasks-image
