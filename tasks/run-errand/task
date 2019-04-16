@@ -5,8 +5,14 @@ source cf-deployment-concourse-tasks/shared-functions
 
 setup_bosh_env_vars
 
-if [ "$KEEP_ALIVE" = true ]; then
-  bosh -d $DEPLOYMENT_NAME run-errand $ERRAND --keep-alive
-else
-  bosh -d $DEPLOYMENT_NAME run-errand $ERRAND
+errand="bosh -d $DEPLOYMENT_NAME run-errand $ERRAND"
+
+if [ -z $INSTANCE ]; then
+  errand="$errand --instance=$INSTANCE"
 fi
+
+if [ "$KEEP_ALIVE" = true ]; then
+  errand="$errand --keep-alive"
+fi
+
+$(echo $errand)
