@@ -702,6 +702,7 @@ jobs:
     - get: log-cache-ci
     - get: p-metric-store-release
       passed: [p-metric-store-unit-tests]
+      trigger: true
     - get: oss-metric-store
       passed: [oss-metric-store-unit-tests]
       trigger: true
@@ -1356,6 +1357,8 @@ jobs:
       - get: log-cache-deployments
       - get: p-metric-store-release
         passed: ["create-p-metric-store-dev-release"]
+      - get: oss-metric-store-dev-release
+        passed: ["create-oss-metric-store-dev-release"]
       - get: p-metric-store-version
         params:
           pre: build
@@ -1377,6 +1380,7 @@ jobs:
         deployment-tools: bobble
         metric-store-release: p-metric-store-release
         metric-store-dev-release: p-metric-store-dev-release
+        oss-metric-store-release: oss-metric-store-dev-release
         tile-config: log-cache-ci
         tile-version: p-metric-store-version
       params:
