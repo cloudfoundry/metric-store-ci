@@ -18,6 +18,7 @@ groups:
   - create-p-metric-store-dev-release
   - oss-metric-store-unit-tests
   - oss-ms-🚬
+  - p-ms-🚬
   - create-oss-metric-store-dev-release
   - bump-oss-metric-store
   - bump-p-metric-store-dependencies
@@ -48,6 +49,7 @@ groups:
   - p-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - cf-deploy
+  - p-ms-🚬
   - "🥓 Bake and Install Tile 🥓"
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
@@ -1074,7 +1076,7 @@ jobs:
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
           cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
-          erb log-cache-ci/ops-files/oss-msats.yml.erb > ops-files/oss-msats.yml
+          erb log-cache-ci/ops-files/msats.yml.erb > ops-files/msats.yml
 
           # TODO - remove this when cf-d has this by default
           cat <<EOT >> ops-files/this-should-already-exist-delete-soon.yml
@@ -1300,7 +1302,7 @@ jobs:
         enable-grafana-uaa.yml
         metric-registrar-in-cf.yml
         cf-deployment-log-cache-candidate-changes.yml
-        oss-msats.yml
+        msats.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
@@ -1356,6 +1358,42 @@ jobs:
         attachments_file: modified-metadata/alert_message_success
     - put: notification-cf-deploy-version
       params: { bump: minor }
+
+- name: p-ms-🚬
+  serial: true
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: cf-deployment-concourse-tasks-image
+    - get: denver-locks
+    - get: cf-deployment-concourse-tasks
+    - get: p-metric-store-release
+      trigger: true
+      passed: ["cf-deploy"]
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: P-Metric-Store Smoke Tests
+  - task: run-msats
+    file: log-cache-ci/tasks/run-errand/task.yml
+    image: cf-deployment-concourse-tasks-image
+    params:
+      BBL_STATE_DIR: ((bbl_state_dir))
+      DEPLOYMENT_NAME: cf
+      ERRAND: metric-store-smoke-tests
+      INSTANCE: p-metric-store/0
+      KEEP_ALIVE: true
+    input_mapping:
+      bbl-state: denver-locks
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_failure
 
 - name: "🥓 Bake and Install Tile 🥓"
   plan:
@@ -1732,6 +1770,7 @@ jobs:
       BBL_STATE_DIR: ((bbl_state_dir))
       DEPLOYMENT_NAME: cf
       ERRAND: metric-store-smoke-tests
+      INSTANCE: metric-store/0
       KEEP_ALIVE: true
     input_mapping:
       bbl-state: denver-locks
