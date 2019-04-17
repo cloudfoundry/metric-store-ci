@@ -25,6 +25,8 @@ EOF
   cp -r src/pkg src/github.com/cloudfoundry/metric-store-release/src
   cp -r src/cmd src/github.com/cloudfoundry/metric-store-release/src
 
+  bosh vendor-package golang-1.12-linux ../golang-release
+
   bosh create-release --force \
     --tarball ../oss-metric-store-dev-release/release-${dev_version}.tgz \
     --version "${dev_version}"

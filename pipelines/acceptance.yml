@@ -327,6 +327,14 @@ resources:
     uri: https://github.com/pivotal-cf/concourse-tasks
     branch: master
 
+- name: golang-release
+  type: git
+  source:
+    uri: git@github.com:bosh-packages/golang-release
+    branch: master
+    tag_filter: v*
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 # currently pinned to af6ff5c02f8e4e9e495dba5b3faf8095c92bc0fb
 # while observability-store iterates - RH
 - name: bobble
@@ -943,6 +951,7 @@ jobs:
       - get: oss-metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
+      - get: golang-release
     - task: create-dev-release
       file: log-cache-ci/tasks/create-oss-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image

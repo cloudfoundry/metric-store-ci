@@ -5,6 +5,7 @@ inputs:
 - name: log-cache-ci
 - name: bosh-dev-release-dir
 - name: bosh-dev-release-version
+- name: golang-release
 
 outputs:
 - name: oss-metric-store-dev-release
