@@ -866,6 +866,7 @@ jobs:
       - get: p-metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
+      - get: golang-release
     - task: create-dev-release
       file: log-cache-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
