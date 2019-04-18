@@ -7,7 +7,7 @@ setup_bosh_env_vars
 
 errand="bosh -d $DEPLOYMENT_NAME run-errand $ERRAND"
 
-if [ -n $INSTANCE ]; then
+if [ -n "$INSTANCE" ]; then
   errand="$errand --instance=$INSTANCE"
 fi
 

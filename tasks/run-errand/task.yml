@@ -27,5 +27,5 @@ params:
   KEEP_ALIVE: false
 
   # - Optional
-  # - Name of instance or group the errang should run on
+  # - Name of instance or group the errand should run on
   INSTANCE:
