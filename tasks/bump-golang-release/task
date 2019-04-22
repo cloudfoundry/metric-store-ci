@@ -14,7 +14,7 @@ set -x
 # checkout golang-release repo at given tag
 pushd golang-release
   release_tag=$(cat tag)
-  pull_request_body=$(cat body)
+  pull_request_body=$(cat body | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g')
 popd
 
 pushd golang-release-repo
