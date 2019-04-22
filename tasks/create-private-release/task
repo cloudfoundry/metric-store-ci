@@ -40,7 +40,7 @@ EOF
 
   # commit release creation changes
   git add .
-  git commit -m "Create release"
+  git commit -m "Create release ${new_version}"
 
   release_abbrev=$(git rev-parse --abbrev-ref HEAD)
   release_sha=$(git rev-parse HEAD)
@@ -52,7 +52,7 @@ popd
 pushd release-develop
   git checkout develop
   git remote add -f local_master ../release-master
-  git merge -v --no-ff -m "Merge release artifacts" "local_master/${release_abbrev}"
+  git merge -v --no-ff -m "Merge release ${new_version} artifacts" "local_master/${release_abbrev}"
 
   cp -r . ../release-develop-modified
 popd

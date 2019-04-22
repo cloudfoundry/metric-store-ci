@@ -284,7 +284,7 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
-- name: release-tarball
+- name: log-cache-release-tarball
   type: s3
   source:
     bucket: log-cache-final-releases
@@ -292,6 +292,20 @@ resources:
     region_name: us-east-2
     access_key_id: ((release-credentials.yml/Notes/loggregator-team-s3-access-key))
     secret_access_key: ((release-credentials.yml/Notes/loggregator-team-s3-secret-key))
+
+- name: oss-metric-store-release-tarball
+  type: gcs-resource
+  source:
+    bucket: oss-metric-store-releases
+    versioned_file: release.tgz
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: p-metric-store-release-tarball
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-releases
+    versioned_file: release.tgz
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 shared:
   - &send-alert-message
@@ -398,7 +412,7 @@ jobs:
     file: log-cache-ci/tasks/create-final-release/task.yml
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-  - put: release-tarball
+  - put: log-cache-release-tarball
     params:
       file: release-tarball/release.tgz
   - put: log-cache-release-master
@@ -422,12 +436,13 @@ jobs:
     - get: log-cache-release-version
       trigger: true
       passed: [create-lcr-final-release]
-    - get: release-tarball
+    - get: log-cache-release-tarball
     - get: log-cache-ci
   - task: github-publish-release-metadata
     file: log-cache-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: log-cache-release-version
+      release-tarball: log-cache-release-tarball
     params:
       PROJECT_NAME: Log Cache
   - put: log-cache-github-release-drafts
@@ -586,6 +601,10 @@ jobs:
       release-version: metric-store-release-version
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
+  - put: p-metric-store-release-tarball
+    params:
+      file: release-tarball/release.tgz
   - put: metric-store-release-master
     params:
       repository: release-master-modified
@@ -603,12 +622,13 @@ jobs:
     - get: metric-store-release-version
       trigger: true
       passed: [create-msr-private-release]
-    - get: release-tarball
+    - get: p-metric-store-release-tarball
     - get: log-cache-ci
   - task: github-publish-release-metadata
     file: log-cache-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: metric-store-release-version
+      release-tarball: p-metric-store-release-tarball
     params:
       PROJECT_NAME: Metric Store
   - put: metric-store-github-release-drafts
@@ -768,6 +788,9 @@ jobs:
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
+  - put: oss-metric-store-release-tarball
+    params:
+      file: release-tarball/release.tgz
   - put: oss-metric-store-release-develop
     params:
       repository: release-develop-modified
@@ -781,12 +804,13 @@ jobs:
     - get: oss-metric-store-release-version
       trigger: true
       passed: [create-oss-msr-final-release]
-    - get: release-tarball
+    - get: oss-metric-store-release-tarball
     - get: log-cache-ci
   - task: github-publish-release-metadata
     file: log-cache-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: oss-metric-store-release-version
+      release-tarball: oss-metric-store-release-tarball
     params:
       PROJECT_NAME: Metric Store
   - put: oss-metric-store-github-release-drafts
