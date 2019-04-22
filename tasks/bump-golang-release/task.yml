@@ -1,0 +1,22 @@
+---
+platform: linux
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+
+inputs:
+- name: log-cache-ci
+- name: repo
+- name: golang-release-repo
+- name: golang-release
+
+run:
+  path: log-cache-ci/tasks/bump-golang-release/task
+
+params:
+  GITHUB_REPO:
+  GITHUB_EMAIL:
+  GITHUB_AUTH_TOKEN:
+  GITHUB_PRIVATE_KEY:
+  JSON_KEY:

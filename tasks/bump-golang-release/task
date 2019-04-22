@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+set -eoux pipefail
+
+. ./log-cache-ci/tasks/shared_bash
+
+git config --global user.email "${GITHUB_EMAIL}" && git config --global user.name "${GITHUB_NAME}"
+set +x
+if ! [[ -z "${GITHUB_PRIVATE_KEY}" ]]; then
+  setup_github_ssh "${GITHUB_PRIVATE_KEY}"
+fi
+set -x
+
+# checkout golang-release repo at given tag
+pushd golang-release
+  release_tag=$(cat tag)
+  pull_request_body=$(cat body)
+popd
+
+pushd golang-release-repo
+  git checkout ${release_tag}
+popd
+
+pushd repo
+  git checkout -b bump-golang-release-${release_tag}
+
+  cat << EOF > config/private.yml
+---
+blobstore:
+  options:
+    credentials_source: static
+    json_key: |
+      $(echo ${JSON_KEY})
+EOF
+
+  bosh vendor-package golang-1.12-linux ../golang-release-repo
+  git add packages/ .final_builds/packages/
+
+  if [ $(git diff --staged | wc -l) -eq 0 ]; then
+    echo "Nothing to commit!"
+    exit 0
+  fi
+
+  git commit -m "Bump Golang Release ${release_tag}"
+
+  git push origin bump-golang-release-${release_tag}
+popd
+
+cat << EOF > new_pull_request.json
+  {
+    "title": "Auto Bump Golang Release ${release_tag}",
+    "base": "develop",
+    "head": "bump-golang-release-${release_tag}",
+    "body": "$(echo "${pull_request_body}")"
+  }
+EOF
+
+cat new_pull_request.json
+
+curl -X POST \
+  -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
+  -H "Content-Type: application/json" \
+  --data-binary @new_pull_request.json \
+  https://api.github.com/repos/${GITHUB_REPO}/pulls
