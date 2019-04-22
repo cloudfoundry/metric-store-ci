@@ -19,11 +19,21 @@ blobstore:
 EOF
   fi
 
+  org="pivotal"
+  lib_dir="internal"
+
+  if [ $OSS_RELEASE = true ]; then
+    org="cloudfoundry"
+    lib_dir="pkg"
+  fi
+
   # put go source files in src directory so go build is pleased.
-  mkdir -p src/github.com/pivotal/metric-store-release/src/{internal,cmd}
+  mkdir -p src/github.com/$org/metric-store-release/src/{$lib_dir,cmd}
   cp -r vendor/* src/
-  cp -r src/internal src/github.com/pivotal/metric-store-release/src
-  cp -r src/cmd src/github.com/pivotal/metric-store-release/src
+
+
+  cp -r src/$lib_dir src/github.com/$org/metric-store-release/src
+  cp -r src/cmd src/github.com/$org/metric-store-release/src
 
   bosh vendor-package golang-1.12-linux ../golang-release
 

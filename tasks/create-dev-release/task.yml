@@ -16,3 +16,4 @@ run:
 
 params:
   JSON_KEY:
+  OSS_RELEASE: false

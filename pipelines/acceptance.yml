@@ -956,16 +956,17 @@ jobs:
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
     - task: create-dev-release
-      file: log-cache-ci/tasks/create-oss-dev-release/task.yml
+      file: log-cache-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-dev-release-dir: oss-metric-store
         bosh-dev-release-version: oss-metric-store-dev-release-version
       params:
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+        OSS_RELEASE: true
     - put: oss-metric-store-dev-release
       params:
-        file: oss-metric-store-dev-release/release-*.tgz
+        file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
     - put: oss-metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
