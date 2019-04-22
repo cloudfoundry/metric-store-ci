@@ -1091,6 +1091,8 @@ jobs:
 
           cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
           - type: remove
+            path: /addons/name=prom_scraper
+          - type: remove
             path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder
           - type: remove
             path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder
