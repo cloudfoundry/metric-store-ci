@@ -1,6 +1,5 @@
 <%
   LOG_CACHE_GOLANG_VERSION    = '1.12.4'
-  METRIC_STORE_GOLANG_VERSION = '1.12.4'
 
   LOG_CACHE_GOLANG_MINOR_VERSION = LOG_CACHE_GOLANG_VERSION.split(".").take(2).join(".")
 %>
@@ -32,13 +31,6 @@ resources:
     repository: logcache/base
     username: ((docker-hub-ci.yml/Notes/docker-hub-username))
     password: ((docker-hub-ci.yml/Notes/docker-hub-password))
-
-- name: metric-store-release-develop
-  type: git
-  source:
-    uri: git@github.com:pivotal/metric-store-release
-    branch: develop
-    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: oss-metric-store-release-develop
   type: git
@@ -142,43 +134,6 @@ jobs:
     - put: log-cache-release-develop
       params:
         repository: committed-log-cache-release
-        rebase: false
-
-- name: bump-metric-store-release-golang
-  serial: true
-  plan:
-  - aggregate:
-    - get: cf-deployment-concourse-tasks-image
-    - get: metric-store-release-develop
-    - get: log-cache-ci
-  - task: download-go
-    image: cf-deployment-concourse-tasks-image
-    file: log-cache-ci/tasks/download-golang/task.yml
-    params:
-      VERSION: <%= METRIC_STORE_GOLANG_VERSION %>
-  - do:
-    - task: bump-metric-store-release
-      image: cf-deployment-concourse-tasks-image
-      file: log-cache-ci/tasks/bump-golang/task.yml
-      input_mapping:
-        release-repo: metric-store-release-develop
-      output_mapping:
-        updated-release-repo: updated-metric-store-release
-      params:
-        VERSION: <%= METRIC_STORE_GOLANG_VERSION %>
-        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-    - task: commit-metric-store-release
-      image: cf-deployment-concourse-tasks-image
-      file: log-cache-ci/tasks/commit/task.yml
-      input_mapping:
-        release-repo: updated-metric-store-release
-      output_mapping:
-        committed-repo: committed-metric-store-release
-      params:
-        COMMIT_MESSAGE: "Bump golang version"
-    - put: metric-store-release-develop
-      params:
-        repository: committed-metric-store-release
         rebase: false
 
 - name: bump-oss-metric-store-golang-release
