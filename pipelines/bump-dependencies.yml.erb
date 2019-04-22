@@ -32,6 +32,13 @@ resources:
     username: ((docker-hub-ci.yml/Notes/docker-hub-username))
     password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
+- name: p-metric-store-release-develop
+  type: git
+  source:
+    uri: git@github.com:pivotal/metric-store-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 - name: oss-metric-store-release-develop
   type: git
   source:
@@ -135,6 +142,27 @@ jobs:
       params:
         repository: committed-log-cache-release
         rebase: false
+
+- name: bump-p-metric-store-golang-release
+  serial: true
+  plan:
+  - aggregate:
+    - get: p-metric-store-release-develop
+    - get: golang-release-repo
+    - get: golang-release
+      trigger: true
+    - get: log-cache-ci
+  - task: bump-golang-release
+    file: log-cache-ci/tasks/bump-golang-release/task.yml
+    input_mapping:
+      repo: p-metric-store-release-develop
+    params:
+      GITHUB_REPO: "pivotal/metric-store-release"
+      GITHUB_EMAIL: "cf-log-cache+github@pivotal.io"
+      GITHUB_NAME: "Metric Store CI"
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
+      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
+      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: bump-oss-metric-store-golang-release
   serial: true
