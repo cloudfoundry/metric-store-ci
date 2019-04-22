@@ -60,6 +60,14 @@ resources:
     repository: golang-release
     access_token: ((github-key-ci.yml/Notes/github-access-token))
 
+- name: weekly-on-sunday
+  type: time
+  source:
+    location: America/Denver
+    start: 5:00 PM
+    stop: 6:00 PM
+    days: [Sunday]
+
 jobs:
 - name: bump-docker-golang
   plan:
@@ -184,3 +192,41 @@ jobs:
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
       GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: bump-p-metric-store-dependencies
+  serial: true
+  plan:
+  - get: weekly-on-sunday
+    trigger: true
+  - aggregate:
+    - get: log-cache-ci
+    - get: p-metric-store-release-develop
+  - task: bump-dependencies
+    file: log-cache-ci/tasks/bump-dependencies/task.yml
+    input_mapping:
+      repo: p-metric-store-release-develop
+    params:
+      GITHUB_REPO: "pivotal/metric-store-release"
+      GITHUB_USER: "metric-store-ci"
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
+      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
+      EXCEPT: "google.golang.org/grpc,github.com/cloudfoundry/metric-store-release"
+
+- name: bump-oss-metric-store-dependencies
+  serial: true
+  plan:
+  - get: weekly-on-sunday
+    trigger: true
+  - aggregate:
+    - get: log-cache-ci
+    - get: oss-metric-store-release-develop
+  - task: bump-dependencies
+    file: log-cache-ci/tasks/bump-dependencies/task.yml
+    input_mapping:
+      repo: oss-metric-store-release-develop
+    params:
+      GITHUB_REPO: "cloudfoundry/metric-store-release"
+      GITHUB_USER: "metric-store-ci"
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
+      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
+      EXCEPT: "google.golang.org/grpc"

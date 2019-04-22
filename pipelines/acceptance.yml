@@ -21,8 +21,6 @@ groups:
   - p-ms-🚬
   - create-oss-metric-store-dev-release
   - bump-oss-metric-store
-  - bump-p-metric-store-dependencies
-  - bump-oss-metric-store-dependencies
 - name: log-cache
   jobs:
   - log-cache-bump-submodule
@@ -41,7 +39,6 @@ groups:
   - oss-ms-🚬
   - oss-metric-store-release-elect-promotion
   - oss-metric-store-master-promotion
-  - bump-oss-metric-store-dependencies
 - name: p-metric-store
   jobs:
   - p-metric-store-unit-tests
@@ -54,7 +51,6 @@ groups:
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
   - bump-oss-metric-store
-  - bump-p-metric-store-dependencies
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -433,14 +429,6 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: temp-baked-tiles/(.*).pivotal
 
-- name: weekly-on-sunday
-  type: time
-  source:
-    location: America/Denver
-    start: 5:00 PM
-    stop: 6:00 PM
-    days: [Sunday]
-
 jobs:
 ###############################################################################
 # LOG CACHE
@@ -768,26 +756,6 @@ jobs:
             channel: ((slack-ci.yml/Notes/slack_alert_channel))
             attachments_file: metadata/alert_message_failure
 
-- name: bump-p-metric-store-dependencies
-  serial: true
-  plan:
-  - get: weekly-on-sunday
-    trigger: true
-  - aggregate:
-    - get: log-cache-ci
-    - get: p-metric-store-release
-      passed: ["bump-oss-metric-store"]
-  - task: bump-dependencies
-    file: log-cache-ci/tasks/bump-dependencies/task.yml
-    input_mapping:
-      repo: p-metric-store-release
-    params:
-      GITHUB_REPO: "pivotal/metric-store-release"
-      GITHUB_USER: "metric-store-ci"
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      EXCEPT: "google.golang.org/grpc,github.com/cloudfoundry/metric-store-release"
-
 - name: log-cache-acceptance-tests-release-bump-submodule
   serial: true
   plan:
@@ -922,26 +890,6 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
-
-- name: bump-oss-metric-store-dependencies
-  serial: true
-  plan:
-  - get: weekly-on-sunday
-    trigger: true
-  - aggregate:
-    - get: log-cache-ci
-    - get: oss-metric-store
-      passed: ["oss-metric-store-unit-tests"]
-  - task: bump-dependencies
-    file: log-cache-ci/tasks/bump-dependencies/task.yml
-    input_mapping:
-      repo: oss-metric-store
-    params:
-      GITHUB_REPO: "cloudfoundry/metric-store-release"
-      GITHUB_USER: "metric-store-ci"
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      EXCEPT: "google.golang.org/grpc"
 
 - name: create-oss-metric-store-dev-release
   serial: true
