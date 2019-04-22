@@ -429,6 +429,15 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: temp-baked-tiles/(.*).pivotal
 
+- name: hourly-during-the-workday
+  type: time
+  source:
+    location: America/Denver
+    interval: 1h
+    start: 7:00 AM
+    stop: 7:00 PM
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+
 jobs:
 ###############################################################################
 # LOG CACHE
@@ -1641,6 +1650,8 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: hourly-during-the-workday
+      trigger: true
     - get: log-cache-release-elect
       passed: ["log-cache-release-elect-promotion"]
       trigger: true
@@ -1677,6 +1688,8 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: hourly-during-the-workday
+      trigger: true
     - get: p-metric-store-release-elect
       passed: ["p-metric-store-release-elect-promotion"]
       trigger: true
@@ -1751,6 +1764,8 @@ jobs:
   serial: true
   plan:
   - aggregate:
+    - get: hourly-during-the-workday
+      trigger: true
     - get: oss-metric-store-release-elect
       passed: ["oss-metric-store-release-elect-promotion"]
       trigger: true
