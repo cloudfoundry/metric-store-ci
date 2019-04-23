@@ -108,6 +108,10 @@ jobs:
     file: log-cache-ci/tasks/cleanup-release/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
+      BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+      BOSH_CLIENT: ((bosh-admin-client.username))
+      BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+      BOSH_ENVIRONMENT: bosh.run.pivotal.io
       RELEASE_NAME: "p-metric-store"
   on_success:
     do:
