@@ -35,3 +35,5 @@ params:
   NO_REBASE: false
 
   JSON_KEY:
+
+  RECORD_SHAS: false

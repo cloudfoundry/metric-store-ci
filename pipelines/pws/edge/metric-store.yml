@@ -80,6 +80,7 @@ jobs:
       BOSH_ENVIRONMENT: bosh.run.pivotal.io
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
       FORCE: true
+      RECORD_SHAS: true
   - task: deploy
     image: cf-deployment-concourse-tasks-image
     config:

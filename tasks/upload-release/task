@@ -22,14 +22,16 @@ blobstore:
 EOF
   fi
 
-  git rev-parse HEAD > css_sha
-  cat css_sha
+  if [ "${RECORD_SHAS:-false}" == "true" ]; then
+    git rev-parse HEAD > css_sha
+    cat css_sha
 
-  if [ -f go.mod ]; then
-    set +e
-    cat go.mod | grep cloudfoundry/metric-store-release | sed 's/.*-\([a-f0-9]*\)$/\1/g' > oss_sha
-    cat oss_sha
-    set -e
+    if [ -f go.mod ]; then
+      set +e
+      cat go.mod | grep cloudfoundry/metric-store-release | sed 's/.*-\([a-f0-9]*\)$/\1/g' > oss_sha
+      cat oss_sha
+      set -e
+    fi
   fi
 
   if [ "${FORCE:-false}" == "true" ]; then
