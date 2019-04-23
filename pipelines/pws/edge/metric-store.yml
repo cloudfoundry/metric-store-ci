@@ -104,6 +104,12 @@ jobs:
             --non-interactive
       inputs:
       - name: log-cache-deployments
+  - task: cleanup-release
+    file: log-cache-ci/tasks/cleanup-release/task.yml
+    image: cf-deployment-concourse-tasks-image
+    config:
+      params:
+        RELEASE_NAME: "p-metric-store"
   on_success:
     do:
     - put: slack-alert
