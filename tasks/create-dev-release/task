@@ -28,7 +28,9 @@ EOF
   fi
 
   git rev-parse HEAD > css_sha
+  cat css_sha
   cat go.mod | grep cloudfoundry/metric-store-release | sed 's/.*-\([a-f0-9]*\)$/\1/g' > oss_sha
+  cat oss_sha
 
   # put go source files in src directory so go build is pleased.
   mkdir -p src/github.com/$org/metric-store-release/src/{$lib_dir,cmd}
