@@ -4,6 +4,10 @@ resource_types:
   source:
     repository: cfcommunity/slack-notification-resource
     tag: latest
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
 
 resources:
 - name: cf-deployment-concourse-tasks-image
@@ -12,12 +16,12 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.24.0
 
-- name: metric-store-release
-  type: git
+- name: p-metric-store-dev-release
+  type: gcs-resource
   source:
-    uri: git@github.com:pivotal/metric-store-release
-    branch: develop
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    bucket: log-cache-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: metric-store-dev-releases/release-(.*).tgz
 
 - name: log-cache-ci
   type: git
@@ -64,23 +68,20 @@ jobs:
       text: ":yellow_heart: Started :metric: Metric Store deployment to :knife: PWS Edge"
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: metric-store-release
+    - get: p-metric-store-dev-release
       trigger: true
     - get: log-cache-ci
     - get: log-cache-deployments
-  - task: upload-metric-store
-    file: log-cache-ci/tasks/upload-release/task.yml
+  - task: upload-p-metric-store-release
+    file: log-cache-ci/tasks/upload-dev-release/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      bosh-release-dir: metric-store-release
+      bosh-release-tarball: p-metric-store-dev-release
     params:
       BOSH_CA_CERT: ((bosh-ca-cert.certificate))
       BOSH_CLIENT: ((bosh-admin-client.username))
       BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
       BOSH_ENVIRONMENT: bosh.run.pivotal.io
-      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-      FORCE: true
-      RECORD_SHAS: true
   - task: deploy
     image: cf-deployment-concourse-tasks-image
     config:
@@ -129,17 +130,17 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: metric-store-release
+    - get: p-metric-store-dev-release
       passed: [metric-store-edge-deploy]
       trigger: true
     - get: log-cache-ci
     - get: log-cache-deployments
   - aggregate:
-    - task: upload-metric-store
-      file: log-cache-ci/tasks/upload-release/task.yml
+    - task: upload-p-metric-store-release
+      file: log-cache-ci/tasks/upload-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
-        bosh-release-dir: metric-store-release
+        bosh-release-tarball: p-metric-store-dev-release
       params:
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_CLIENT: ((bosh-admin-client.username))
@@ -153,7 +154,7 @@ jobs:
     config:
       platform: linux
       inputs:
-      - name: metric-store-release
+      - name: p-metric-store-dev-release
       - name: log-cache-deployments
       params:
         DEPLOYMENT_NAME: metric-store-edge-blackbox
@@ -219,7 +220,7 @@ jobs:
       text: ":monkey: Starting nightly :metric: Metric Store Edge redeployment"
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: metric-store-release
+    - get: p-metric-store-dev-release
       passed: [blackbox-deploy]
     - get: nightly
       trigger: true
@@ -275,7 +276,7 @@ jobs:
       text: ":monkey: Killing a :metric: Metric Store Edge vm"
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: metric-store-release
+    - get: p-metric-store-dev-release
       passed: [blackbox-deploy]
     - get: every-23-hours
       trigger: true
