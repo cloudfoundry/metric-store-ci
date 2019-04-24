@@ -16,4 +16,4 @@ while read release_line; do
   release_version=$(echo ${release_line} | cut -d' ' -f2)
 
   bosh delete-release -n ${release_name}/${release_version}
-done <release
+done <releases
