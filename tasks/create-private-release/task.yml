@@ -21,3 +21,4 @@ run:
 params:
   JSON_KEY:
   GITHUB_PRIVATE_KEY:
+  RECORD_SHAS: false

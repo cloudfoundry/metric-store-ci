@@ -607,6 +607,7 @@ jobs:
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
+      RECORD_SHAS: true
   - put: p-metric-store-release-tarball
     params:
       file: release-tarball/release.tgz

@@ -34,6 +34,18 @@ blobstore:
       $(echo ${JSON_KEY})
 EOF
 
+  if [ "${RECORD_SHAS:-false}" == "true" ]; then
+    git rev-parse HEAD > css_sha
+    cat css_sha
+
+    if [ -f go.mod ]; then
+      set +e
+      cat go.mod | grep cloudfoundry/metric-store-release | sed 's/.*-\([a-f0-9]*\)$/\1/g' > oss_sha
+      cat oss_sha
+      set -e
+    fi
+  fi
+
   bosh -n create-release --sha2 --final \
     --tarball ../release-tarball/release.tgz \
     --version "${new_version}"
