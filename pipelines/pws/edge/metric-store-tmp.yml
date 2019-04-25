@@ -40,6 +40,7 @@ resources:
 
 jobs:
 - name: metric-store-edge-tmp-deploy
+  serial: true
   plan:
   - put: slack-alert
     params:
@@ -53,7 +54,6 @@ jobs:
     - get: metric-store-release
     - get: log-cache-ci
     - get: log-cache-deployments
-      params: {pre: dev}
   - task: upload-metric-store
     file: log-cache-ci/tasks/upload-release/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -66,6 +66,7 @@ jobs:
       BOSH_ENVIRONMENT: bosh.run.pivotal.io
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
       FORCE: true
+      RECORD_SHAS: true
   - task: deploy
     image: cf-deployment-concourse-tasks-image
     config:
