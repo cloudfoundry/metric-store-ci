@@ -1328,7 +1328,7 @@ jobs:
     - get: cf-deployment-concourse-tasks
     - get: p-metric-store-release
       trigger: true
-      passed: ["cf-deploy"]
+      passed: ["cf-deploy", "🥓 Bake and Install Tile 🥓"]
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
@@ -1678,7 +1678,7 @@ jobs:
     - get: develop
       resource: p-metric-store-release
       trigger: true
-      passed: ["cf-deploy", "🥓 Bake and Install Tile 🥓"]
+      passed: ["p-ms-🚬"]
   - get: p-metric-store-release-elect
   - put: p-metric-store-release-elect
     params:
