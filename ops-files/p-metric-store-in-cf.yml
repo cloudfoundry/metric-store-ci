@@ -3,7 +3,7 @@
 - type: replace
   path: /releases/-
   value:
-    name: p-metric-store-release
+    name: p-metric-store
     version: latest
 
 - type: replace
@@ -20,7 +20,7 @@
     - name: default
     jobs:
     - name: metric-store
-      release: p-metric-store-release
+      release: p-metric-store
       provides:
         metric-store: {shared: true, as: p-metric-store}
       consumes:
@@ -33,7 +33,7 @@
           cert: ((p_metric_store.certificate))
           key: ((p_metric_store.private_key))
     - name: metric-store-gateway
-      release: p-metric-store-release
+      release: p-metric-store
       provides:
         metric-store-gateway: {as: p-metric-store-gateway}
       consumes:
@@ -43,7 +43,7 @@
         proxy_cert: "((p_metric_store_proxy_tls.certificate))"
         proxy_key: "((p_metric_store_proxy_tls.private_key))"
     - name: metric-store-nozzle
-      release: p-metric-store-release
+      release: p-metric-store
       provides:
         metric-store-nozzle: {as: p-metric-store-nozzle}
       consumes:
@@ -77,7 +77,7 @@
       properties:
         metrics_urls: "http://localhost:6060/metrics,http://localhost:6061/metrics,http://localhost:6065/metrics"
     - name: metric-store-cf-auth-proxy
-      release: p-metric-store-release
+      release: p-metric-store
       provides:
         metric-store-cf-auth-proxy: {as: p-metric-store-cf-auth-proxy}
       consumes:
