@@ -181,7 +181,7 @@ function find_pipeline {
     if [[ "$pipeline" == pws* ]]; then
         TARGET="${TARGET:-pws}"
     else
-        TARGET="${TARGET:-log-cache}"
+        TARGET="${TARGET:-cf-denver}"
     fi
 
     pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')

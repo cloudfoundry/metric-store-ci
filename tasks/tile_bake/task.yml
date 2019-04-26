@@ -1,0 +1,19 @@
+---
+platform: linux
+
+inputs:
+  - name: log-cache-ci
+  - name: tile-version
+  - name: metric-store-dev-release
+  - name: metric-store-release
+  - name: oss-metric-store-release
+
+outputs:
+  - name: baked-tile
+  - name: new-tile-version
+
+params:
+  TILE_NAME: app-metric-store
+
+run:
+  path: log-cache-ci/tasks/tile_bake/task

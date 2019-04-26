@@ -5,7 +5,9 @@ groups:
   - p-metric-store-unit-tests
   - log-cache-docker-images
   - cf-deploy
-  - "🥓 Bake and Install Tile 🥓"
+  - "🥖 Bake Tile 🍰"
+  - "🚽 Install Tile 🍾"
+  - "Smith Install"
   - log-cache-acceptance-tests-release-bump-submodule
   - lcats
   - cats
@@ -47,7 +49,9 @@ groups:
   - create-p-metric-store-dev-release
   - cf-deploy
   - p-ms-🚬
-  - "🥓 Bake and Install Tile 🥓"
+  - "🥖 Bake Tile 🍰"
+  - "🚽 Install Tile 🍾"
+  - "Smith Install"
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
   - bump-oss-metric-store
@@ -166,6 +170,13 @@ resources:
   type: docker-image
   source:
     repository: logcache/log-cache-gateway
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+
+- name: tile-image
+  type: docker-image
+  source:
+    repository: logcache/metric-store-tile
     username: ((docker-hub-ci.yml/Notes/docker-hub-username))
     password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
@@ -435,6 +446,21 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: temp-baked-tiles/(.*).pivotal
 
+- name: gcp-light-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-google-kvm-ubuntu-xenial-go_agent
+    version_family: 170.latest
+    tarball: true
+    preserve_filename: true
+
+- name: smith-cli
+  type: git
+  source:
+    uri: git@github.com:pivotal/smith
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/temp_github_private_key))
+
 - name: hourly-during-the-workday
   type: time
   source:
@@ -552,6 +578,16 @@ jobs:
       params:
         CONTEXT_PATH: docker-images/log-cache-scheduler
         BASE_PACKAGE: code.cloudfoundry.org/log-cache
+    - task: build-metric-store-tile-image
+      file: log-cache-ci/tasks/build-go-docker-image/task.yml
+      input_mapping:
+        context-repo: log-cache-ci-docker-images
+        source-repo: log-cache-release
+      output_mapping:
+        build-image: build-metric-store-tile-image
+      params:
+        CONTEXT_PATH: docker-images/metric-store-tile
+        BASE_PACKAGE: code.cloudfoundry.org/log-cache
   - aggregate:
     - put: log-cache-image
       params:
@@ -578,6 +614,13 @@ jobs:
       params:
         build: build-scheduler-image/build
         tag: build-scheduler-image/tag
+        tag_as_latest: true
+        cache: true
+        cache_tag: latest
+    - put: tile-image
+      params:
+        build: build-metric-store-tile-image/build
+        tag: build-metric-store-tile-image/tag
         tag_as_latest: true
         cache: true
         cache_tag: latest
@@ -1334,7 +1377,7 @@ jobs:
     - get: cf-deployment-concourse-tasks
     - get: p-metric-store-release
       trigger: true
-      passed: ["cf-deploy", "🥓 Bake and Install Tile 🥓"]
+      passed: ["cf-deploy", "🚽 Install Tile 🍾"]
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
@@ -1360,13 +1403,11 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
-- name: "🥓 Bake and Install Tile 🥓"
+- name: "🥖 Bake Tile 🍰"
   plan:
     - aggregate:
-      - get: bobble
       - get: concourse-tasks
       - get: log-cache-ci
-      - get: log-cache-deployments
       - get: p-metric-store-release
         passed: ["create-p-metric-store-dev-release"]
       - get: oss-metric-store-dev-release
@@ -1379,28 +1420,14 @@ jobs:
         passed: ["create-p-metric-store-dev-release"]
       - get: pcf-observability-ci-image
       attempts: 3
-    - task: "prepare deployment environment"
-      file: bobble/ci-tasks/prepare-environment/prepare-environment.yml
-      input_mapping:
-        src: log-cache-deployments
-      params:
-        ENV_PATH: gcp/optimus
-    - task: "bake and install"
+    - task: "bake tile"
       image: pcf-observability-ci-image
-      file: log-cache-ci/tasks/bake_and_install/task.yml
+      file: log-cache-ci/tasks/tile_bake/task.yml
       input_mapping:
-        deployment-tools: bobble
         metric-store-release: p-metric-store-release
         metric-store-dev-release: p-metric-store-dev-release
         oss-metric-store-release: oss-metric-store-dev-release
-        tile-config: log-cache-ci
         tile-version: p-metric-store-version
-      params:
-        OPSMAN_USER: ((log-cache-ops-manager/Username))
-        OPSMAN_PASSWORD: ((log-cache-ops-manager/Password))
-        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
-        STEMCELL_SHA: 9bb3663ee35f795f466a65a5fb185c4b650049cd
-        PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
     - put: temp-baked-tile
       params:
         file: baked-tile/*.pivotal
@@ -1409,6 +1436,135 @@ jobs:
     put: p-metric-store-version
     params:
       file: new-tile-version/version
+
+- name: "🚽 Install Tile 🍾"
+  plan:
+    - aggregate:
+      - get: bobble
+      - get: concourse-tasks
+      - get: log-cache-ci
+      - get: log-cache-deployments
+      - get: p-metric-store-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: oss-metric-store-dev-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: p-metric-store-dev-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: pcf-observability-ci-image
+      - get: p-metric-store-version
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: temp-baked-tile
+        trigger: true
+        passed: ["🥖 Bake Tile 🍰"]
+      attempts: 3
+    - task: "prepare deployment environment"
+      file: bobble/ci-tasks/prepare-environment/prepare-environment.yml
+      input_mapping:
+        src: log-cache-deployments
+      params:
+        ENV_PATH: gcp/optimus
+    - task: "install tile"
+      image: pcf-observability-ci-image
+      file: log-cache-ci/tasks/tile_install/task.yml
+      input_mapping:
+        deployment-tools: bobble
+        tile-config: log-cache-ci
+        tile-version: p-metric-store-version
+        baked-tile: temp-baked-tile
+      params:
+        OPSMAN_USER: ((log-cache-ops-manager/Username))
+        OPSMAN_PASSWORD: ((log-cache-ops-manager/Password))
+        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
+        STEMCELL_SHA: 9bb3663ee35f795f466a65a5fb185c4b650049cd
+        PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
+
+- name: "Smith Install"
+  plan:
+    - aggregate:
+      - get: bobble
+      - get: concourse-tasks
+      - get: log-cache-ci
+      - get: log-cache-deployments
+      - get: p-metric-store-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: oss-metric-store-dev-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: p-metric-store-dev-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: pcf-observability-ci-image
+      - get: p-metric-store-version
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: temp-baked-tile
+        trigger: true
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: smith-cli
+      - get: gcp-light-stemcell
+      attempts: 3
+    - task: "gimme smith env and install"
+      tags: [ cf-log-cache-vsphere ]
+      input_mapping:
+        tile-version: p-metric-store-version
+        baked-tile: temp-baked-tile
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: logcache/metric-store-tile
+        inputs:
+        - name: smith-cli
+        - name: baked-tile
+        - name: gcp-light-stemcell
+        - name: tile-version
+        outputs:
+        - name: environment
+        run:
+          path: sh
+          args:
+          - "-c"
+          - |
+            set -eux
+            cd smith-cli
+              go install
+            cd -
+            # exports smith environment name to `env`
+            $(smith claim -p us_2_5 -n "cf-metric-store CI" | tail -1)
+            echo "Claimed smith environment: ${env}"
+
+            export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
+            export RELEASE_VERSION=$(cat tile-version/version)
+            export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
+            mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
+            smith om upload-product -- --product ${TILE_FILE}
+            smith om stage-product -- --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
+            smith read > metadata
+            # get the azs and network from that file
+            target=$(jq -r .ops_manager.url < metadata)
+            ert_subnet=$(jq -r .ert_subnet < metadata)
+            zone_1=$(jq -r .azs[0] < metadata)
+            zone_2=$(jq -r .azs[1] < metadata)
+            zone_3=$(jq -r .azs[2] < metadata)
+            cat > metric-store-tile-config.yml <<EOF
+            ---
+            product-name: p-metric-store
+            network-properties:
+              network:
+                name: ${ert_subnet}
+              other_availability_zones:
+                - name: ${zone_1}
+                - name: ${zone_2}
+                - name: ${zone_3}
+              singleton_availability_zone:
+                name: ${zone_1}
+            EOF
+
+
+            smith om configure-product -- --config metric-store-tile-config.yml
+            smith om upload-stemcell -- --stemcell gcp-light-stemcell/${STEMCELL_FILE} -- --floating true
+            smith om apply-changes -- --product-name "p-metric-store"
+      params:
+        TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
 
 - name: lcats
   serial_groups: [cf-deploy]

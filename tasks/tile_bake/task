@@ -1,5 +1,5 @@
 #!/bin/bash -euf
-echo "running build and install"
+echo "running tile build"
 
 . ./log-cache-ci/tasks/shared_bash
 
@@ -44,15 +44,3 @@ kiln bake \
     --output-file ${TILE_FILE}
 
 echo "Freshly baked tile 🍞: ${TILE_FILE}"
-
-source environment/environment.sh
-source deployment-tools/prelude.sh
-source deployment-tools/omg.sh
-
-stemcell_filename=$(download-product ${STEMCELL_URL})
-
-omg upload-product --product ${TILE_FILE}
-omg stage-product --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
-omg configure-product --config log-cache-ci/tile/metric-store-config.yml
-omg upload-stemcell --stemcell ${stemcell_filename} --floating true --shasum ${STEMCELL_SHA}
-omg apply-changes --product-name "p-metric-store"
