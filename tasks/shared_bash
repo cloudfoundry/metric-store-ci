@@ -134,3 +134,11 @@ calculate_version() {
     cp ${current_dev_version_dir}/version ${new_version_dir}/version
   fi
 }
+
+function pushd() {
+  builtin pushd $@ > /dev/null
+}
+
+function popd() {
+  builtin popd $@ > /dev/null
+}

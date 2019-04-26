@@ -1679,10 +1679,15 @@ jobs:
       resource: p-metric-store-release
       trigger: true
       passed: ["p-ms-🚬"]
-  - get: p-metric-store-release-elect
+    - get: p-metric-store-dev-release
+    - get: p-metric-store-release-elect
+    - get: oss-metric-store-release-master
+    - get: log-cache-ci
+  - task: bump
+    file: log-cache-ci/tasks/pre-bumper/task.yml
   - put: p-metric-store-release-elect
     params:
-      repository: develop
+      repository: bumped-p-metric-store-release-elect
 
 - name: p-metric-store-master-promotion
   serial: true

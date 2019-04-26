@@ -1,0 +1,18 @@
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+
+inputs:
+- name: log-cache-ci
+- name: p-metric-store-dev-release
+- name: p-metric-store-release-elect
+- name: oss-metric-store-release-master
+
+outputs:
+- name: bumped-p-metric-store-release-elect
+
+run:
+  path: log-cache-ci/tasks/pre-bumper/task
