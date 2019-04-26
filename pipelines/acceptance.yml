@@ -1679,7 +1679,7 @@ jobs:
       resource: p-metric-store-release
       trigger: true
       passed: ["p-ms-🚬"]
-    - get: p-metric-store-dev-release
+    - get: p-metric-store-release
     - get: p-metric-store-release-elect
     - get: oss-metric-store-release-master
     - get: log-cache-ci

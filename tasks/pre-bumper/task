@@ -11,7 +11,7 @@ pushd p-metric-store-release-elect
   MS_RELEASE_ELECT_SHA=$(git rev-parse HEAD)
 popd
 
-pushd p-metric-store-dev-release
+pushd p-metric-store-release
   SHA_TO_BUMP_RELEASE_ELECT_TO=$(git rev-parse HEAD)
   BUMP_OSS_COMMIT_SHAS=$(git log --oneline --reverse --format=format:%H --grep='Bump OSS Metric Store' $MS_RELEASE_ELECT_SHA..HEAD)
 
@@ -49,7 +49,7 @@ echo " DONE: bumping p-metric-store-release-elect to ${SHA_TO_BUMP_RELEASE_ELECT
 cp -R p-metric-store-release-elect/. bumped-p-metric-store-release-elect
 
 pushd bumped-p-metric-store-release-elect
-  git remote add p-metric-store-dev-release ../p-metric-store-dev-release
-  git fetch p-metric-store-dev-release --recurse-submodules=no develop
+  git remote add p-metric-store-release ../p-metric-store-release
+  git fetch p-metric-store-release --recurse-submodules=no develop
   git merge ${SHA_TO_BUMP_RELEASE_ELECT_TO} --ff-only
 popd
