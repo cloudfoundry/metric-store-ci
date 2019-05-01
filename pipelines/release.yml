@@ -246,6 +246,7 @@ resources:
     uri: git@github.com:pivotal/metric-store-release
     branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
+    clean_tags: true
 
 - name: metric-store-release-master
   type: git
@@ -253,6 +254,7 @@ resources:
     uri: git@github.com:pivotal/metric-store-release
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
+    clean_tags: true
 
 - name: metric-store-github-release-drafts
   type: github-release
@@ -268,6 +270,7 @@ resources:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    clean_tags: true
 
 - name: oss-metric-store-release-master
   type: git
@@ -275,6 +278,7 @@ resources:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    clean_tags: true
 
 - name: oss-metric-store-github-release-drafts
   type: github-release
