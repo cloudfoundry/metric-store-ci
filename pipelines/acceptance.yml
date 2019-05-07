@@ -1481,10 +1481,8 @@ jobs:
 - name: "Smith Install"
   plan:
     - aggregate:
-      - get: bobble
       - get: concourse-tasks
       - get: log-cache-ci
-      - get: log-cache-deployments
       - get: p-metric-store-release
         passed: ["🥖 Bake Tile 🍰"]
       - get: oss-metric-store-dev-release
