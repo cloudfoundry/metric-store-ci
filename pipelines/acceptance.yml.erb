@@ -237,13 +237,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: p-metric-store
-  type: git
-  source:
-    uri: git@github.com:pivotal/metric-store
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: p-metric-store-release
   type: git
   source:
@@ -255,6 +248,14 @@ resources:
     - releases
     disable_ci_skip: false
     clean_tags: true
+
+- name: p-metric-store-github-release
+  type: github-release
+  source:
+    user: pivotal
+    repository: metric-store-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    drafts: false
 
 - name: p-metric-store-release-elect
   type: git
@@ -746,8 +747,6 @@ jobs:
     - get: cf-deployment-concourse-tasks-image
     - get: log-cache-ci
     - get: p-metric-store-release
-      trigger: true
-    - get: p-metric-store
       trigger: true
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
@@ -1895,6 +1894,19 @@ jobs:
     params:
       repository: p-metric-store-release-repo-modified
       rebase: false
+  - task: github-publish-release-metadata
+    file: log-cache-ci/tasks/publish-github-release/task.yml
+    input_mapping:
+      release-tarball: baked-tile
+    params:
+      PROJECT_NAME: Metric Store for PCF
+  - put: p-metric-store-github-release
+    params:
+      name: github-release/name
+      tag: github-release/tag
+      body: github-release/body
+      globs:
+      - github-release/*.tgz
   on_failure:
     do:
     - put: slack-alert

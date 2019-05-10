@@ -10,6 +10,7 @@ inputs:
 
 outputs:
   - name: baked-tile
+  - name: release-version
   - name: p-metric-store-release-repo-develop-modified
   - name: p-metric-store-release-repo-modified
 

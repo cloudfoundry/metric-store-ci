@@ -3,6 +3,7 @@
 . ./log-cache-ci/tasks/shared_bash
 
 RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
+echo $RELEASE_VERSION > release-version/version
 TIMESTAMP=$(date +%s)
 
 mkdir -p releases
