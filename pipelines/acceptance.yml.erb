@@ -1,3 +1,4 @@
+<% envs_we_care_about = { "2.4": "us_2_4", "2.5": "us_2_5", "2.6": "us_2_6" } %>
 groups:
 - name: all
   jobs:
@@ -7,13 +8,18 @@ groups:
   - cf-deploy
   - "🥖 Bake Tile 🍰"
   - "🚽 Install Tile 🍾"
-  - "Smith Install"
+  <% envs_we_care_about.each do |name, _| %>
+  - "Install on PCF <%= name %>"
+  <% end %>
+  - 🥖 Bake Final Tile 🥖
+  - 🚀 Push to Pivnet 🚀
   - log-cache-acceptance-tests-release-bump-submodule
   - lcats
   - cats
   - log-cache-release-elect-promotion
   - log-cache-master-promotion
   - p-metric-store-release-elect-promotion
+  - p-metric-store-test-gate
   - p-metric-store-master-promotion
   - oss-metric-store-release-elect-promotion
   - oss-metric-store-master-promotion
@@ -45,16 +51,21 @@ groups:
   jobs:
   - p-metric-store-unit-tests
   - p-metric-store-release-elect-promotion
+  - p-metric-store-test-gate
   - p-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - cf-deploy
   - p-ms-🚬
   - "🥖 Bake Tile 🍰"
   - "🚽 Install Tile 🍾"
-  - "Smith Install"
+  <% envs_we_care_about.each do |name, _| %>
+  - "Install on PCF <%= name %>"
+  <% end %>
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
   - bump-oss-metric-store
+  - 🥖 Bake Final Tile 🥖
+  - 🚀 Push to Pivnet 🚀
 - name: log-cache-cli
   jobs:
   - log-cache-cli-tests
@@ -77,6 +88,12 @@ resource_types:
   source:
     repository: frodenas/gcs-resource
 
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
 resources:
 - name: cf-deployment
   type: git
@@ -88,13 +105,13 @@ resources:
   type: git
   source:
     uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
-    branch: v7.9
+    branch: v8.12 # bump to latest
 
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
-    tag: v5.26.0
+    tag: latest
 
 - name: denver-locks
   type: git
@@ -260,6 +277,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
+    branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
     ignore_paths:
     - .final_builds
@@ -430,7 +448,7 @@ resources:
     bucket: log-cache-ci-versions
     key: metric-store-release-acceptance-tile
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    initial_version: 0.0.0
+    initial_version: 0.1.2-build.14
 
 - name: p-metric-store-dev-release
   type: gcs-resource
@@ -446,20 +464,33 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: temp-baked-tiles/(.*).pivotal
 
+- name: freshly-baked-final-tiles
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: tiles/(.*).pivotal
+
+- name: p-metric-store-pivnet-metadata
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    versioned_file: pivnet/metadata.yml
+
 - name: gcp-light-stemcell
   type: bosh-io-stemcell
   source:
     name: bosh-google-kvm-ubuntu-xenial-go_agent
-    version_family: 170.latest
+    version_family: 250.latest
     tarball: true
     preserve_filename: true
 
-- name: smith-cli
-  type: git
+- name: p-metric-store-pivnet
+  type: pivnet
   source:
-    uri: git@github.com:pivotal/smith
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/temp_github_private_key))
+    api_token: ((release-credentials.yml/Notes/pivnet-token-metric-store))
+    product_slug: app-metrics-store-pcf
 
 - name: hourly-during-the-workday
   type: time
@@ -1084,200 +1115,12 @@ jobs:
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
           cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
+          cp log-cache-ci/ops-files/awaiting-cf-deployment-prs.yml ops-files
+          cp log-cache-ci/ops-files/bosh-speed.yml ops-files
+          cp log-cache-ci/ops-files/test-clients.yml ops-files
+          cp log-cache-ci/ops-files/scale-loggregator-components-up.yml ops-files
+          cp log-cache-ci/ops-files/use-latest.yml ops-files
           erb log-cache-ci/ops-files/msats.yml.erb > ops-files/msats.yml
-
-          # TODO - remove this when cf-d has this by default
-          cat <<EOT >> ops-files/this-should-already-exist-delete-soon.yml
-          - type: replace
-            path: /releases/name=metric-store/version?
-            value: 1.0.0
-          - type: replace
-            path: /releases/name=metric-store/sha1?
-            value: fca1a466746c82dca2c8d43041b45fbf3dd1e5c2
-          EOT
-
-          cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
-          - type: remove
-            path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder
-          - type: remove
-            path: /instance_groups/name=doppler/jobs/name=log-cache-expvar-forwarder
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=prom_scraper?
-            value:
-              name: prom_scraper
-              consumes:
-                loggregator:
-                  from: loggregator
-              properties:
-                metrics_urls: "http://localhost:6060/metrics,http://localhost:6061/metrics,http://localhost:6065/metrics"
-              release: loggregator-agent
-          EOT
-
-          cat <<EOT >> ops-files/cf-PR-log-cache-proxy-tls.yml
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-gateway/properties/proxy_cert?
-            value: "((log_cache_proxy_tls.certificate))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-gateway/properties/proxy_key?
-            value: "((log_cache_proxy_tls.private_key))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/proxy_ca_cert?
-            value: "((log_cache_ca.certificate))"
-          - type: replace
-            path: /variables/name=log_cache_proxy_tls?
-            value:
-              name: log_cache_proxy_tls
-              type: certificate
-              options:
-                ca: log_cache_ca
-                common_name: localhost
-          EOT
-
-          cat <<EOT >> ops-files/cf-PR-log-cache-router-tls.yml
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/external_cert?
-            value: "((logcache_ssl.certificate))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-cf-auth-proxy/properties/external_key?
-            value: "((logcache_ssl.private_key))"
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=route_registrar?
-            value:
-              name: route_registrar
-              release: routing
-              properties:
-                route_registrar:
-                  routes:
-                  - name: log-cache-reverse-proxy
-                    tls_port: 8083
-                    registration_interval: 20s
-                    server_cert_domain_san: log-cache.((system_domain))
-                    uris:
-                    - log-cache.((system_domain))
-                    - "*.log-cache.((system_domain))"
-          - type: replace
-            path: /variables/name=logcache_ssl?
-            value:
-              name: logcache_ssl
-              type: certificate
-              options:
-                ca: service_cf_internal_ca
-                common_name: log-cache
-                alternative_names:
-                - log-cache.((system_domain))
-                - "*.log-cache.((system_domain))"
-          EOT
-
-          cat <<EOT >> ops-files/test-clients.yml
-          - type: replace
-            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/msats?
-            value:
-              authorities: doppler.firehose
-              authorized-grant-types: client_credentials
-              scope: doppler.firehose
-              secret: ((msats_client_secret))
-          - type: replace
-            path: /variables/name=msats_client_secret?
-            value:
-              name: msats_client_secret
-              type: password
-          - type: replace
-            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/lcats?
-            value:
-              authorities: doppler.firehose
-              authorized-grant-types: client_credentials
-              scope: doppler.firehose
-              secret: ((lcats_client_secret))
-          - type: replace
-            path: /variables/name=lcats_client_secret?
-            value:
-              name: lcats_client_secret
-              type: password
-          - type: replace
-            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/blackbox?
-            value:
-              authorities: doppler.firehose
-              authorized-grant-types: client_credentials
-              scope: doppler.firehose
-              secret: ((blackbox_client_secret))
-          - type: replace
-            path: /variables/name=blackbox_client_secret?
-            value:
-              name: blackbox_client_secret
-              type: password
-          - type: replace
-            path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/datadog-forwarder?
-            value:
-              authorities: doppler.firehose
-              authorized-grant-types: client_credentials
-              scope: doppler.firehose
-              secret: ((datadog_forwarder_client_secret))
-          - type: replace
-            path: /variables/name=datadog_forwarder_client_secret?
-            value:
-              name: datadog_forwarder_client_secret
-              type: password
-          EOT
-
-          cat <<EOT >> ops-files/scale-loggregator-components-up.yml
-          - type: replace
-            path: /instance_groups/name=doppler/instances
-            value: 3
-          - type: replace
-            path: /instance_groups/name=log-api/instances
-            value: 2
-          EOT
-
-          cat <<EOT >> ops-files/bosh-speed.yml
-          - type: replace
-            path: /update/max_in_flight
-            value: 10
-          - type: replace
-            path: /update/canaries
-            value: 5
-          EOT
-
-          cat <<EOT >> ops-files/use-latest.yml
-          - type: replace
-            path: /releases/name=log-cache
-            value:
-              name: log-cache
-              version: latest
-          - type: replace
-            path: /releases/name=metric-store?
-            value:
-              name: metric-store
-              version: latest
-          EOT
-
-          cat <<EOT >> ops-files/cf-deployment-log-cache-candidate-changes.yml
-          - type: replace
-            path: /variables/name=logs_provider
-            value:
-              name: log_cache_to_logs_provider
-              type: certificate
-              options:
-                ca: loggregator_ca
-                common_name: log-cache
-                extended_key_usage:
-                - client_auth
-          - type: replace
-            path: /variables/name=log_cache_to_loggregator_agent?
-            value:
-              name: log_cache_to_loggregator_agent
-              type: certificate
-              options:
-                ca: loggregator_ca
-                common_name: log-cache
-                extended_key_usage:
-                - client_auth
-          - type: replace
-            path: /instance_groups/name=doppler/jobs/name=log-cache-nozzle/properties/logs_provider/tls
-            value:
-              ca_cert: "((log_cache_to_logs_provider.ca))"
-              cert: "((log_cache_to_logs_provider.certificate))"
-              key: "((log_cache_to_logs_provider.private_key))"
-          EOT
 
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
@@ -1298,18 +1141,14 @@ jobs:
         test-clients.yml
         bosh-speed.yml
         add-metric-store.yml
-        this-should-already-exist-delete-soon.yml
         metric-store-in-cf.yml
         p-metric-store-in-cf.yml
-        cf-PR-log-cache-router-tls.yml
-        cf-PR-log-cache-proxy-tls.yml
-        cf-PR-log-cache-remove-expvar-forwarder.yml
+        awaiting-cf-deployment-prs.yml
         use-latest.yml
         grafana-in-cf.yml
         add-grafana-uaa-clients.yml
         enable-grafana-uaa.yml
         metric-registrar-in-cf.yml
-        cf-deployment-log-cache-candidate-changes.yml
         msats.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
@@ -1377,7 +1216,7 @@ jobs:
     - get: cf-deployment-concourse-tasks
     - get: p-metric-store-release
       trigger: true
-      passed: ["cf-deploy", "🚽 Install Tile 🍾"]
+      passed: ["cf-deploy"]
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
@@ -1474,35 +1313,131 @@ jobs:
       params:
         OPSMAN_USER: ((log-cache-ops-manager/Username))
         OPSMAN_PASSWORD: ((log-cache-ops-manager/Password))
-        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
-        STEMCELL_SHA: 9bb3663ee35f795f466a65a5fb185c4b650049cd
+        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-250.38-google-kvm-ubuntu-xenial-go_agent.tgz
+        STEMCELL_SHA: 014426acb722365a5c48ab731a797e92cbc0eb37
         PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
 
-- name: "Smith Install"
+<% envs_we_care_about.each do |env_version, pool_name| %>
+- name: "Install on PCF <%= env_version %>"
   plan:
-    - aggregate:
-      - get: concourse-tasks
-      - get: log-cache-ci
-      - get: p-metric-store-release
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: oss-metric-store-dev-release
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: p-metric-store-dev-release
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: pcf-observability-ci-image
-      - get: p-metric-store-version
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: temp-baked-tile
-        trigger: true
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: smith-cli
-      - get: gcp-light-stemcell
-      attempts: 3
-    - task: "gimme smith env and install"
+  - aggregate:
+    - get: concourse-tasks
+    - get: log-cache-ci
+    - get: p-metric-store-release
+      passed: ["🥖 Bake Tile 🍰"]
+    - get: oss-metric-store-dev-release
+      passed: ["🥖 Bake Tile 🍰"]
+    - get: p-metric-store-dev-release
+      passed: ["🥖 Bake Tile 🍰"]
+    - get: pcf-observability-ci-image
+    - get: p-metric-store-version
+      passed: ["🥖 Bake Tile 🍰"]
+    - get: temp-baked-tile
+      trigger: true
+      passed: ["🥖 Bake Tile 🍰"]
+    - get: gcp-light-stemcell
+    attempts: 3
+  - task: "Claim Smith Env"
+    tags: [ cf-log-cache-vsphere ]
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: logcache/metric-store-tile
+      outputs:
+      - name: environment
+      run:
+        path: sh
+        args:
+        - "-c"
+        - |
+          set -eu
+          # exports smith environment name to `env`
+          $(smith claim -p <%= pool_name %> -n "cf-metric-store CI" | tail -1)
+          echo "Claimed smith environment: ${env}"
+          echo ${env} > environment/name
+    attempts: 3
+    on_failure:
+      task: release-env
       tags: [ cf-log-cache-vsphere ]
-      input_mapping:
-        tile-version: p-metric-store-version
-        baked-tile: temp-baked-tile
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source:
+            repository: logcache/base
+        run:
+          path: sh
+          args:
+          - "-c"
+          - |
+            set -e
+            sleep 10
+    params:
+      TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+  - task: "Upload and Install"
+    tags: [ cf-log-cache-vsphere ]
+    input_mapping:
+      tile-version: p-metric-store-version
+      baked-tile: temp-baked-tile
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: logcache/metric-store-tile
+      inputs:
+      - name: baked-tile
+      - name: gcp-light-stemcell
+      - name: tile-version
+      - name: environment
+      outputs:
+      - name: environment
+      run:
+        path: sh
+        args:
+        - "-c"
+        - |
+          set -eu
+          export env=$(cat environment/name)
+
+          export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
+          export RELEASE_VERSION=$(cat tile-version/version)
+          export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
+          mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
+          smith om upload-product -- --product ${TILE_FILE}
+          smith om stage-product -- --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
+          smith read > environment/metadata
+          # get the azs and network from that file
+          target=$(jq -r .ops_manager.url < environment/metadata)
+          ert_subnet=$(jq -r .ert_subnet < environment/metadata)
+          zone_1=$(jq -r .azs[0] < environment/metadata)
+          zone_2=$(jq -r .azs[1] < environment/metadata)
+          zone_3=$(jq -r .azs[2] < environment/metadata)
+          cat > metric-store-tile-config.yml <<EOF
+          ---
+          product-name: p-metric-store
+          network-properties:
+            network:
+              name: ${ert_subnet}
+            other_availability_zones:
+              - name: ${zone_1}
+              - name: ${zone_2}
+              - name: ${zone_3}
+            singleton_availability_zone:
+              name: ${zone_1}
+          EOF
+
+
+          smith om configure-product -- --config metric-store-tile-config.yml
+          smith om upload-stemcell -- --stemcell gcp-light-stemcell/${STEMCELL_FILE} -- --floating true
+          smith om apply-changes -- --product-name "p-metric-store"
+    params:
+      TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+    on_success:
+      task: release-env
+      tags: [ cf-log-cache-vsphere ]
       config:
         platform: linux
         image_resource:
@@ -1510,60 +1445,17 @@ jobs:
           source:
             repository: logcache/metric-store-tile
         inputs:
-        - name: smith-cli
-        - name: baked-tile
-        - name: gcp-light-stemcell
-        - name: tile-version
-        outputs:
         - name: environment
         run:
           path: sh
           args:
           - "-c"
           - |
-            set -eux
-            cd smith-cli
-              go install
-            cd -
-            # exports smith environment name to `env`
-            $(smith claim -p us_2_5 -n "cf-metric-store CI" | tail -1)
-            echo "Claimed smith environment: ${env}"
-
-            export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
-            export RELEASE_VERSION=$(cat tile-version/version)
-            export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
-            mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
-            smith om upload-product -- --product ${TILE_FILE}
-            smith om stage-product -- --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
-            smith read > metadata
-            # get the azs and network from that file
-            target=$(jq -r .ops_manager.url < metadata)
-            ert_subnet=$(jq -r .ert_subnet < metadata)
-            zone_1=$(jq -r .azs[0] < metadata)
-            zone_2=$(jq -r .azs[1] < metadata)
-            zone_3=$(jq -r .azs[2] < metadata)
-            cat > metric-store-tile-config.yml <<EOF
-            ---
-            product-name: p-metric-store
-            network-properties:
-              network:
-                name: ${ert_subnet}
-              other_availability_zones:
-                - name: ${zone_1}
-                - name: ${zone_2}
-                - name: ${zone_3}
-              singleton_availability_zone:
-                name: ${zone_1}
-            EOF
-
-
-            smith om configure-product -- --config metric-store-tile-config.yml
-            smith om upload-stemcell -- --stemcell gcp-light-stemcell/${STEMCELL_FILE} -- --floating true
-            smith om apply-changes -- --product-name "p-metric-store"
+            set -e
+            smith unclaim -e $(cat environment/name)
       params:
         TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
-        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-170.16-google-kvm-ubuntu-xenial-go_agent.tgz
-
+<% end %>
 - name: lcats
   serial_groups: [cf-deploy]
   plan:
@@ -1831,6 +1723,20 @@ jobs:
     params:
       repository: merged-dest
 
+- name: p-metric-store-test-gate
+  serial: true
+  plan:
+    - aggregate:
+      - get: develop
+        resource: p-metric-store-release
+        trigger: true
+        passed:
+          - "p-ms-🚬"
+          - "🚽 Install Tile 🍾"
+          <% envs_we_care_about.each do |name, _| %>
+          - "Install on PCF <%= name %>"
+          <% end %>
+
 - name: p-metric-store-release-elect-promotion
   serial: true
   plan:
@@ -1838,7 +1744,8 @@ jobs:
     - get: develop
       resource: p-metric-store-release
       trigger: true
-      passed: ["p-ms-🚬"]
+      passed:
+        - p-metric-store-test-gate
     - get: p-metric-store-release
     - get: p-metric-store-release-elect
     - get: oss-metric-store-release-master
@@ -1855,6 +1762,8 @@ jobs:
   - aggregate:
     - get: hourly-during-the-workday
       trigger: true
+    - get: p-metric-store-release
+      passed: ["p-metric-store-release-elect-promotion"]
     - get: p-metric-store-release-elect
       passed: ["p-metric-store-release-elect-promotion"]
       trigger: true
@@ -1950,6 +1859,56 @@ jobs:
   - put: oss-metric-store-release-master
     params:
       repository: merged-dest
+
+- name: 🥖 Bake Final Tile 🥖
+  plan:
+  - aggregate:
+    - get: p-metric-store-release
+    - get: p-metric-store-release-master
+      passed:
+        - p-metric-store-master-promotion
+    - get: oss-metric-store-release-master
+      passed:
+        - oss-metric-store-master-promotion
+    - get: p-metric-store-pivnet-metadata
+    - get: pcf-observability-ci-image
+    - get: log-cache-ci
+  - task: bake-final-tile
+    image: pcf-observability-ci-image
+    input_mapping:
+      oss-metric-store-release-repo: oss-metric-store-release-master
+      p-metric-store-release-repo: p-metric-store-release-master
+      p-metric-store-release-repo-develop: p-metric-store-release
+      pivnet-metadata: p-metric-store-pivnet-metadata
+    file: log-cache-ci/tasks/tile_bake_final/task.yml
+    params:
+      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+  - put: freshly-baked-final-tiles
+    params:
+      file: baked-tile/*.pivotal
+      content_type: application/octet-stream
+  - put: p-metric-store-release
+    params:
+      repository: p-metric-store-release-repo-develop-modified
+      rebase: false
+  - put: p-metric-store-release-master
+    params:
+      repository: p-metric-store-release-repo-modified
+      rebase: false
+
+- name: 🚀 Push to Pivnet 🚀
+  plan:
+  - get: freshly-baked-final-tiles
+    passed:
+    - "🥖 Bake Final Tile 🥖"
+  - get: p-metric-store-pivnet-metadata
+    passed:
+    - "🥖 Bake Final Tile 🥖"
+  - put: p-metric-store-pivnet
+    params:
+      file_glob: freshly-baked-final-tiles/*.pivotal
+      metadata_file: p-metric-store-pivnet-metadata/metadata.yml
+      override: false # do not re-upload already uploaded version
 
 - name: log-cache-tools-tests
   serial: true

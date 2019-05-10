@@ -1,0 +1,21 @@
+---
+platform: linux
+
+inputs:
+  - name: log-cache-ci
+  - name: p-metric-store-release-repo
+  - name: p-metric-store-release-repo-develop
+  - name: oss-metric-store-release-repo
+  - name: pivnet-metadata
+
+outputs:
+  - name: baked-tile
+  - name: p-metric-store-release-repo-develop-modified
+  - name: p-metric-store-release-repo-modified
+
+params:
+  TILE_NAME: metric-store
+  JSON_KEY:
+
+run:
+  path: log-cache-ci/tasks/tile_bake_final/task

@@ -1,0 +1,48 @@
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/msats?
+  value:
+    authorities: doppler.firehose
+    authorized-grant-types: client_credentials
+    scope: doppler.firehose
+    secret: ((msats_client_secret))
+- type: replace
+  path: /variables/name=msats_client_secret?
+  value:
+    name: msats_client_secret
+    type: password
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/lcats?
+  value:
+    authorities: doppler.firehose
+    authorized-grant-types: client_credentials
+    scope: doppler.firehose
+    secret: ((lcats_client_secret))
+- type: replace
+  path: /variables/name=lcats_client_secret?
+  value:
+    name: lcats_client_secret
+    type: password
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/blackbox?
+  value:
+    authorities: doppler.firehose
+    authorized-grant-types: client_credentials
+    scope: doppler.firehose
+    secret: ((blackbox_client_secret))
+- type: replace
+  path: /variables/name=blackbox_client_secret?
+  value:
+    name: blackbox_client_secret
+    type: password
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/datadog-forwarder?
+  value:
+    authorities: doppler.firehose
+    authorized-grant-types: client_credentials
+    scope: doppler.firehose
+    secret: ((datadog_forwarder_client_secret))
+- type: replace
+  path: /variables/name=datadog_forwarder_client_secret?
+  value:
+    name: datadog_forwarder_client_secret
+    type: password
