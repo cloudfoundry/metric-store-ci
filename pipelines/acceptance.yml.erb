@@ -1895,6 +1895,15 @@ jobs:
     params:
       repository: p-metric-store-release-repo-modified
       rebase: false
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_failure
 
 - name: 🚀 Push to Pivnet 🚀
   plan:
@@ -1909,6 +1918,15 @@ jobs:
       file_glob: freshly-baked-final-tiles/*.pivotal
       metadata_file: p-metric-store-pivnet-metadata/metadata.yml
       override: false # do not re-upload already uploaded version
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_failure
 
 - name: log-cache-tools-tests
   serial: true
