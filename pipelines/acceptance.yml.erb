@@ -522,6 +522,7 @@ jobs:
     input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
     params:
       TITLE: Log Cache CLI Tests
+      TEAM: metric-store-log-cache
   - task: run-tests
     file: log-cache-ci/tasks/go-test-module/task.yml
     input_mapping:
@@ -692,6 +693,7 @@ jobs:
       input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
       params:
         TITLE: Log Cache Bump Submodule
+        TEAM: metric-store-log-cache
     - task: run-tests
       file: log-cache-ci/tasks/run-release-script/task.yml
       input_mapping:
@@ -752,6 +754,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Pivotal Metric Store Unit Tests
+      TEAM: metric-store-log-cache
   - task: run-tests
     config:
       platform: linux
@@ -796,6 +799,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Pivotal Metric Store Bump OSS Metric Store
+      TEAM: metric-store-log-cache
   - task: bump-oss-metric-store
     file: log-cache-ci/tasks/bump-oss-metric-store/task.yml
     params:
@@ -860,6 +864,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: LCATS Release Bump Submodule
+      TEAM: metric-store-log-cache
   - task: update-log-cache-submodule
     file: log-cache-ci/tasks/bump-submodule/task.yml
     input_mapping:
@@ -950,6 +955,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: OSS Metric Store Unit Tests
+      TEAM: metric-store-log-cache
   - task: run-tests
     config:
       platform: linux
@@ -1024,6 +1030,7 @@ jobs:
     input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
     params:
       TITLE: Log Cache CF Deploy
+      TEAM: metric-store-log-cache
   - aggregate:
     - do:
       - get: log-cache-release
@@ -1220,6 +1227,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: P-Metric-Store Smoke Tests
+      TEAM: metric-store-log-cache
   - task: run-msats
     file: log-cache-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -1474,6 +1482,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: LCATS
+      TEAM: metric-store-log-cache
   - task: upload-lcats
     file: log-cache-ci/tasks/upload-release/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -1553,6 +1562,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: CATS
+      TEAM: metric-store-log-cache
   - task: integration-config
     file: log-cache-ci/tasks/create-integration-config/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -1592,6 +1602,7 @@ jobs:
     input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
     params:
       TITLE: Log Cache CLI Integration Tests
+      TEAM: metric-store-log-cache
   - task: create-test-space
     file: log-cache-ci/tasks/create-org-and-space/task.yml
     params:
@@ -1799,6 +1810,7 @@ jobs:
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: OSS Metric Store Smoke Tests
+      TEAM: metric-store-log-cache
   - task: run-msats
     file: log-cache-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -1954,6 +1966,7 @@ jobs:
     input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
     params:
       TITLE: Log Cache Tools Tests
+      TEAM: metric-store-log-cache
   - task: run-tests
     file: log-cache-ci/tasks/go-test-module-with-mod/task.yml
     input_mapping:

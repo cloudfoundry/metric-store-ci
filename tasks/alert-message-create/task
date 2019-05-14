@@ -4,4 +4,4 @@
 set -eoux pipefail
 
 alert_setup
-alert_title "${TITLE}"
+alert_title "${TITLE}" "${TEAM}"
