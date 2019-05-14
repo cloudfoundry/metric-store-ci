@@ -180,8 +180,10 @@ function find_pipeline {
 
     if [[ "$pipeline" == pws* ]]; then
         TARGET="${TARGET:-pws}"
+        TEAM="${TEAM:-main}"
     else
         TARGET="${TARGET:-cf-denver}"
+        TEAM="${TEAM:-metric-store-log-cache}"
     fi
 
     pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')
@@ -229,7 +231,7 @@ function login_fly {
         step_ok "logged in"
     else
         step_info "not logged in"
-        info_block "fly login" "fly -t $TARGET login -b"
+        info_block "fly login" "fly -t $TARGET login -b -n $TEAM"
     fi
 }
 
@@ -251,7 +253,7 @@ function check_fly {
         login_fly
     else
         step_info "login required"
-        info_block "fly login" "fly -t $TARGET login -b"
+        info_block "fly login" "fly -t $TARGET login -b -n $TEAM"
     fi
 }
 
