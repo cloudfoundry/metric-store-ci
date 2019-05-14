@@ -24,7 +24,7 @@ alert_setup() {
 
 alert_title() {
   local title="${1} #\${BUILD_NAME}"
-  local team="${2:-main}
+  local team="${2:-main}"
   local build_link="\${ATC_EXTERNAL_URL}/teams/${team}/pipelines/\${BUILD_PIPELINE_NAME}/jobs/\${BUILD_JOB_NAME}/builds/\${BUILD_NAME}"
   current=$(cat metadata/alert_message_failure)
   current=$(cat metadata/alert_message_success)
