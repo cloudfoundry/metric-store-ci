@@ -146,13 +146,6 @@ resources:
     private_key: ((github-key-ci.yml/Notes/github_key))
     branch: master
 
-- name: log-cache-deployments
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-deployments
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: log-cache-ci-docker-images
   type: git
   source:
@@ -1279,7 +1272,6 @@ jobs:
     - aggregate:
       - get: concourse-tasks
       - get: log-cache-ci
-      - get: log-cache-deployments
       - get: p-metric-store-release
         passed: ["🥖 Bake Tile 🍰"]
       - get: oss-metric-store-dev-release
@@ -1298,7 +1290,6 @@ jobs:
       image: pcf-observability-ci-image
       file: log-cache-ci/tasks/tile_install/task.yml
       input_mapping:
-        tile-config: log-cache-ci
         tile-version: p-metric-store-version
         baked-tile: temp-baked-tile
       params:
@@ -1344,6 +1335,7 @@ jobs:
           $(smith claim -p <%= pool_name %> -n "cf-metric-store CI" | tail -1)
           echo "Claimed smith environment: ${env}"
           echo ${env} > environment/name
+          smith read > environment/metadata
     attempts: 3
     on_failure:
       task: release-env
@@ -1368,60 +1360,11 @@ jobs:
     input_mapping:
       tile-version: p-metric-store-version
       baked-tile: temp-baked-tile
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: logcache/metric-store-tile
-      inputs:
-      - name: baked-tile
-      - name: gcp-light-stemcell
-      - name: tile-version
-      - name: environment
-      outputs:
-      - name: environment
-      run:
-        path: sh
-        args:
-        - "-c"
-        - |
-          set -eu
-          export env=$(cat environment/name)
-          smith read > environment/metadata
-
-
-          export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
-          export RELEASE_VERSION=$(cat tile-version/version)
-          export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
-          mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
-
-          smith om upload-product -- --product ${TILE_FILE}
-          smith om stage-product -- --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
-
-          ert_subnet=$(jq -r .ert_subnet < environment/metadata)
-          zone_1=$(jq -r .azs[0] < environment/metadata)
-          zone_2=$(jq -r .azs[1] < environment/metadata)
-          zone_3=$(jq -r .azs[2] < environment/metadata)
-          cat > metric-store-tile-config.yml <<EOF
-          ---
-          product-name: p-metric-store
-          network-properties:
-            network:
-              name: ${ert_subnet}
-            other_availability_zones:
-              - name: ${zone_1}
-              - name: ${zone_2}
-              - name: ${zone_3}
-            singleton_availability_zone:
-              name: ${zone_1}
-          EOF
-
-          smith om configure-product -- --config metric-store-tile-config.yml
-          smith om upload-stemcell -- --stemcell gcp-light-stemcell/${STEMCELL_FILE} -- --floating true
-          smith om apply-changes -- --product-name "p-metric-store"
-    params:
-      TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+    image: pcf-observability-ci-image
+    file: log-cache-ci/tasks/tile_install/task.yml
+    input_mapping:
+      tile-version: p-metric-store-version
+      baked-tile: temp-baked-tile
     on_success:
       task: release-env
       tags: [ cf-log-cache-vsphere ]
