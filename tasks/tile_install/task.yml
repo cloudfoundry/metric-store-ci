@@ -2,20 +2,13 @@
 platform: linux
 
 inputs:
-  - name: environment
-  - name: deployment-tools
-  - name: log-cache-ci
-  - name: tile-config
-    optional: true
-  - name: tile-version
   - name: baked-tile
+  - name: gcp-light-stemcell
+  - name: tile-version
+  - name: log-cache-ci
 
-params:
-  OPSMAN_USER:
-  OPSMAN_PASSWORD:
-  STEMCELL_URL:
-  STEMCELL_SHA:
-  PRODUCT_CONFIG_PATH:
+PARAMS:
+  TOOLSMITHS_ENV:
 
 run:
   path: log-cache-ci/tasks/tile_install/task

@@ -1,7 +1,7 @@
 product-name: p-metric-store
 network-properties:
   network:
-    name: optimus-pas-subnet
+    name: <%= toolsmiths_env_name %>-pas-subnet
   other_availability_zones:
     - name: us-central1-a
     - name: us-central1-b

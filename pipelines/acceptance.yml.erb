@@ -1286,7 +1286,6 @@ jobs:
 - name: "🚽 Install Tile 🍾"
   plan:
     - aggregate:
-      - get: bobble
       - get: concourse-tasks
       - get: log-cache-ci
       - get: log-cache-deployments
@@ -1302,27 +1301,17 @@ jobs:
       - get: temp-baked-tile
         trigger: true
         passed: ["🥖 Bake Tile 🍰"]
+      - get: gcp-light-stemcell
       attempts: 3
-    - task: "prepare deployment environment"
-      file: bobble/ci-tasks/prepare-environment/prepare-environment.yml
-      input_mapping:
-        src: log-cache-deployments
-      params:
-        ENV_PATH: gcp/optimus
     - task: "install tile"
       image: pcf-observability-ci-image
       file: log-cache-ci/tasks/tile_install/task.yml
       input_mapping:
-        deployment-tools: bobble
         tile-config: log-cache-ci
         tile-version: p-metric-store-version
         baked-tile: temp-baked-tile
       params:
-        OPSMAN_USER: ((log-cache-ops-manager/Username))
-        OPSMAN_PASSWORD: ((log-cache-ops-manager/Password))
-        STEMCELL_URL: https://s3.amazonaws.com/bosh-gce-light-stemcells/light-bosh-stemcell-250.38-google-kvm-ubuntu-xenial-go_agent.tgz
-        STEMCELL_SHA: 014426acb722365a5c48ab731a797e92cbc0eb37
-        PRODUCT_CONFIG_PATH: tile-config/tile/metric-store-config.yml
+        TOOLSMITHS_ENV_JSON: ((ms-pas-acceptance.yml/Notes/env_json))
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
 - name: "Install on PCF <%= env_version %>"
@@ -1408,16 +1397,17 @@ jobs:
         - |
           set -eu
           export env=$(cat environment/name)
+          smith read > environment/metadata
+
 
           export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
           export RELEASE_VERSION=$(cat tile-version/version)
           export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
           mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
+
           smith om upload-product -- --product ${TILE_FILE}
           smith om stage-product -- --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
-          smith read > environment/metadata
-          # get the azs and network from that file
-          target=$(jq -r .ops_manager.url < environment/metadata)
+
           ert_subnet=$(jq -r .ert_subnet < environment/metadata)
           zone_1=$(jq -r .azs[0] < environment/metadata)
           zone_2=$(jq -r .azs[1] < environment/metadata)
@@ -1435,7 +1425,6 @@ jobs:
             singleton_availability_zone:
               name: ${zone_1}
           EOF
-
 
           smith om configure-product -- --config metric-store-tile-config.yml
           smith om upload-stemcell -- --stemcell gcp-light-stemcell/${STEMCELL_FILE} -- --floating true

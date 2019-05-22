@@ -1,20 +1,42 @@
 #!/bin/bash -eu
-echo "running tile install"
+echo "Running tile install"
 
 . ./log-cache-ci/tasks/shared_bash
 
+echo ${TOOLSMITHS_ENV_JSON} > env.json
+export OM_TARGET=$(jq -r .ops_manager.url < env.json)
+export OM_USERNAME=$(jq -r .ops_manager.username < env.json)
+export OM_PASSWORD=$(jq -r .ops_manager.password < env.json)
+export OM_SKIP_SSL_VALIDATION=true
+
+
+export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
 export RELEASE_VERSION=$(cat tile-version/version)
+export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
+mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
 
-TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
+om upload-product --product ${TILE_FILE}
+om stage-product --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
 
-source environment/environment.sh
-source deployment-tools/prelude.sh
-source deployment-tools/omg.sh
+ert_subnet=$(jq -r .ert_subnet < env.json)
+zone_1=$(jq -r .azs[0] < env.json)
+zone_2=$(jq -r .azs[1] < env.json)
+zone_3=$(jq -r .azs[2] < env.json)
+cat > metric-store-tile-config.yml <<EOF
+---
+product-name: p-metric-store
+network-properties:
+  network:
+    name: ${ert_subnet}
+  other_availability_zones:
+    - name: ${zone_1}
+    - name: ${zone_2}
+    - name: ${zone_3}
+  singleton_availability_zone:
+    name: ${zone_1}
+EOF
 
-stemcell_filename=$(download-product ${STEMCELL_URL})
+om configure-product --config metric-store-tile-config.yml
+om upload-stemcell --stemcell gcp-light-stemcell/${STEMCELL_FILE} --floating true --shasum ${STEMCELL_SHA}
+om apply-changes --product-name "p-metric-store"
 
-omg upload-product --product ${TILE_FILE}
-omg stage-product --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
-omg configure-product --config ${PRODUCT_CONFIG_PATH}
-omg upload-stemcell --stemcell ${stemcell_filename} --floating true --shasum ${STEMCELL_SHA}
-omg apply-changes --product-name "p-metric-store"
