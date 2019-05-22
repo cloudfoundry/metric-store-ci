@@ -9,6 +9,10 @@ inputs:
   - name: environment
     optional: true
 
+outputs:
+  - name: environment
+    optional: true
+
 PARAMS:
   TOOLSMITHS_ENV:
 
