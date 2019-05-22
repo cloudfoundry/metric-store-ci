@@ -15,6 +15,7 @@ export RELEASE_VERSION=$(cat new-tile-version/version)
 RELEASE_URLS=(
   https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release
   https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release
+  https://bosh.io/d/github.com/cloudfoundry/loggregator-agent-release
 )
 
 pushd releases
