@@ -6,6 +6,8 @@ inputs:
   - name: gcp-light-stemcell
   - name: tile-version
   - name: log-cache-ci
+  - name: environment
+    optional: true
 
 PARAMS:
   TOOLSMITHS_ENV:

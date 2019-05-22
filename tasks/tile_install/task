@@ -3,7 +3,11 @@ echo "Running tile install"
 
 . ./log-cache-ci/tasks/shared_bash
 
-echo ${TOOLSMITHS_ENV_JSON} > env.json
+if [-f environment/metadata]; then
+  cp environment/metadata env.json
+else
+  echo ${TOOLSMITHS_ENV_JSON} > env.json
+fi
 export OM_TARGET=$(jq -r .ops_manager.url < env.json)
 export OM_USERNAME=$(jq -r .ops_manager.username < env.json)
 export OM_PASSWORD=$(jq -r .ops_manager.password < env.json)
