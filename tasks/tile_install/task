@@ -3,7 +3,7 @@ echo "Running tile install"
 
 . ./log-cache-ci/tasks/shared_bash
 
-if [-f environment/metadata]; then
+if [ -f environment/metadata ]; then
   cp environment/metadata env.json
 else
   echo ${TOOLSMITHS_ENV_JSON} > env.json

@@ -13,7 +13,7 @@ outputs:
   - name: environment
 
 PARAMS:
-  TOOLSMITHS_ENV:
+  TOOLSMITHS_ENV_JSON: ""
 
 run:
   path: log-cache-ci/tasks/tile_install/task
