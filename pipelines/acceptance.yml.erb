@@ -907,7 +907,7 @@ jobs:
       - get: log-cache-ci
       - get: p-metric-store-release
         trigger: true
-        passed: ["bump-oss-metric-store"]
+        passed: ["p-metric-store-unit-tests"]
       - get: p-metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
