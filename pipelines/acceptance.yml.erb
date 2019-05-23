@@ -467,7 +467,7 @@ resources:
   type: bosh-io-stemcell
   source:
     name: bosh-google-kvm-ubuntu-xenial-go_agent
-    version_family: 250.latest
+    version_family: latest
     tarball: true
     preserve_filename: true
 
@@ -1249,6 +1249,7 @@ jobs:
         trigger: true
         passed: ["create-p-metric-store-dev-release"]
       - get: pcf-observability-ci-image
+      - get: gcp-light-stemcell
       attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -1258,6 +1259,7 @@ jobs:
         metric-store-dev-release: p-metric-store-dev-release
         oss-metric-store-release: oss-metric-store-dev-release
         tile-version: p-metric-store-version
+        stemcell: gcp-light-stemcell
     - put: temp-baked-tile
       params:
         file: baked-tile/*.pivotal
@@ -1285,6 +1287,7 @@ jobs:
         trigger: true
         passed: ["🥖 Bake Tile 🍰"]
       - get: gcp-light-stemcell
+        passed: ["🥖 Bake Tile 🍰"]
       attempts: 3
     - task: "install tile"
       image: pcf-observability-ci-image
@@ -1314,6 +1317,7 @@ jobs:
       trigger: true
       passed: ["🥖 Bake Tile 🍰"]
     - get: gcp-light-stemcell
+      passed: ["🥖 Bake Tile 🍰"]
     attempts: 3
   - task: "Claim Smith Env"
     tags: [ cf-log-cache-vsphere ]
@@ -1660,6 +1664,8 @@ jobs:
   serial: true
   plan:
     - aggregate:
+      - get: gcp-light-stemcell
+        passed: ["🥖 Bake Tile 🍰"]
       - get: develop
         resource: p-metric-store-release
         trigger: true
@@ -1806,6 +1812,8 @@ jobs:
     - get: p-metric-store-pivnet-metadata
     - get: pcf-observability-ci-image
     - get: log-cache-ci
+    - get: gcp-light-stemcell
+      passed: ["p-metric-store-test-gate"]
   - task: bake-final-tile
     image: pcf-observability-ci-image
     input_mapping:
@@ -1813,6 +1821,7 @@ jobs:
       p-metric-store-release-repo: p-metric-store-release-master
       p-metric-store-release-repo-develop: p-metric-store-release
       pivnet-metadata: p-metric-store-pivnet-metadata
+      stemcell: gcp-light-stemcell
     file: log-cache-ci/tasks/tile_bake_final/task.yml
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))

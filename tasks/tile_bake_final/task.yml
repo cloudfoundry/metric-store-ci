@@ -7,6 +7,7 @@ inputs:
   - name: p-metric-store-release-repo-develop
   - name: oss-metric-store-release-repo
   - name: pivnet-metadata
+  - name: stemcell
 
 outputs:
   - name: baked-tile

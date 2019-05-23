@@ -32,6 +32,12 @@ popd
 mkdir -p baked-tile
 TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal
 
+STEMCELL_VERSION=$(cat stemcell/version)
+echo "Using stemcell ${STEMCELL_VERSION} ..."
+pushd metric-store-release/tile
+  erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
+popd
+
 kiln bake \
     --version "$RELEASE_VERSION" \
     --metadata metric-store-release/tile/metadata.yml \

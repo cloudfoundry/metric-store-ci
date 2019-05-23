@@ -92,6 +92,12 @@ pushd releases
     done
 popd
 
+STEMCELL_VERSION=$(cat stemcell/version)
+echo "Using stemcell ${STEMCELL_VERSION} ..."
+pushd p-metric-store-release-repo/tile
+  erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
+popd
+
 mkdir -p baked-tile
 TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}-${TIMESTAMP}.pivotal
 
