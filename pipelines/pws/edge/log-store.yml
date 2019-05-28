@@ -1,0 +1,96 @@
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
+
+resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: v5.24.0
+
+- name: log-store-release-repo
+  type: git
+  source:
+    uri: git@github.com:pivotal/log-store-release
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
+
+jobs:
+- name: log-store-edge-deploy
+  plan:
+  - aggregate:
+    - get: log-store-release-repo
+      trigger: true
+    - get: cf-deployment-concourse-tasks-image
+  - put: slack-alert
+    params:
+      silent: true
+      username: ((slack-ci.yml/Notes/slack_alert_username))
+      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+      channel: ((slack-ci.yml/Notes/slack_alert_channel))
+      text: ":yellow_heart: Started :tree-log: Log Store deployment to :knife: PWS Edge"
+  - task: upload-release
+    file: log-store-release-repo/ci/tasks/upload-release/task.yml
+    image: cf-deployment-concourse-tasks-image
+    input_mapping:
+      bosh-release-dir: log-store-release-repo
+    params:
+      BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+      BOSH_CLIENT: ((bosh-admin-client.username))
+      BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+      BOSH_ENVIRONMENT: bosh.run.pivotal.io
+  - task: deploy
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: log-store-release-repo
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        BOSH_DEPLOYMENT: log-store-edge
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          bosh deploy "log-store-release-repo/manifests/log-store-edge.yml" \
+            --var pws-datadog-forwarder-client-username="((pws-datadog-forwarder-client/Username))" \
+            --var pws-datadog-forwarder-client-password="((pws-datadog-forwarder-client/Password))" \
+            --non-interactive
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":green_heart: Finished :tree-log: Log Store deployment to :knife: PWS Edge"
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":broken_heart: Failed to deploy :tree-log: Log Store: to :knife: PWS Edge"
