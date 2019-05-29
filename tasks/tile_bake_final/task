@@ -73,24 +73,10 @@ EOF
   bosh create-release --version=$OSS_RELEASE_VERSION --final --tarball=../releases/oss-metric-store-release.tgz
 popd
 
-RELEASE_URLS=(
-  https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release
-  https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release
-)
 
-echo_green "Downloading depedency releases from bosh.io"
-pushd releases
-    for URL in ${RELEASE_URLS[@]}; do
-        echo "Downloading ${URL}"
-        curl \
-          --location \
-          --remote-name \
-          --remote-header-name \
-          --silent \
-          --retry 5 \
-          ${URL} || true
-    done
-popd
+echo_green "Copying depedency releases to releases directory"
+mv bpm-release/release.tgz releases/bpm-release.tgz
+mv cf-routing-release/release.tgz releases/cf-routing-release.tgz
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."

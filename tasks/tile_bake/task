@@ -12,22 +12,8 @@ set -f
 calculate_version metric-store-release/src/version tile-version new-tile-version "build"
 export RELEASE_VERSION=$(cat new-tile-version/version)
 
-RELEASE_URLS=(
-  https://bosh.io/d/github.com/cloudfoundry-incubator/bpm-release
-  https://bosh.io/d/github.com/cloudfoundry-incubator/cf-routing-release
-)
-
-pushd releases
-    for URL in ${RELEASE_URLS[@]}; do
-        curl \
-          --location \
-          --remote-name \
-          --remote-header-name \
-          --silent \
-          --retry 5 \
-          ${URL} || true
-    done
-popd
+mv bpm-release/release.tgz releases/bpm-release.tgz
+mv cf-routing-release/release.tgz releases/cf-routing-release.tgz
 
 mkdir -p baked-tile
 TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal

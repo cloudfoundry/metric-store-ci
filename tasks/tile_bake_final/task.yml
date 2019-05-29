@@ -8,6 +8,8 @@ inputs:
   - name: oss-metric-store-release-repo
   - name: pivnet-metadata
   - name: stemcell
+  - name: bpm-release
+  - name: cf-routing-release
 
 outputs:
   - name: baked-tile
