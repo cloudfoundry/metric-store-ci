@@ -477,6 +477,16 @@ resources:
     api_token: ((release-credentials.yml/Notes/pivnet-token-metric-store))
     product_slug: app-metrics-store-pcf
 
+- name: bpm-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bpm-release
+
+- name: cf-routing-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry-incubator/cf-routing-release
+
 - name: hourly-during-the-workday
   type: time
   source:
@@ -1250,6 +1260,8 @@ jobs:
         passed: ["create-p-metric-store-dev-release"]
       - get: pcf-observability-ci-image
       - get: gcp-light-stemcell
+      - get: bpm-release
+      - get: cf-routing-release
       attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -1666,6 +1678,10 @@ jobs:
     - aggregate:
       - get: gcp-light-stemcell
         passed: ["🥖 Bake Tile 🍰"]
+      - get: bpm-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: cf-routing-release
+        passed: ["🥖 Bake Tile 🍰"]
       - get: develop
         resource: p-metric-store-release
         trigger: true
@@ -1813,6 +1829,10 @@ jobs:
     - get: pcf-observability-ci-image
     - get: log-cache-ci
     - get: gcp-light-stemcell
+      passed: ["p-metric-store-test-gate"]
+    - get: bpm-release
+      passed: ["p-metric-store-test-gate"]
+    - get: cf-routing-release
       passed: ["p-metric-store-test-gate"]
   - task: bake-final-tile
     image: pcf-observability-ci-image
