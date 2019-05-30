@@ -1332,7 +1332,7 @@ jobs:
       passed: ["🥖 Bake Tile 🍰"]
     attempts: 3
   - task: "Claim Smith Env"
-    tags: [ cf-log-cache-vsphere ]
+    tags: [ cf-denver-shared-vsphere ]
     config:
       platform: linux
       image_resource:
@@ -1355,7 +1355,7 @@ jobs:
     attempts: 3
     on_failure:
       task: release-env
-      tags: [ cf-log-cache-vsphere ]
+      tags: [ cf-denver-shared-vsphere ]
       config:
         platform: linux
         image_resource:
@@ -1372,7 +1372,7 @@ jobs:
     params:
       TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
   - task: "Upload and Install"
-    tags: [ cf-log-cache-vsphere ]
+    tags: [ cf-denver-shared-vsphere ]
     input_mapping:
       tile-version: p-metric-store-version
       baked-tile: temp-baked-tile
@@ -1383,7 +1383,7 @@ jobs:
       baked-tile: temp-baked-tile
     on_success:
       task: release-env
-      tags: [ cf-log-cache-vsphere ]
+      tags: [ cf-denver-shared-vsphere ]
       config:
         platform: linux
         image_resource:
