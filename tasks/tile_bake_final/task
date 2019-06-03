@@ -77,6 +77,7 @@ popd
 echo_green "Copying depedency releases to releases directory"
 mv bpm-release/release.tgz releases/bpm-release.tgz
 mv cf-routing-release/release.tgz releases/cf-routing-release.tgz
+mv loggregator-agent-release/release.tgz releases/loggregator-agent-release.tgz
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."

@@ -10,12 +10,14 @@ inputs:
   - name: stemcell
   - name: bpm-release
   - name: cf-routing-release
+  - name: loggregator-agent-release
 
 outputs:
   - name: baked-tile
   - name: new-tile-version
   - name: bpm-release
   - name: cf-routing-release
+  - name: loggregator-agent-release
 
 params:
   TILE_NAME: app-metric-store

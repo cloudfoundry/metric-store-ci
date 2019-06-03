@@ -487,6 +487,11 @@ resources:
   source:
     repository: cloudfoundry-incubator/cf-routing-release
 
+- name: loggregator-agent-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/loggregator-agent-release
+
 - name: hourly-during-the-workday
   type: time
   source:
@@ -1262,6 +1267,7 @@ jobs:
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
+      - get: loggregator-agent-release
       attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -1682,6 +1688,8 @@ jobs:
         passed: ["🥖 Bake Tile 🍰"]
       - get: cf-routing-release
         passed: ["🥖 Bake Tile 🍰"]
+      - get: loggregator-agent-release
+        passed: ["🥖 Bake Tile 🍰"]
       - get: develop
         resource: p-metric-store-release
         trigger: true
@@ -1833,6 +1841,8 @@ jobs:
     - get: bpm-release
       passed: ["p-metric-store-test-gate"]
     - get: cf-routing-release
+      passed: ["p-metric-store-test-gate"]
+    - get: loggregator-agent-release
       passed: ["p-metric-store-test-gate"]
   - task: bake-final-tile
     image: pcf-observability-ci-image
