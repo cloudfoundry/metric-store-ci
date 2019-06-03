@@ -83,8 +83,6 @@
       release: loggregator-agent
       consumes:
         loggregator: {from: loggregator, deployment: cf}
-      properties:
-        metrics_urls: "http://localhost:6060/metrics,http://localhost:6061/metrics,http://localhost:6065/metrics"
     - name: metric-store-cf-auth-proxy
       release: metric-store
       provides:
