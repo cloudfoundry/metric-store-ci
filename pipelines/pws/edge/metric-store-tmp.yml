@@ -100,7 +100,7 @@ jobs:
             value: metric-store-edge-tmp
           - type: replace
             path: /instance_groups/name=metric-store/vm_type
-            value: minimal
+            value: metric-store-mini
           - type: replace
             path: /instance_groups/name=metric-store/jobs/name=route_registrar/properties
             value:
