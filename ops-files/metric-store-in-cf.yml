@@ -81,8 +81,6 @@
             - "*.metric-store.((system_domain))"
     - name: prom_scraper
       release: loggregator-agent
-      consumes:
-        loggregator: {from: loggregator, deployment: cf}
     - name: metric-store-cf-auth-proxy
       release: metric-store
       provides:
