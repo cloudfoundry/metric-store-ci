@@ -20,8 +20,8 @@ export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
 export STEMCELL_SHA=$(shasum gcp-light-stemcell/stemcell.tgz | cut -d ' ' -f 1)
 mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
 
-om upload-product --trace --product ${TILE_FILE}
-om stage-product --trace --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
+om upload-product --product ${TILE_FILE}
+om stage-product --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
 
 ert_subnet=$(jq -r .ert_subnet < env.json)
 zone_1=$(jq -r .azs[0] < env.json)
