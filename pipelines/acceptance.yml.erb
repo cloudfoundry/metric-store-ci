@@ -755,6 +755,7 @@ jobs:
       TITLE: Pivotal Metric Store Unit Tests
       TEAM: metric-store-log-cache
   - task: run-tests
+    attempts: 3
     config:
       platform: linux
       image_resource:
