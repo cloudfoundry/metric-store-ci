@@ -791,7 +791,6 @@ jobs:
     - get: log-cache-ci
     - get: p-metric-store-release
       passed: [p-metric-store-unit-tests]
-      trigger: true
     - get: oss-metric-store
       passed: [oss-metric-store-unit-tests]
       trigger: true
