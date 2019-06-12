@@ -1875,7 +1875,7 @@ jobs:
   - task: github-publish-release-metadata
     file: log-cache-ci/tasks/publish-github-release/task.yml
     input_mapping:
-      release-tarball: baked-tile
+      release-tarball: p-metric-store-final-release
     params:
       PROJECT_NAME: Metric Store for PCF
   - put: p-metric-store-github-release

@@ -17,6 +17,7 @@ outputs:
   - name: release-version
   - name: p-metric-store-release-repo-develop-modified
   - name: p-metric-store-release-repo-modified
+  - name: p-metric-store-final-release
 
 params:
   TILE_NAME: metric-store

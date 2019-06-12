@@ -101,3 +101,5 @@ kiln bake \
     --output-file ${TILE_FILE}
 
 echo_green "Freshly baked tile 🍞: ${TILE_FILE}"
+
+cp releases/p-metric-store-release.tgz p-metric-store-final-release/
