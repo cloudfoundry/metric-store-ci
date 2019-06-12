@@ -69,10 +69,9 @@ blobstore:
     json_key: |
       $(echo ${JSON_KEY})
 EOF
-  OSS_RELEASE_VERSION="$(cat version)-tile.${TIMESTAMP}"
+  OSS_RELEASE_VERSION="$(cat src/version)-tile.${TIMESTAMP}"
   bosh create-release --version=$OSS_RELEASE_VERSION --final --tarball=../releases/oss-metric-store-release.tgz
 popd
-
 
 echo_green "Copying depedency releases to releases directory"
 mv bpm-release/release.tgz releases/bpm-release.tgz
