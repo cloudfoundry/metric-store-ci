@@ -1844,6 +1844,11 @@ jobs:
       passed: ["p-metric-store-test-gate"]
     - get: loggregator-agent-release
       passed: ["p-metric-store-test-gate"]
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Releasing Final Tile
+      TEAM: metric-store-log-cache
   - task: bake-final-tile
     image: pcf-observability-ci-image
     input_mapping:
@@ -1889,6 +1894,15 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_success
 
 - name: 🚀 Push to Pivnet 🚀
   plan:
