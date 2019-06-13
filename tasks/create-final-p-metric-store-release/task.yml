@@ -9,6 +9,7 @@ inputs:
 - name: oss-metric-store-release-master
 
 outputs:
+- name: release-version
 - name: p-metric-store-release-master-modified
 - name: p-metric-store-release-develop-modified
 - name: p-metric-store-final-bosh-release
