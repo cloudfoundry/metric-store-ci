@@ -16,7 +16,7 @@ mv loggregator-agent-release/release.tgz releases/loggregator-agent-release.tgz
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."
-pushd p-metric-store-release-repo/tile
+pushd p-metric-store-release-master/tile
   erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
 popd
 
