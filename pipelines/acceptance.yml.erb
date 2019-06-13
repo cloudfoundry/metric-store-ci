@@ -1843,6 +1843,7 @@ jobs:
   plan:
   - aggregate:
     - get: log-cache-ci
+    - get: pcf-observability-ci-image
     - get: p-metric-store-pivnet-metadata
     - get: p-metric-store-release
     - get: p-metric-store-release-master
@@ -1863,8 +1864,10 @@ jobs:
       TITLE: Building Final Release
       TEAM: metric-store-log-cache
   - task: create-final-release
+    image: pcf-observability-ci-image
     file: log-cache-ci/tasks/create-final-p-metric-store-release/task.yml
     input_mapping:
+      pivnet-metadata: p-metric-store-pivnet-metadata
       p-metric-store-release-develop: p-metric-store-release
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
@@ -1920,11 +1923,11 @@ jobs:
   plan:
   - aggregate:
     - get: log-cache-ci
+    - get: pcf-observability-ci-image
     - get: p-metric-store-pivnet-metadata
       passed: [ build-final-release ]
     - get: p-metric-store-release-master
       passed: [ build-final-release ]
-    - get: pcf-observability-ci-image
     - get: gcp-light-stemcell
       passed: [ build-final-release ]
     - get: bpm-release
@@ -1946,6 +1949,7 @@ jobs:
     file: log-cache-ci/tasks/tile_bake_final/task.yml
     image: pcf-observability-ci-image
     input_mapping:
+      pivnet-metadata: p-metric-store-pivnet-metadata
       stemcell: gcp-light-stemcell
   - put: freshly-baked-final-tiles
     params:

@@ -1,7 +1,4 @@
-image_resource:
-  type: docker-image
-  source:
-    repository: logcache/base
+---
 platform: linux
 
 inputs:
@@ -17,8 +14,8 @@ outputs:
 - name: p-metric-store-final-bosh-release
 - name: oss-metric-store-final-bosh-release
 
-run:
-  path: log-cache-ci/tasks/create-final-p-metric-store-release/task
-
 params:
   JSON_KEY:
+
+run:
+  path: log-cache-ci/tasks/create-final-p-metric-store-release/task
