@@ -11,6 +11,7 @@ groups:
   <% envs_we_care_about.each do |name, _| %>
   - "Install on PCF <%= name %>"
   <% end %>
+  - build-final-release
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
   - log-cache-acceptance-tests-release-bump-submodule
@@ -64,6 +65,7 @@ groups:
   - p-metric-store-release-elect-promotion
   - p-metric-store-master-promotion
   - bump-oss-metric-store
+  - build-final-release
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
 - name: log-cache-cli
@@ -311,6 +313,20 @@ resources:
     bucket: log-cache-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: oss-metric-store-dev-releases/release-(.*).tgz
+
+- name: oss-metric-store-final-bosh-release
+  type: gcs-resource
+  source:
+    bucket: log-cache-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: oss-metric-store-final-bosh-releases/release-(.*).tgz
+
+- name: p-metric-store-final-bosh-release
+  type: gcs-resource
+  source:
+    bucket: log-cache-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: p-metric-store-final-bosh-releases/release-(.*).tgz
 
 - name: log-cache-cli
   type: git
@@ -1830,19 +1846,17 @@ jobs:
     - get: p-metric-store-pivnet-metadata
     - get: p-metric-store-release
     - get: p-metric-store-release-master
-      passed:
-        - p-metric-store-master-promotion
+      passed: [ p-metric-store-master-promotion ]
     - get: oss-metric-store-release-master
-      passed:
-        - oss-metric-store-master-promotion
+      passed: [ oss-metric-store-master-promotion ]
     - get: gcp-light-stemcell
-      passed: p-metric-store-test-gate
+      passed: [ p-metric-store-test-gate ]
     - get: bpm-release
-      passed: p-metric-store-test-gate
+      passed: [ p-metric-store-test-gate ]
     - get: cf-routing-release
-      passed: p-metric-store-test-gate
+      passed: [ p-metric-store-test-gate ]
     - get: loggregator-agent-release
-      passed: p-metric-store-test-gate
+      passed: [ p-metric-store-test-gate ]
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
@@ -1875,6 +1889,14 @@ jobs:
       body: github-release/body
       globs:
       - github-release/*.tgz
+  - put: oss-metric-store-final-bosh-release
+    params:
+      file: oss-metric-store-final-bosh-release/release-*.tgz
+      content_type: application/octet-stream
+  - put: p-metric-store-final-bosh-release
+    params:
+      file: p-metric-store-final-bosh-release/release-*.tgz
+      content_type: application/octet-stream
   on_failure:
     do:
     - put: slack-alert
@@ -1898,23 +1920,23 @@ jobs:
   plan:
   - aggregate:
     - get: log-cache-ci
+    - get: p-metric-store-pivnet-metadata
+      passed: [ build-final-release ]
     - get: p-metric-store-release-master
-      passed: build-final-release
+      passed: [ build-final-release ]
     - get: pcf-observability-ci-image
     - get: gcp-light-stemcell
-      passed: build-final-release
+      passed: [ build-final-release ]
     - get: bpm-release
-      passed: build-final-release
+      passed: [ build-final-release ]
     - get: cf-routing-release
-      passed: build-final-release
+      passed: [ build-final-release ]
     - get: loggregator-agent-release
-      passed: build-final-release
-    - get: release-version
-      passed: build-final-release
+      passed: [ build-final-release ]
     - get: p-metric-store-final-bosh-release
-      passed: build-final-release
+      passed: [ build-final-release ]
     - get: oss-metric-store-final-bosh-release
-      passed: build-final-release
+      passed: [ build-final-release ]
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:

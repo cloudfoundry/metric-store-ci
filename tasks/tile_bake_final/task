@@ -2,14 +2,14 @@
 
 . ./log-cache-ci/tasks/shared_bash
 
-RELEASE_VERSION=$(cat release-version/version)
+RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
 TIMESTAMP=$(date +%s)
 
 mkdir -p releases
 
 echo_green "Copying depedency releases to releases directory"
-cp p-metric-store-final-bosh-release/p-metric-store-release.tgz releases/p-metric-store-release.tgz
-cp oss-metric-store-final-bosh-release/oss-metric-store-release.tgz releases/oss-metric-store-release.tgz
+cp p-metric-store-final-bosh-release/release-*.tgz releases
+cp oss-metric-store-final-bosh-release/release-*.tgz releases
 mv bpm-release/release.tgz releases/bpm-release.tgz
 mv cf-routing-release/release.tgz releases/cf-routing-release.tgz
 mv loggregator-agent-release/release.tgz releases/loggregator-agent-release.tgz

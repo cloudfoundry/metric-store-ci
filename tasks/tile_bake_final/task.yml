@@ -3,12 +3,12 @@ platform: linux
 
 inputs:
   - name: log-cache-ci
+  - name: pivnet-metadata
   - name: p-metric-store-release-master
   - name: stemcell
   - name: bpm-release
   - name: cf-routing-release
   - name: loggregator-agent-release
-  - name: release-version
   - name: p-metric-store-final-bosh-release
   - name: oss-metric-store-final-bosh-release
 

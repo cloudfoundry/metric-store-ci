@@ -5,7 +5,6 @@
 . ./log-cache-ci/tasks/shared_bash
 
 RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
-echo $RELEASE_VERSION > release-version/version
 
 pushd p-metric-store-release-master
   git checkout master
@@ -39,7 +38,7 @@ blobstore:
 EOF
 
   bosh -n create-release --sha2 --final \
-    --tarball ../p-metric-store-final-bosh-release/p-metric-store-release.tgz \
+    --tarball ../p-metric-store-final-bosh-release/release-p-metric-store-${RELEASE_VERSION}.tgz \
     --version "${RELEASE_VERSION}"
 
   # commit release creation changes
@@ -64,7 +63,7 @@ pushd p-metric-store-release-develop
   cp -r . ../p-metric-store-release-develop-modified
 popd
 
-echo_green "BOSH creating oss-metric-store-release $RELEASE_VERSION"
+echo_green "BOSH creating oss-metric-store-release for $RELEASE_VERSION"
 pushd oss-metric-store-release-master
   cat << EOF > config/private.yml
 ---
@@ -76,6 +75,6 @@ blobstore:
 EOF
   OSS_RELEASE_VERSION="$(cat src/version)-tile.${TIMESTAMP}"
   bosh create-release --final \
-    --tarball ../oss-metric-store-final-bosh-release/oss-metric-store-release.tgz \
+    --tarball ../oss-metric-store-final-bosh-release/release-oss-metric-store-${OSS_RELEASE_VERSION}.tgz \
     --version "${OSS_RELEASE_VERSION}"
 popd
