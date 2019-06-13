@@ -1,4 +1,4 @@
-#!/bin/bash -euf
+#!/bin/bash -eux
 
 . ./log-cache-ci/tasks/shared_bash
 
