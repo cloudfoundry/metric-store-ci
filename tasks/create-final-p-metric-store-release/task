@@ -5,6 +5,7 @@
 . ./log-cache-ci/tasks/shared_bash
 
 RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
+TIMESTAMP=$(date +%s)
 
 pushd p-metric-store-release-master
   git checkout master
