@@ -2,78 +2,14 @@
 
 . ./log-cache-ci/tasks/shared_bash
 
-RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
-echo $RELEASE_VERSION > release-version/version
+RELEASE_VERSION=$(cat release-version/version)
 TIMESTAMP=$(date +%s)
 
 mkdir -p releases
-pushd p-metric-store-release-repo
-  git checkout master
-  echo_green "Adding OSS & CSS SHAs to p-metric-store-release"
-  git rev-parse HEAD > css_sha
-  echo "CSS SHA: $(cat css_sha)"
-
-  if [ -f go.mod ]; then
-    set +e
-    cat go.mod | grep cloudfoundry/metric-store-release | sed 's/.*-\([a-f0-9]*\)$/\1/g' > oss_sha
-    echo "OSS SHA: $(cat oss_sha)"
-    set -e
-  fi
-
-  echo_green "BOSH creating p-metric-store-release ${RELEASE_VERSION}"
-
-  echo $RELEASE_VERSION > src/version
-  git add .
-  git commit -m "Bump version to ${RELEASE_VERSION}"
-
-  cat << EOF > config/private.yml
----
-blobstore:
-  options:
-    credentials_source: static
-    json_key: |
-      $(echo ${JSON_KEY})
-EOF
-  bosh -n create-release --sha2 --final \
-    --tarball ../releases/p-metric-store-release.tgz \
-    --version "${RELEASE_VERSION}"
-
-  echo_green "Committing final release and git tag on master"
-  git add .
-  git commit -m "Create final release"
-
-  tag_name="v${RELEASE_VERSION}"
-  final_release_abbrev=$(git rev-parse --abbrev-ref HEAD)
-  final_release_sha=$(git rev-parse HEAD)
-  git tag "${tag_name}" ${final_release_sha}
-
-  cp -r . ../p-metric-store-release-repo-modified
-popd
-
-echo_green "Merging version and release artifacts to develop"
-pushd p-metric-store-release-repo-develop
-  git checkout develop
-  git remote add -f local_master ../p-metric-store-release-repo
-  git merge -v --no-ff -m "Merge final release artifacts" "local_master/${final_release_abbrev}"
-
-  cp -r . ../p-metric-store-release-repo-develop-modified
-popd
-
-echo_green "BOSH creating oss-metric-store-release $RELEASE_VERSION"
-pushd oss-metric-store-release-repo
-  cat << EOF > config/private.yml
----
-blobstore:
-  options:
-    credentials_source: static
-    json_key: |
-      $(echo ${JSON_KEY})
-EOF
-  OSS_RELEASE_VERSION="$(cat src/version)-tile.${TIMESTAMP}"
-  bosh create-release --version=$OSS_RELEASE_VERSION --final --tarball=../releases/oss-metric-store-release.tgz
-popd
 
 echo_green "Copying depedency releases to releases directory"
+cp p-metric-store-final-bosh-release/p-metric-store-release.tgz releases/p-metric-store-release.tgz
+cp oss-metric-store-final-bosh-release/oss-metric-store-release.tgz releases/oss-metric-store-release.tgz
 mv bpm-release/release.tgz releases/bpm-release.tgz
 mv cf-routing-release/release.tgz releases/cf-routing-release.tgz
 mv loggregator-agent-release/release.tgz releases/loggregator-agent-release.tgz
@@ -91,15 +27,13 @@ echo_green "Kiln baking tile"
 
 kiln bake \
     --version "$RELEASE_VERSION" \
-    --metadata p-metric-store-release-repo/tile/metadata.yml \
-    --icon p-metric-store-release-repo/tile/icon.png \
+    --metadata p-metric-store-release-master/tile/metadata.yml \
+    --icon p-metric-store-release-master/tile/icon.png \
     --releases-directory releases \
-    --properties-directory p-metric-store-release-repo/tile/properties \
-    --jobs-directory p-metric-store-release-repo/tile/jobs \
-    --instance-groups-directory p-metric-store-release-repo/tile/instance_groups \
-    --bosh-variables-directory p-metric-store-release-repo/tile/variables \
+    --properties-directory p-metric-store-release-master/tile/properties \
+    --jobs-directory p-metric-store-release-master/tile/jobs \
+    --instance-groups-directory p-metric-store-release-master/tile/instance_groups \
+    --bosh-variables-directory p-metric-store-release-master/tile/variables \
     --output-file ${TILE_FILE}
 
 echo_green "Freshly baked tile 🍞: ${TILE_FILE}"
-
-cp releases/p-metric-store-release.tgz p-metric-store-final-release/

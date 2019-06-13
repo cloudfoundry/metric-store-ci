@@ -1823,9 +1823,11 @@ jobs:
     params:
       repository: merged-dest
 
-- name: 🥖 Bake Final Tile 🥖
+- name: build-final-release
   plan:
   - aggregate:
+    - get: log-cache-ci
+    - get: p-metric-store-pivnet-metadata
     - get: p-metric-store-release
     - get: p-metric-store-release-master
       passed:
@@ -1833,49 +1835,37 @@ jobs:
     - get: oss-metric-store-release-master
       passed:
         - oss-metric-store-master-promotion
-    - get: p-metric-store-pivnet-metadata
-    - get: pcf-observability-ci-image
-    - get: log-cache-ci
     - get: gcp-light-stemcell
-      passed: ["p-metric-store-test-gate"]
+      passed: p-metric-store-test-gate
     - get: bpm-release
-      passed: ["p-metric-store-test-gate"]
+      passed: p-metric-store-test-gate
     - get: cf-routing-release
-      passed: ["p-metric-store-test-gate"]
+      passed: p-metric-store-test-gate
     - get: loggregator-agent-release
-      passed: ["p-metric-store-test-gate"]
+      passed: p-metric-store-test-gate
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
-      TITLE: Releasing Final Tile
+      TITLE: Building Final Release
       TEAM: metric-store-log-cache
-  - task: bake-final-tile
-    image: pcf-observability-ci-image
+  - task: create-final-release
+    file: log-cache-ci/tasks/create-final-p-metric-store-release/task.yml
     input_mapping:
-      oss-metric-store-release-repo: oss-metric-store-release-master
-      p-metric-store-release-repo: p-metric-store-release-master
-      p-metric-store-release-repo-develop: p-metric-store-release
-      pivnet-metadata: p-metric-store-pivnet-metadata
-      stemcell: gcp-light-stemcell
-    file: log-cache-ci/tasks/tile_bake_final/task.yml
+      p-metric-store-release-develop: p-metric-store-release
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-  - put: freshly-baked-final-tiles
-    params:
-      file: baked-tile/*.pivotal
-      content_type: application/octet-stream
   - put: p-metric-store-release
     params:
-      repository: p-metric-store-release-repo-develop-modified
+      repository: p-metric-store-release-develop-modified
       rebase: false
   - put: p-metric-store-release-master
     params:
-      repository: p-metric-store-release-repo-modified
+      repository: p-metric-store-release-master-modified
       rebase: false
   - task: github-publish-release-metadata
     file: log-cache-ci/tasks/publish-github-release/task.yml
     input_mapping:
-      release-tarball: p-metric-store-final-release
+      release-tarball: p-metric-store-final-bosh-release
     params:
       PROJECT_NAME: Metric Store for PCF
   - put: p-metric-store-github-release
@@ -1885,6 +1875,60 @@ jobs:
       body: github-release/body
       globs:
       - github-release/*.tgz
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        attachments_file: metadata/alert_message_success
+
+- name: 🥖 Bake Final Tile 🥖
+  plan:
+  - aggregate:
+    - get: log-cache-ci
+    - get: p-metric-store-release-master
+      passed: build-final-release
+    - get: pcf-observability-ci-image
+    - get: gcp-light-stemcell
+      passed: build-final-release
+    - get: bpm-release
+      passed: build-final-release
+    - get: cf-routing-release
+      passed: build-final-release
+    - get: loggregator-agent-release
+      passed: build-final-release
+    - get: release-version
+      passed: build-final-release
+    - get: p-metric-store-final-bosh-release
+      passed: build-final-release
+    - get: oss-metric-store-final-bosh-release
+      passed: build-final-release
+  - task: create-slack-message
+    file: log-cache-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Releasing Final Tile
+      TEAM: metric-store-log-cache
+  - task: bake-final-tile
+    file: log-cache-ci/tasks/tile_bake_final/task.yml
+    image: pcf-observability-ci-image
+    input_mapping:
+      stemcell: gcp-light-stemcell
+  - put: freshly-baked-final-tiles
+    params:
+      file: baked-tile/*.pivotal
+      content_type: application/octet-stream
   on_failure:
     do:
     - put: slack-alert

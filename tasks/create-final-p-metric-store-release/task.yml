@@ -1,0 +1,25 @@
+image_resource:
+  type: docker-image
+  source:
+    repository: logcache/base
+platform: linux
+
+inputs:
+- name: log-cache-ci
+- name: pivnet-metadata
+- name: p-metric-store-release-develop
+- name: p-metric-store-release-master
+- name: oss-metric-store-release-master
+
+outputs:
+- name: release-version
+- name: p-metric-store-release-master-modified
+- name: p-metric-store-release-develop-modified
+- name: p-metric-store-final-bosh-release
+- name: oss-metric-store-final-bosh-release
+
+run:
+  path: log-cache-ci/tasks/create-final-p-metric-store-release/task
+
+params:
+  JSON_KEY:

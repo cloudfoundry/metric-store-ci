@@ -3,25 +3,20 @@ platform: linux
 
 inputs:
   - name: log-cache-ci
-  - name: p-metric-store-release-repo
-  - name: p-metric-store-release-repo-develop
-  - name: oss-metric-store-release-repo
-  - name: pivnet-metadata
+  - name: p-metric-store-release-master
   - name: stemcell
   - name: bpm-release
   - name: cf-routing-release
   - name: loggregator-agent-release
+  - name: release-version
+  - name: p-metric-store-final-bosh-release
+  - name: oss-metric-store-final-bosh-release
 
 outputs:
   - name: baked-tile
-  - name: release-version
-  - name: p-metric-store-release-repo-develop-modified
-  - name: p-metric-store-release-repo-modified
-  - name: p-metric-store-final-release
 
 params:
   TILE_NAME: metric-store
-  JSON_KEY:
 
 run:
   path: log-cache-ci/tasks/tile_bake_final/task
