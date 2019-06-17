@@ -28,8 +28,15 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
+- name: every-3-hours
+  type: time
+  source:
+    interval: 3h
+
 jobs:
 - name: log-store-edge-deploy
+  serial: true
+  serial_groups: [chaos]
   plan:
   - aggregate:
     - get: log-store-release-repo
@@ -94,3 +101,75 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ":broken_heart: Failed to deploy :tree-log: Log Store: to :knife: PWS Edge"
+
+- name: metric-store-edge-kill-vm
+  serial: true
+  serial_groups: [chaos]
+  plan:
+  - put: slack-alert
+    params:
+      silent: true
+      username: ((slack-ci.yml/Notes/slack_alert_username))
+      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+      channel: ((slack-ci.yml/Notes/slack_alert_channel))
+      text: ":monkey: Killing a :tree-log: Log Store Edge vm"
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: log-store-release-repo
+      passed: [log-store-edge-deploy]
+    - get: every-3-hours
+      trigger: true
+  - task: kill-vm
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        BOSH_DEPLOYMENT: log-store-edge
+        VM_OFFLINE_DURATION: 5m
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          vm_to_stop="$(bosh vms |
+            grep 'log-store/' |
+            sort -R |
+            head -n 1 |
+            awk '{print $1}')"
+
+          bosh \
+            stop "${vm_to_stop}" \
+            --soft --skip-drain \
+            --non-interactive
+
+          sleep ${VM_OFFLINE_DURATION}
+
+          bosh \
+            start "${vm_to_stop}" \
+            --non-interactive
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":green_heart: Finished killing and restarting a :tree-log: Log Store Edge vm"
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":broken_heart: Failed to kill a :tree-log: Log Store Edge vm
+          Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
