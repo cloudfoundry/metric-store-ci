@@ -28,6 +28,14 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
 
+- name: nightly
+  type: time
+  source:
+    interval: 24h
+    start: 6 AM
+    stop: 7 AM
+    location: America/Denver
+
 - name: every-3-hours
   type: time
   source:
@@ -102,7 +110,61 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ":broken_heart: Failed to deploy :tree-log: Log Store: to :knife: PWS Edge"
 
-- name: metric-store-edge-kill-vm
+- name: log-store-edge-nightly-redeploy
+  serial_groups: [chaos]
+  plan:
+  - put: slack-alert
+    params:
+      silent: true
+      username: ((slack-ci.yml/Notes/slack_alert_username))
+      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+      channel: ((slack-ci.yml/Notes/slack_alert_channel))
+      text: ":monkey: Starting nightly :tree-log: Log Store Edge redeployment"
+  - aggregate:
+    - get: cf-deployment-concourse-tasks-image
+    - get: nightly
+      trigger: true
+  - task: redeploy
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      params:
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        BOSH_DEPLOYMENT: log-store-edge
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          bosh manifest > manifest.yml
+          bosh deploy --non-interactive --recreate manifest.yml
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":green_heart: Finished nightly :tree-log: Log Store Edge redeployment"
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text: ":broken_heart: Failed nightly :tree-log: Log Store Edge redeployment
+          Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+
+- name: log-store-edge-kill-vm
   serial: true
   serial_groups: [chaos]
   plan:
