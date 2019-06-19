@@ -1976,6 +1976,7 @@ jobs:
 
 - name: 🚀 Push to Pivnet 🚀
   plan:
+  - get: log-cache-ci
   - task: create-slack-message
     file: log-cache-ci/tasks/alert-message-create/task.yml
     params:
@@ -2001,7 +2002,7 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
-  on_failure:
+  on_success:
     do:
     - put: slack-alert
       params:
