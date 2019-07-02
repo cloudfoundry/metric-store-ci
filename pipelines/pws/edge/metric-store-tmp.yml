@@ -76,7 +76,7 @@ jobs:
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        BOSH_DEPLOYMENT: metric-store-edge-tmp
+        BOSH_DEPLOYMENT: tmp-metric-store-edge
       run:
         path: bash
         args:
@@ -90,14 +90,14 @@ jobs:
             path: /instance_groups/name=metric-store/jobs/name=metric-store/provides
             value:
               metric-store:
-                as: metric-store-edge-tmp
+                as: tmp-metric-store-edge
                 shared: true
           - type: replace
             path: /name
-            value: metric-store-edge-tmp
+            value: tmp-metric-store-edge
           - type: replace
             path: /instance_groups/name=metric-store/jobs/name=metric-store-nozzle/properties/shard_id?
-            value: metric-store-edge-tmp
+            value: tmp-metric-store-edge
           - type: replace
             path: /instance_groups/name=metric-store/vm_type
             value: metric-store-mini
