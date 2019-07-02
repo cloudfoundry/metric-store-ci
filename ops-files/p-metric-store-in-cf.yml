@@ -7,6 +7,12 @@
     version: latest
 
 - type: replace
+  path: /releases/name=loggregator-agent?
+  value:
+    name: loggregator-agent
+    version: latest
+
+- type: replace
   path: /instance_groups/-
   value:
     name: p-metric-store
