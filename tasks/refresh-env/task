@@ -1,0 +1,4 @@
+#!/bin/bash
+
+set -exu
+curl -v "https://environments.toolsmiths.cf-app.com/custom_gcp_environments/${ID}/renew"
