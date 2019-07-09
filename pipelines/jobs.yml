@@ -30,6 +30,7 @@ jobs:
     trigger: true
   - get: cf-deployment-concourse-tasks-image
   - task: refresh-marina
+    tags: [ cf-denver-shared-vsphere ]
     image: cf-deployment-concourse-tasks-image
     file: log-cache-ci/tasks/refresh-env/task.yml
     params:
