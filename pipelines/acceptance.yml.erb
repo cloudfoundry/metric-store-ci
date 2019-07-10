@@ -2,9 +2,8 @@
 groups:
 - name: all
   jobs:
-  - log-cache-bump-submodule
   - p-metric-store-unit-tests
-  - log-cache-docker-images
+  - build-docker-images
   - cf-deploy
   - "🥖 Bake Tile 🍰"
   - "🚽 Install Tile 🍾"
@@ -14,11 +13,7 @@ groups:
   - build-final-release
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
-  - log-cache-acceptance-tests-release-bump-submodule
-  - lcats
   - cats
-  - log-cache-release-elect-promotion
-  - log-cache-master-promotion
   - p-metric-store-release-elect-promotion
   - p-metric-store-test-gate
   - p-metric-store-master-promotion
@@ -30,21 +25,12 @@ groups:
   - p-ms-🚬
   - create-oss-metric-store-dev-release
   - bump-oss-metric-store
-- name: log-cache
-  jobs:
-  - log-cache-bump-submodule
-  - cf-deploy
-  - log-cache-docker-images
-  - log-cache-acceptance-tests-release-bump-submodule
-  - lcats
-  - cats
-  - log-cache-release-elect-promotion
-  - log-cache-master-promotion
 - name: oss-metric-store
   jobs:
   - oss-metric-store-unit-tests
   - create-oss-metric-store-dev-release
   - cf-deploy
+  - cats
   - oss-ms-🚬
   - oss-metric-store-release-elect-promotion
   - oss-metric-store-master-promotion
@@ -68,12 +54,6 @@ groups:
   - build-final-release
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
-- name: log-cache-cli
-  jobs:
-  - log-cache-cli-tests
-  - lcats
-  - log-cache-cli-integration-tests
-  - log-cache-cli-promotion
 - name: log-cache-tools
   jobs:
   - log-cache-tools-tests
@@ -122,19 +102,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: log-cache-acceptance-tests
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/log-cache-acceptance-tests
-    branch: master
-
-- name: log-cache-acceptance-tests-release
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-acceptance-tests-release
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: cf-acceptance-tests
   type: git
   source:
@@ -157,34 +124,6 @@ resources:
     paths:
     - docker-images
 
-- name: log-cache-image
-  type: docker-image
-  source:
-    repository: logcache/log-cache
-    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
-    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
-
-- name: scheduler-image
-  type: docker-image
-  source:
-    repository: logcache/log-cache-scheduler
-    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
-    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
-
-- name: nozzle-image
-  type: docker-image
-  source:
-    repository: logcache/log-cache-nozzle
-    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
-    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
-
-- name: gateway-image
-  type: docker-image
-  source:
-    repository: logcache/log-cache-gateway
-    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
-    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
-
 - name: tile-image
   type: docker-image
   source:
@@ -198,39 +137,6 @@ resources:
     repository: gcr.io/cf-denver/pcf-observability-ci
     username: _json_key
     password: ((release-credentials.yml/Notes/gcp-service-account-key))
-
-- name: log-cache-release
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: develop
-    private_key: ((github-key-ci.yml/Notes/github_key))
-    ignore_paths:
-    - .final_builds
-    - releases
-    disable_ci_skip: false
-
-- name: log-cache-release-elect
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: release-elect
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
-- name: log-cache-release-master
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-release
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-    disable_ci_skip: true
-
-- name: log-cache
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: p-metric-store-release
   type: git
@@ -328,24 +234,11 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: p-metric-store-final-bosh-releases/release-(.*).tgz
 
-- name: log-cache-cli
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/log-cache-cli
-    branch: develop
-
 - name: log-cache-tools
   type: git
   source:
     uri: https://github.com/cloudfoundry-incubator/log-cache-tools
     branch: master
-
-- name: log-cache-cli-master
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-cli
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: bumper-tool
   type: git
@@ -388,39 +281,12 @@ resources:
   source:
     url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
 
-- name: notification-log-cache-tests-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: log-cache-ci-notifications
-    key: log-cache-slack-log-cache-tests-version
-    initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-
-- name: notification-cli-tests-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: log-cache-ci-notifications
-    key: log-cache-slack-cli-tests-version
-    initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-
 - name: notification-tools-tests-version
   type: semver
   source:
     driver: gcs
     bucket: log-cache-ci-notifications
     key: log-cache-slack-tools-tests-version
-    initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-
-- name: notification-cli-integration-tests-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: log-cache-ci-notifications
-    key: log-cache-slack-integration-tests-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -518,244 +384,31 @@ resources:
     days: [Monday, Tuesday, Wednesday, Thursday, Friday]
 
 jobs:
-###############################################################################
-# LOG CACHE
-###############################################################################
-- name: log-cache-cli-tests
+- name: build-docker-images
   serial: true
   public: true
   plan:
-  - aggregate:
-    - get: cf-deployment-concourse-tasks
-    - get: log-cache-ci
-    - get: log-cache-cli
-      trigger: true
-    - get: notification-cli-tests-version
-      params: { bump: patch }
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
-    params:
-      TITLE: Log Cache CLI Tests
-      TEAM: metric-store-log-cache
-  - task: run-tests
-    file: log-cache-ci/tasks/go-test-module/task.yml
+  - get: log-cache-ci
+  - get: p-metric-store-release
+  - get: log-cache-ci-docker-images
+    trigger: true
+  - task: build-metric-store-tile-image
+    file: log-cache-ci/tasks/build-go-docker-image/task.yml
     input_mapping:
-      source-repo: log-cache-cli
-  on_failure:
-    do:
-    - put: notification-cli-tests-version
-      params: { file: notification-cli-tests-version/version }
-    - task: enable-disable-alert-failure
-      file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
-      params: { alert_multiple: 5 }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_failure
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cli-tests-version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-cli-tests-version
-      params: { bump: minor }
-
-- name: log-cache-docker-images
-  serial: true
-  public: true
-  plan:
-  - aggregate:
-    - get: log-cache-ci
-    - get: log-cache-ci-docker-images
-      trigger: true
-    - get: log-cache-release
-      trigger: true
-      passed: ["log-cache-bump-submodule"]
-  - aggregate:
-    - task: build-log-cache-image
-      file: log-cache-ci/tasks/build-go-docker-image/task.yml
-      input_mapping:
-        context-repo: log-cache-ci-docker-images
-        source-repo: log-cache-release
-      output_mapping:
-        build-image: build-log-cache-image
-      params:
-        CONTEXT_PATH: docker-images/log-cache
-        BASE_PACKAGE: code.cloudfoundry.org/log-cache
-    - task: build-nozzle-image
-      file: log-cache-ci/tasks/build-go-docker-image/task.yml
-      input_mapping:
-        context-repo: log-cache-ci-docker-images
-        source-repo: log-cache-release
-      output_mapping:
-        build-image: build-nozzle-image
-      params:
-        CONTEXT_PATH: docker-images/log-cache-nozzle
-        BASE_PACKAGE: code.cloudfoundry.org/log-cache
-    - task: build-gateway-image
-      file: log-cache-ci/tasks/build-go-docker-image/task.yml
-      input_mapping:
-        context-repo: log-cache-ci-docker-images
-        source-repo: log-cache-release
-      output_mapping:
-        build-image: build-gateway-image
-      params:
-        CONTEXT_PATH: docker-images/log-cache-gateway
-        BASE_PACKAGE: code.cloudfoundry.org/log-cache
-    - task: build-scheduler-image
-      file: log-cache-ci/tasks/build-go-docker-image/task.yml
-      input_mapping:
-        context-repo: log-cache-ci-docker-images
-        source-repo: log-cache-release
-      output_mapping:
-        build-image: build-scheduler-image
-      params:
-        CONTEXT_PATH: docker-images/log-cache-scheduler
-        BASE_PACKAGE: code.cloudfoundry.org/log-cache
-    - task: build-metric-store-tile-image
-      file: log-cache-ci/tasks/build-go-docker-image/task.yml
-      input_mapping:
-        context-repo: log-cache-ci-docker-images
-        source-repo: log-cache-release
-      output_mapping:
-        build-image: build-metric-store-tile-image
-      params:
-        CONTEXT_PATH: docker-images/metric-store-tile
-        BASE_PACKAGE: code.cloudfoundry.org/log-cache
-  - aggregate:
-    - put: log-cache-image
-      params:
-        build: build-log-cache-image/build
-        tag: build-log-cache-image/tag
-        tag_as_latest: true
-        cache: true
-        cache_tag: latest
-    - put: nozzle-image
-      params:
-        build: build-nozzle-image/build
-        tag: build-nozzle-image/tag
-        tag_as_latest: true
-        cache: true
-        cache_tag: latest
-    - put: gateway-image
-      params:
-        build: build-gateway-image/build
-        tag: build-gateway-image/tag
-        tag_as_latest: true
-        cache: true
-        cache_tag: latest
-    - put: scheduler-image
-      params:
-        build: build-scheduler-image/build
-        tag: build-scheduler-image/tag
-        tag_as_latest: true
-        cache: true
-        cache_tag: latest
-    - put: tile-image
-      params:
-        build: build-metric-store-tile-image/build
-        tag: build-metric-store-tile-image/tag
-        tag_as_latest: true
-        cache: true
-        cache_tag: latest
-
-- name: log-cache-bump-submodule
-  serial: true
-  plan:
-  - aggregate:
-    - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
-    - get: log-cache-release
-      trigger: true
-    - get: log-cache
-      trigger: true
-  - task: update-log-cache-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    input_mapping:
-      release-repo: log-cache-release
-      source-repo: log-cache
+      context-repo: log-cache-ci-docker-images
+      source-repo: metric-store-release
     output_mapping:
-      bumped-release-repo: bumped-log-cache-release
+      build-image: build-metric-store-tile-image
     params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
-  - task: sync-package-specs
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    input_mapping:
-      release-repo: bumped-log-cache-release
-    output_mapping:
-      updated-release-repo: synced-log-cache-release
+      CONTEXT_PATH: docker-images/metric-store-tile
+      BASE_PACKAGE: code.cloudfoundry.org/log-cache
+  - put: tile-image
     params:
-      SCRIPT: scripts/sync-package-specs
-  - do:
-    - get: notification-log-cache-tests-version
-      params: { bump: patch }
-    - task: create-slack-message
-      file: log-cache-ci/tasks/alert-message-create/task.yml
-      input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
-      params:
-        TITLE: Log Cache Bump Submodule
-        TEAM: metric-store-log-cache
-    - task: run-tests
-      file: log-cache-ci/tasks/run-release-script/task.yml
-      input_mapping:
-        release-repo: synced-log-cache-release
-      params:
-        SCRIPT: scripts/test
-  - task: commit
-    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
-    image: cf-deployment-concourse-tasks-image
-    input_mapping:
-      release-repo: synced-log-cache-release
-    output_mapping:
-      committed-repo: committed-log-cache-release
-    params:
-      PATHS: |
-        src/code.cloudfoundry.org/log-cache
-        packages
-  - put: log-cache-release
-    params:
-      repository: committed-log-cache-release
-      rebase: true
-  on_failure:
-    do:
-    - put: notification-log-cache-tests-version
-      params: { file: notification-log-cache-tests-version/version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-log-cache-tests-version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-log-cache-tests-version
-      params: { bump: minor }
+      build: build-metric-store-tile-image/build
+      tag: build-metric-store-tile-image/tag
+      tag_as_latest: true
+      cache: true
+      cache_tag: latest
 
 - name: p-metric-store-unit-tests
   serial: true
@@ -862,74 +515,6 @@ jobs:
             icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
             channel: ((slack-ci.yml/Notes/slack_alert_channel))
             attachments_file: metadata/alert_message_failure
-
-- name: log-cache-acceptance-tests-release-bump-submodule
-  serial: true
-  plan:
-  - aggregate:
-    - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
-    - get: log-cache
-      trigger: true
-    - get: log-cache-acceptance-tests-release
-      trigger: true
-    - get: log-cache-acceptance-tests
-      trigger: true
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: LCATS Release Bump Submodule
-      TEAM: metric-store-log-cache
-  - task: update-log-cache-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    input_mapping:
-      release-repo: log-cache-acceptance-tests-release
-      source-repo: log-cache
-    output_mapping:
-      bumped-release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache
-    params:
-      SUBMODULE_PATH: src/code.cloudfoundry.org/log-cache
-  - task: update-log-cache-acceptance-tests-submodule
-    file: log-cache-ci/tasks/bump-submodule/task.yml
-    input_mapping:
-      release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache
-      source-repo: log-cache-acceptance-tests
-    output_mapping:
-      bumped-release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache-acceptance-tests
-    params:
-      SUBMODULE_PATH: src/github.com/cloudfoundry/log-cache-acceptance-tests
-  - task: sync-package-specs
-    file: log-cache-ci/tasks/run-release-script/task.yml
-    input_mapping:
-      release-repo: log-cache-acceptance-tests-release-with-bumped-log-cache-acceptance-tests
-    output_mapping:
-      updated-release-repo: synced-log-cache-acceptance-tests-release
-    params:
-      SCRIPT: scripts/sync-package-specs
-  - task: commit
-    file: log-cache-ci/tasks/commit-with-shortlog/task.yml
-    image: cf-deployment-concourse-tasks-image
-    input_mapping:
-      release-repo: synced-log-cache-acceptance-tests-release
-    output_mapping:
-      committed-repo: committed-log-cache-acceptance-tests-release
-    params:
-      PATHS: |
-        src
-        packages
-  - put: log-cache-acceptance-tests-release
-    params:
-      repository: committed-log-cache-acceptance-tests-release
-      rebase: true
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
 
 - name: create-p-metric-store-dev-release
   serial: true
@@ -1048,18 +633,6 @@ jobs:
       TEAM: metric-store-log-cache
   - aggregate:
     - do:
-      - get: log-cache-release
-        trigger: true
-        passed: ["log-cache-bump-submodule"]
-      - task: upload-log-cache-release
-        file: log-cache-ci/tasks/upload-release/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          bosh-release-dir: log-cache-release
-        params:
-          BBL_STATE_DIR: ((bbl_state_dir))
-          JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-    - do:
       - get: p-metric-store-release
         passed: ["create-p-metric-store-dev-release"]
       - get: p-metric-store-dev-release
@@ -1094,6 +667,16 @@ jobs:
           bosh-release-dir: grafana-boshrelease
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
+    - do:
+      - get: loggregator-agent-release
+      - task: upload-loggregator-agent-release
+        file: log-cache-ci/tasks/upload-release-tarball/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          release-tarball: loggregator-agent-release
+        params:
+          BBL_STATE_DIR: ((bbl_state_dir))
+          RELEASE_TARBALL_GLOB: "release.*"
     - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
@@ -1132,6 +715,7 @@ jobs:
           cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
           cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
           cp log-cache-ci/ops-files/add-grafana-uaa-clients.yml ops-files
+          cp log-cache-ci/ops-files/alertmanager-p-metric-store.yml ops-files
           cp log-cache-ci/ops-files/enable-grafana-uaa.yml ops-files
           cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
@@ -1139,7 +723,6 @@ jobs:
           cp log-cache-ci/ops-files/awaiting-cf-deployment-prs.yml ops-files
           cp log-cache-ci/ops-files/bosh-speed.yml ops-files
           cp log-cache-ci/ops-files/test-clients.yml ops-files
-          cp log-cache-ci/ops-files/scale-loggregator-components-up.yml ops-files
           cp log-cache-ci/ops-files/use-latest.yml ops-files
           erb log-cache-ci/ops-files/msats.yml.erb > ops-files/msats.yml
 
@@ -1158,12 +741,12 @@ jobs:
         use-compiled-releases.yml
         scale-to-one-az.yml
         add-system-metrics-agent.yml
-        scale-loggregator-components-up.yml
         test-clients.yml
         bosh-speed.yml
         add-metric-store.yml
         metric-store-in-cf.yml
         p-metric-store-in-cf.yml
+        alertmanager-p-metric-store.yml
         awaiting-cf-deployment-prs.yml
         use-latest.yml
         grafana-in-cf.yml
@@ -1424,93 +1007,11 @@ jobs:
       params:
         TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
 <% end %>
-- name: lcats
-  serial_groups: [cf-deploy]
-  plan:
-  - aggregate:
-    - get: log-cache-release
-      passed:
-      - cf-deploy
-      trigger: true
-    - get: denver-locks
-    - get: log-cache-ci
-    - get: cf-deployment-concourse-tasks
-    - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-acceptance-tests-release
-      trigger: true
-      passed: ["log-cache-acceptance-tests-release-bump-submodule"]
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: LCATS
-      TEAM: metric-store-log-cache
-  - task: upload-lcats
-    file: log-cache-ci/tasks/upload-release/task.yml
-    image: cf-deployment-concourse-tasks-image
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-    input_mapping:
-      bbl-state: denver-locks
-      bosh-release-dir: log-cache-acceptance-tests-release
-  - task: create-ops-files
-    image: cf-deployment-concourse-tasks-image
-    config:
-      platform: linux
-      inputs:
-      - name: log-cache-ci
-      outputs:
-      - name: ops-files
-      run:
-        path: /bin/bash
-        args:
-        - "-c"
-        - |
-          set -e
-          erb log-cache-ci/ops-files/lcats.yml.erb > ops-files/lcats.yml
-    params:
-      ENV_NAME: ((env_name))
-      SYS_DOMAIN: ((sys_domain))
-  - task: lcats-deploy
-    file: log-cache-ci/tasks/bosh-deploy/task.yml
-    image: cf-deployment-concourse-tasks-image
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      DEPLOYMENT_NAME: lcats
-      MANIFEST_FILE: manifests/manifest.yml
-      OPS_FILES: lcats.yml
-    input_mapping:
-      bbl-state: denver-locks
-      bosh-release: log-cache-acceptance-tests-release
-      ops-files: ops-files
-      vars-files: ops-files
-  - task: run-lcats
-    file: log-cache-ci/tasks/run-errand/task.yml
-    image: cf-deployment-concourse-tasks-image
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      DEPLOYMENT_NAME: lcats
-      ERRAND: lcats
-      KEEP_ALIVE: true
-    input_mapping:
-      bbl-state: denver-locks
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
 
 - name: cats
   serial_groups: [cf-deploy]
   plan:
   - aggregate:
-    - get: log-cache-release
-      passed:
-      - cf-deploy
-      trigger: true
     - get: denver-locks
     - get: log-cache-ci
     - get: cf-acceptance-tests
@@ -1541,158 +1042,6 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
-
-- name: log-cache-cli-integration-tests
-  serial_groups: [cf-deploy]
-  plan:
-  - aggregate:
-    - get: cf-deployment-concourse-tasks
-    - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
-    - get: log-cache-cli
-      passed: [ log-cache-cli-tests ]
-      trigger: true
-    - get: notification-cli-integration-tests-version
-      params: { bump: patch }
-    - get: bbl-state
-      resource: denver-locks
-      passed: [ lcats ]
-      trigger: true
-  - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
-    params:
-      TITLE: Log Cache CLI Integration Tests
-      TEAM: metric-store-log-cache
-  - task: create-test-space
-    file: log-cache-ci/tasks/create-org-and-space/task.yml
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      ORG: integration-tests
-      SPACE: integration-tests
-      SYSTEM_DOMAIN: ((sys_domain))
-  - task: run-integration-tests
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: logcache/base
-      inputs:
-        - name: bbl-state
-        - name: cf-deployment-concourse-tasks
-        - name: log-cache-cli
-      params:
-        BBL_STATE_DIR: ((bbl_state_dir))
-        SYSTEM_DOMAIN: ((sys_domain))
-      run:
-        path: bash
-        args:
-          - -c
-          - |
-            #!/bin/bash
-            set -exuo pipefail
-
-            source cf-deployment-concourse-tasks/shared-functions
-
-            setup_bosh_env_vars
-
-            cf api api.${SYSTEM_DOMAIN} --skip-ssl-validation
-            (set +x; cf auth admin "$(get_password_from_credhub cf_admin_password)")
-
-            CF_ORG=integration-tests CF_SPACE=integration-tests \
-              log-cache-cli/scripts/integration-tests.sh
-  on_failure:
-    do:
-    - put: notification-cli-integration-tests-version
-      params: { file: notification-cli-integration-tests-version/version }
-    - task: enable-disable-alert-failure
-      file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
-      params: { alert_multiple: 5 }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_failure
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cli-integration-tests-version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-cli-integration-tests-version
-      params: { bump: minor }
-
-- name: log-cache-release-elect-promotion
-  serial: true
-  plan:
-  - aggregate:
-    - get: develop
-      resource: log-cache-release
-      trigger: true
-      passed: ["lcats"]
-    - get: log-cache-release-elect
-  - put: log-cache-release-elect
-    params:
-      repository: develop
-
-- name: log-cache-cli-promotion
-  serial: true
-  plan:
-  - aggregate:
-    - get: log-cache-cli
-      passed: [ log-cache-cli-integration-tests ]
-      trigger: true
-    - get: log-cache-cli-master
-    - get: bumper-tool
-    - get: log-cache-ci
-  - task: bumper
-    file: log-cache-ci/tasks/bumper/task.yml
-    input_mapping:
-      source: log-cache-cli
-      dest: log-cache-cli-master
-    params:
-      SOURCE_BRANCH: develop
-      DEST_BRANCH: master
-  - put: log-cache-cli-master
-    params:
-      repository: merged-dest
-
-- name: log-cache-master-promotion
-  serial: true
-  plan:
-  - aggregate:
-    - get: hourly-during-the-workday
-      trigger: true
-    - get: log-cache-release-elect
-      passed: ["log-cache-release-elect-promotion"]
-      trigger: true
-    - get: log-cache-release-master
-    - get: bumper-tool
-    - get: log-cache-ci
-  - task: bumper
-    file: log-cache-ci/tasks/bumper/task.yml
-    input_mapping:
-      source: log-cache-release-elect
-      dest: log-cache-release-master
-    params:
-      SOURCE_BRANCH: release-elect
-      DEST_BRANCH: master
-      FOLLOW_BUMPS_OF: src/code.cloudfoundry.org/log-cache
-  - put: log-cache-release-master
-    params:
-      repository: merged-dest
 
 - name: p-metric-store-test-gate
   serial: true
