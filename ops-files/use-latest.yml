@@ -2,7 +2,7 @@
   path: /releases/name=log-cache
   value:
     name: log-cache
-    version: latest
+    version: 2.3.0
 - type: replace
   path: /releases/name=metric-store?
   value:

@@ -1,3 +1,7 @@
+# expvar forwarder adds itself as an addon in cf-d loggregator agent
+- type: remove
+  path: /addons/name=loggregator_agent/jobs/name=loggr-expvar-forwarder
+
 # cat <<EOT >> ops-files/cf-PR-log-cache-remove-expvar-forwarder.yml
 - type: remove
   path: /instance_groups/name=scheduler/jobs/name=log-cache-expvar-forwarder

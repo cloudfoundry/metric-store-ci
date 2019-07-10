@@ -369,6 +369,11 @@ resources:
   source:
     repository: cloudfoundry-incubator/cf-routing-release
 
+- name: log-cache-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/log-cache-release
+
 - name: loggregator-agent-release
   type: bosh-io-release
   source:
@@ -687,6 +692,16 @@ jobs:
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
           RELEASE_TARBALL_GLOB: "release-*"
+    - do:
+      - get: log-cache-release
+      - task: upload-log-cache-release
+        file: log-cache-ci/tasks/upload-release-tarball/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          release-tarball: log-cache-release
+        params:
+          BBL_STATE_DIR: ((bbl_state_dir))
+          RELEASE_TARBALL_GLOB: "release.*"
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
