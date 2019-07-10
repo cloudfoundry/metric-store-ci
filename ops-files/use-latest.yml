@@ -1,4 +1,9 @@
 - type: replace
+  path: /releases/name=log-cache
+  value:
+    name: log-cache
+    version: latest
+- type: replace
   path: /releases/name=metric-store?
   value:
     name: metric-store
