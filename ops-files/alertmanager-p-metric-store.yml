@@ -1,0 +1,42 @@
+- path: /instance_groups/name=p-metric-store/jobs/-
+  type: replace
+  value:
+    name: alertmanager
+    release: prometheus
+    properties:
+      alertmanager:
+        route:
+          receiver: default
+        receivers:
+          - name: default
+            slack_configs:
+            - channel: "#log-cache-stdout"
+              title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+              text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+        test_alert:
+          daily: true
+        slack:
+          api_url: "((slack_api_url))"
+        inhibit_rules:
+          - source_match:
+              severity: 'critical'
+            target_match:
+              severity: 'warning'
+            equal: ['alertname', 'dev', 'instance']
+
+- path: /instance_groups/name=p-metric-store/jobs/name=metric-store/properties/alertmanager?
+  type: replace
+  value:
+    addr: "localhost:9093"
+- path: /instance_groups/name=p-metric-store/jobs/name=metric-store/properties/rules_path?
+  type: replace
+  value: '/var/vcap/jobs/metric-store/config/rules.yml'
+
+- path: /releases/name=prometheus?
+  type: replace
+  value:
+    name: prometheus
+    version: "25.0.0"
+    url: https://bosh.io/d/github.com/cloudfoundry-community/prometheus-boshrelease?v=25.0.0
+    sha1: f2a1de6d1b00c856402964347685274877b33910
+
