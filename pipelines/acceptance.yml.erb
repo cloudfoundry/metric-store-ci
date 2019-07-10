@@ -1028,6 +1028,9 @@ jobs:
   plan:
   - aggregate:
     - get: denver-locks
+    - get: oss-metric-store
+      trigger: true
+      passed: [cf-deploy]
     - get: log-cache-ci
     - get: cf-acceptance-tests
       trigger: true
@@ -1171,7 +1174,7 @@ jobs:
     - get: develop
       resource: oss-metric-store
       trigger: true
-      passed: ["oss-ms-🚬"]
+      passed: ["oss-ms-🚬", cats]
   - get: oss-metric-store-release-elect
   - put: oss-metric-store-release-elect
     params:
