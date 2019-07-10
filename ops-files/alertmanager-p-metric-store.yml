@@ -16,7 +16,7 @@
         test_alert:
           daily: true
         slack:
-          api_url: "((slack_api_url))"
+          api_url: "((/bosh-yuzu/cf/slack_api_url))"
         inhibit_rules:
           - source_match:
               severity: 'critical'
