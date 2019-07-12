@@ -20,7 +20,7 @@ resources:
   type: git
   source:
     uri: git@github.com:pivotal/log-store-release
-    branch: master
+    branch: release-candidate
     private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: slack-alert
