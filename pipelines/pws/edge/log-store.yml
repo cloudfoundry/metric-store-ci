@@ -79,10 +79,6 @@ jobs:
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
         BOSH_DEPLOYMENT: log-store-edge
-        AUTH_PROXY_CLIENT_ID: ((log-store-cf-auth-proxy-client.username))
-        AUTH_PROXY_CLIENT_SECRET: ((log-store-cf-auth-proxy-client.password))
-        BLACKBOX_CLIENT_ID: ((pws-datadog-forwarder-client/Username))
-        BLACKBOX_CLIENT_SECRET: ((pws-datadog-forwarder-client/Password))
       run:
         path: bash
         args:
@@ -92,10 +88,6 @@ jobs:
           set -eux
 
           bosh deploy "log-store-release-repo/manifests/log-store-edge.yml" \
-            --var auth-proxy-client-id="$AUTH_PROXY_CLIENT_ID" \
-            --var auth-proxy-client-secret="$AUTH_PROXY_CLIENT_SECRET" \
-            --var blackbox-client-id="$BLACKBOX_CLIENT_ID" \
-            --var blackbox-client-secret="$BLACKBOX_CLIENT_SECRET" \
             --non-interactive
   on_success:
     do:
