@@ -1086,8 +1086,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: develop
-      resource: p-metric-store-release
+    - get: p-metric-store-release
       trigger: true
       passed:
         - p-metric-store-test-gate
