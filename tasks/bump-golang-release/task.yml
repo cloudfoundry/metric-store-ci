@@ -6,13 +6,13 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: repo
 - name: golang-release-repo
 - name: golang-release
 
 run:
-  path: log-cache-ci/tasks/bump-golang-release/task
+  path: metric-store-ci/tasks/bump-golang-release/task
 
 params:
   GITHUB_REPO:

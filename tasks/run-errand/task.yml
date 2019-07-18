@@ -1,12 +1,12 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci # This repo
+- name: metric-store-ci # This repo
 - name: bbl-state      # The BBL state repository
 - name: cf-deployment-concourse-tasks
 
 run:
-  path: log-cache-ci/tasks/run-errand/task
+  path: metric-store-ci/tasks/run-errand/task
 
 params:
   # - Required

@@ -7,7 +7,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-  - name: log-cache-ci
+  - name: metric-store-ci
   - name: slack-rate-limit-version
   - name: metadata
 
@@ -15,4 +15,4 @@ outputs:
   - name: modified-metadata
 
 run:
-  path: log-cache-ci/tasks/enable-disable-alert-success/run.sh
+  path: metric-store-ci/tasks/enable-disable-alert-success/run.sh

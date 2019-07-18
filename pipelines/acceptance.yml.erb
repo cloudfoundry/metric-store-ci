@@ -108,19 +108,19 @@ resources:
     uri: https://github.com/cloudfoundry/cf-acceptance-tests
     branch: master
 
-- name: log-cache-ci
+- name: metric-store-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-ci
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    uri: git@github.com:cloudfoundry/metric-store-ci
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     branch: master
 
-- name: log-cache-ci-docker-images
+- name: docker-images
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-ci
+    uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     paths:
     - docker-images
 
@@ -208,7 +208,7 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     key: oss-metric-store-dev-release-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
@@ -216,21 +216,21 @@ resources:
 - name: oss-metric-store-dev-release
   type: gcs-resource
   source:
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: oss-metric-store-dev-releases/release-(.*).tgz
 
 - name: oss-metric-store-final-bosh-release
   type: gcs-resource
   source:
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: oss-metric-store-final-bosh-releases/release-(.*).tgz
 
 - name: p-metric-store-final-bosh-release
   type: gcs-resource
   source:
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: p-metric-store-final-bosh-releases/release-(.*).tgz
 
@@ -285,7 +285,7 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     key: log-cache-slack-tools-tests-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
@@ -294,7 +294,7 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     key: log-cache-slack-cf-deploy-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
@@ -303,7 +303,7 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     key: metric-store-dev-release-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
@@ -312,7 +312,7 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: log-cache-ci-versions
+    bucket: metric-store-ci-versions
     key: metric-store-release-acceptance-tile
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     initial_version: 0.1.2-build.14
@@ -320,14 +320,14 @@ resources:
 - name: p-metric-store-dev-release
   type: gcs-resource
   source:
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: metric-store-dev-releases/release-(.*).tgz
 
 - name: temp-baked-tile
   type: gcs-resource
   source:
-    bucket: log-cache-ci-notifications
+    bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: temp-baked-tiles/(.*).pivotal
 
@@ -393,14 +393,14 @@ jobs:
   serial: true
   public: true
   plan:
-  - get: log-cache-ci
+  - get: metric-store-ci
   - get: p-metric-store-release
-  - get: log-cache-ci-docker-images
+  - get: docker-images
     trigger: true
   - task: build-metric-store-tile-image
-    file: log-cache-ci/tasks/build-go-docker-image/task.yml
+    file: metric-store-ci/tasks/build-go-docker-image/task.yml
     input_mapping:
-      context-repo: log-cache-ci-docker-images
+      context-repo: docker-images
       source-repo: metric-store-release
     output_mapping:
       build-image: build-metric-store-tile-image
@@ -420,11 +420,11 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: p-metric-store-release
       trigger: true
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Pivotal Metric Store Unit Tests
       TEAM: metric-store-log-cache
@@ -462,19 +462,19 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: p-metric-store-release
       passed: [p-metric-store-unit-tests]
     - get: oss-metric-store
       passed: [oss-metric-store-unit-tests]
       trigger: true
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Pivotal Metric Store Bump OSS Metric Store
       TEAM: metric-store-log-cache
   - task: bump-oss-metric-store
-    file: log-cache-ci/tasks/bump-oss-metric-store/task.yml
+    file: metric-store-ci/tasks/bump-oss-metric-store/task.yml
     params:
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/github_key))
   - put: p-metric-store-release
@@ -503,7 +503,7 @@ jobs:
       on_failure:
         do:
         - task: create-tracker-story
-          file: log-cache-ci/tasks/create-tracker-story/task.yml
+          file: metric-store-ci/tasks/create-tracker-story/task.yml
           input_mapping:
             linked-repo: bumped-p-metric-store-release
           params:
@@ -525,7 +525,7 @@ jobs:
   serial: true
   plan:
     - aggregate:
-      - get: log-cache-ci
+      - get: metric-store-ci
       - get: p-metric-store-release
         trigger: true
         passed: ["p-metric-store-unit-tests"]
@@ -534,7 +534,7 @@ jobs:
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
     - task: create-dev-release
-      file: log-cache-ci/tasks/create-dev-release/task.yml
+      file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-dev-release-dir: p-metric-store-release
@@ -553,11 +553,11 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: oss-metric-store
       trigger: true
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: OSS Metric Store Unit Tests
       TEAM: metric-store-log-cache
@@ -594,7 +594,7 @@ jobs:
   serial: true
   plan:
     - aggregate:
-      - get: log-cache-ci
+      - get: metric-store-ci
       - get: oss-metric-store
         trigger: true
         passed: ["oss-metric-store-unit-tests"]
@@ -603,7 +603,7 @@ jobs:
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
     - task: create-dev-release
-      file: log-cache-ci/tasks/create-dev-release/task.yml
+      file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-dev-release-dir: oss-metric-store
@@ -622,7 +622,7 @@ jobs:
   serial_groups: [cf-deploy]
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: bbl-state
       resource: denver-locks
     - get: cf-deployment
@@ -631,7 +631,7 @@ jobs:
     - get: notification-cf-deploy-version
       params: { bump: patch }
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
     params:
       TITLE: Log Cache CF Deploy
@@ -644,7 +644,7 @@ jobs:
         trigger: true
         passed: ["create-p-metric-store-dev-release"]
       - task: upload-p-metric-store-release
-        file: log-cache-ci/tasks/upload-dev-release/task.yml
+        file: metric-store-ci/tasks/upload-dev-release/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
           bosh-release-tarball: p-metric-store-dev-release
@@ -657,7 +657,7 @@ jobs:
         trigger: true
         passed: ["create-oss-metric-store-dev-release"]
       - task: upload-oss-metric-store-release
-        file: log-cache-ci/tasks/upload-dev-release/task.yml
+        file: metric-store-ci/tasks/upload-dev-release/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
           bosh-release-tarball: oss-metric-store-dev-release
@@ -666,7 +666,7 @@ jobs:
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
-        file: log-cache-ci/tasks/upload-release/task.yml
+        file: metric-store-ci/tasks/upload-release/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
           bosh-release-dir: grafana-boshrelease
@@ -675,7 +675,7 @@ jobs:
     - do:
       - get: loggregator-agent-release
       - task: upload-loggregator-agent-release
-        file: log-cache-ci/tasks/upload-release-tarball/task.yml
+        file: metric-store-ci/tasks/upload-release-tarball/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
           release-tarball: loggregator-agent-release
@@ -685,7 +685,7 @@ jobs:
     - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
-        file: log-cache-ci/tasks/upload-release-tarball/task.yml
+        file: metric-store-ci/tasks/upload-release-tarball/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
           release-tarball: metric-registrar-release
@@ -695,7 +695,7 @@ jobs:
     - do:
       - get: log-cache-release
       - task: upload-log-cache-release
-        file: log-cache-ci/tasks/upload-release-tarball/task.yml
+        file: metric-store-ci/tasks/upload-release-tarball/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
           release-tarball: log-cache-release
@@ -710,7 +710,7 @@ jobs:
       inputs:
       - name: bbl-state
       - name: cf-deployment
-      - name: log-cache-ci
+      - name: metric-store-ci
       - name: oss-metric-store
       outputs:
       - name: ops-files
@@ -728,18 +728,18 @@ jobs:
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
           cp cf-deployment/operations/experimental/add-system-metrics-agent.yml ops-files
           cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
-          cp log-cache-ci/ops-files/grafana-in-cf.yml ops-files
-          cp log-cache-ci/ops-files/add-grafana-uaa-clients.yml ops-files
-          cp log-cache-ci/ops-files/alertmanager-p-metric-store.yml ops-files
-          cp log-cache-ci/ops-files/enable-grafana-uaa.yml ops-files
-          cp log-cache-ci/ops-files/metric-registrar-in-cf.yml ops-files
-          cp log-cache-ci/ops-files/metric-store-in-cf.yml ops-files
-          cp log-cache-ci/ops-files/p-metric-store-in-cf.yml ops-files
-          cp log-cache-ci/ops-files/awaiting-cf-deployment-prs.yml ops-files
-          cp log-cache-ci/ops-files/bosh-speed.yml ops-files
-          cp log-cache-ci/ops-files/test-clients.yml ops-files
-          cp log-cache-ci/ops-files/use-latest.yml ops-files
-          erb log-cache-ci/ops-files/msats.yml.erb > ops-files/msats.yml
+          cp metric-store-ci/ops-files/grafana-in-cf.yml ops-files
+          cp metric-store-ci/ops-files/add-grafana-uaa-clients.yml ops-files
+          cp metric-store-ci/ops-files/alertmanager-p-metric-store.yml ops-files
+          cp metric-store-ci/ops-files/enable-grafana-uaa.yml ops-files
+          cp metric-store-ci/ops-files/metric-registrar-in-cf.yml ops-files
+          cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
+          cp metric-store-ci/ops-files/p-metric-store-in-cf.yml ops-files
+          cp metric-store-ci/ops-files/awaiting-cf-deployment-prs.yml ops-files
+          cp metric-store-ci/ops-files/bosh-speed.yml ops-files
+          cp metric-store-ci/ops-files/test-clients.yml ops-files
+          cp metric-store-ci/ops-files/use-latest.yml ops-files
+          erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
 
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
@@ -780,7 +780,7 @@ jobs:
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
   - task: create-test-space
-    file: log-cache-ci/tasks/create-org-and-space/task.yml
+    file: metric-store-ci/tasks/create-org-and-space/task.yml
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
       ORG: test
@@ -798,7 +798,7 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
     - task: enable-disable-alert-failure
-      file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
+      file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
       input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
       params: { alert_multiple: 5, ignore_first: true }
     - put: slack-high-visibility-alert
@@ -812,7 +812,7 @@ jobs:
   on_success:
     do:
     - task: enable-disable-alert-success
-      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+      file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
       input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
     - put: slack-alert
       params:
@@ -829,7 +829,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: cf-deployment-concourse-tasks-image
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
@@ -837,12 +837,12 @@ jobs:
       trigger: true
       passed: ["cf-deploy"]
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: P-Metric-Store Smoke Tests
       TEAM: metric-store-log-cache
   - task: run-msats
-    file: log-cache-ci/tasks/run-errand/task.yml
+    file: metric-store-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
@@ -866,7 +866,7 @@ jobs:
   plan:
     - aggregate:
       - get: concourse-tasks
-      - get: log-cache-ci
+      - get: metric-store-ci
       - get: p-metric-store-release
         passed: ["create-p-metric-store-dev-release"]
       - get: oss-metric-store-dev-release
@@ -885,7 +885,7 @@ jobs:
       attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
-      file: log-cache-ci/tasks/tile_bake/task.yml
+      file: metric-store-ci/tasks/tile_bake/task.yml
       input_mapping:
         metric-store-release: p-metric-store-release
         metric-store-dev-release: p-metric-store-dev-release
@@ -905,7 +905,7 @@ jobs:
   plan:
     - aggregate:
       - get: concourse-tasks
-      - get: log-cache-ci
+      - get: metric-store-ci
       - get: p-metric-store-release
         passed: ["🥖 Bake Tile 🍰"]
       - get: oss-metric-store-dev-release
@@ -923,7 +923,7 @@ jobs:
       attempts: 3
     - task: "install tile"
       image: pcf-observability-ci-image
-      file: log-cache-ci/tasks/tile_install/task.yml
+      file: metric-store-ci/tasks/tile_install/task.yml
       input_mapping:
         tile-version: p-metric-store-version
         baked-tile: temp-baked-tile
@@ -935,7 +935,7 @@ jobs:
   plan:
   - aggregate:
     - get: concourse-tasks
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: p-metric-store-release
       passed: ["🥖 Bake Tile 🍰"]
     - get: oss-metric-store-dev-release
@@ -997,7 +997,7 @@ jobs:
       tile-version: p-metric-store-version
       baked-tile: temp-baked-tile
     image: pcf-observability-ci-image
-    file: log-cache-ci/tasks/tile_install/task.yml
+    file: metric-store-ci/tasks/tile_install/task.yml
     input_mapping:
       tile-version: p-metric-store-version
       baked-tile: temp-baked-tile
@@ -1031,7 +1031,7 @@ jobs:
     - get: oss-metric-store
       trigger: true
       passed: [cf-deploy]
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: cf-acceptance-tests
       trigger: true
     - get: cf-deployment-concourse-tasks
@@ -1039,12 +1039,12 @@ jobs:
     - get: bbl-state
       resource: denver-locks
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: CATS
       TEAM: metric-store-log-cache
   - task: integration-config
-    file: log-cache-ci/tasks/create-integration-config/task.yml
+    file: metric-store-ci/tasks/create-integration-config/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
@@ -1092,9 +1092,9 @@ jobs:
         - p-metric-store-test-gate
     - get: p-metric-store-release-elect
     - get: oss-metric-store-release-master
-    - get: log-cache-ci
+    - get: metric-store-ci
   - task: bump
-    file: log-cache-ci/tasks/pre-bumper/task.yml
+    file: metric-store-ci/tasks/pre-bumper/task.yml
   - put: p-metric-store-release-elect
     params:
       repository: bumped-p-metric-store-release-elect
@@ -1112,9 +1112,9 @@ jobs:
       trigger: true
     - get: p-metric-store-release-master
     - get: bumper-tool
-    - get: log-cache-ci
+    - get: metric-store-ci
   - task: bumper
-    file: log-cache-ci/tasks/bumper/task.yml
+    file: metric-store-ci/tasks/bumper/task.yml
     input_mapping:
       source: p-metric-store-release-elect
       dest: p-metric-store-release-master
@@ -1131,7 +1131,7 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: cf-deployment-concourse-tasks-image
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
@@ -1140,12 +1140,12 @@ jobs:
       trigger: true
       passed: ["cf-deploy"]
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: OSS Metric Store Smoke Tests
       TEAM: metric-store-log-cache
   - task: run-msats
-    file: log-cache-ci/tasks/run-errand/task.yml
+    file: metric-store-ci/tasks/run-errand/task.yml
     image: cf-deployment-concourse-tasks-image
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
@@ -1189,9 +1189,9 @@ jobs:
       trigger: true
     - get: oss-metric-store-release-master
     - get: bumper-tool
-    - get: log-cache-ci
+    - get: metric-store-ci
   - task: bumper
-    file: log-cache-ci/tasks/bumper/task.yml
+    file: metric-store-ci/tasks/bumper/task.yml
     input_mapping:
       source: oss-metric-store-release-elect
       dest: oss-metric-store-release-master
@@ -1207,7 +1207,7 @@ jobs:
 - name: build-final-release
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: p-metric-store-pivnet-metadata
     - get: p-metric-store-release
@@ -1224,13 +1224,13 @@ jobs:
     - get: loggregator-agent-release
       passed: [ p-metric-store-test-gate ]
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Building Final Release
       TEAM: metric-store-log-cache
   - task: create-final-release
     image: pcf-observability-ci-image
-    file: log-cache-ci/tasks/create-final-p-metric-store-release/task.yml
+    file: metric-store-ci/tasks/create-final-p-metric-store-release/task.yml
     input_mapping:
       pivnet-metadata: p-metric-store-pivnet-metadata
       p-metric-store-release-develop: p-metric-store-release
@@ -1245,7 +1245,7 @@ jobs:
       repository: p-metric-store-release-master-modified
       rebase: false
   - task: github-publish-release-metadata
-    file: log-cache-ci/tasks/publish-github-release/task.yml
+    file: metric-store-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-tarball: p-metric-store-final-bosh-release
     params:
@@ -1287,7 +1287,7 @@ jobs:
 - name: 🥖 Bake Final Tile 🥖
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: p-metric-store-pivnet-metadata
       passed: [ build-final-release ]
@@ -1306,12 +1306,12 @@ jobs:
     - get: oss-metric-store-final-bosh-release
       passed: [ build-final-release ]
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Releasing Final Tile
       TEAM: metric-store-log-cache
   - task: bake-final-tile
-    file: log-cache-ci/tasks/tile_bake_final/task.yml
+    file: metric-store-ci/tasks/tile_bake_final/task.yml
     image: pcf-observability-ci-image
     input_mapping:
       pivnet-metadata: p-metric-store-pivnet-metadata
@@ -1341,9 +1341,9 @@ jobs:
 
 - name: 🚀 Push to Pivnet 🚀
   plan:
-  - get: log-cache-ci
+  - get: metric-store-ci
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
       TITLE: Uploading Final Tile to PivNet
       TEAM: metric-store-log-cache
@@ -1381,19 +1381,19 @@ jobs:
   serial: true
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-tools
       trigger: true
     - get: notification-tools-tests-version
       params: { bump: patch }
   - task: create-slack-message
-    file: log-cache-ci/tasks/alert-message-create/task.yml
+    file: metric-store-ci/tasks/alert-message-create/task.yml
     input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
     params:
       TITLE: Log Cache Tools Tests
       TEAM: metric-store-log-cache
   - task: run-tests
-    file: log-cache-ci/tasks/go-test-module-with-mod/task.yml
+    file: metric-store-ci/tasks/go-test-module-with-mod/task.yml
     input_mapping:
       source-repo: log-cache-tools
     params:
@@ -1407,7 +1407,7 @@ jobs:
     - put: notification-tools-tests-version
       params: { file: notification-tools-tests-version/version }
     - task: enable-disable-alert-failure
-      file: log-cache-ci/tasks/enable-disable-alert-failure/task.yml
+      file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
       input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
       params: { alert_multiple: 5 }
     - put: slack-alert
@@ -1421,7 +1421,7 @@ jobs:
   on_success:
     do:
     - task: enable-disable-alert-success
-      file: log-cache-ci/tasks/enable-disable-alert-success/task.yml
+      file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
       input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
     - put: slack-alert
       params:

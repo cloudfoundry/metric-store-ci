@@ -2,7 +2,7 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: bosh-dev-release-dir
 - name: bosh-dev-release-version
 - name: golang-release
@@ -12,7 +12,7 @@ outputs:
 - name: bosh-new-dev-release-version
 
 run:
-  path: log-cache-ci/tasks/create-dev-release/task
+  path: metric-store-ci/tasks/create-dev-release/task
 
 params:
   JSON_KEY:

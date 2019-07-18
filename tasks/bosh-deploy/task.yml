@@ -4,7 +4,7 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci # - This repo
+- name: metric-store-ci # - This repo
 - name: bbl-state      # - The Director's `bbl-state.json`
 - name: bosh-release   # - The release that contains the manifest file.
 - name: ops-files      # - The directory from which to read ops-files
@@ -12,7 +12,7 @@ inputs:
 - name: cf-deployment-concourse-tasks
 
 run:
-  path: log-cache-ci/tasks/bosh-deploy/task
+  path: metric-store-ci/tasks/bosh-deploy/task
 
 params:
   # - Optional

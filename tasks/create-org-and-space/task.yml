@@ -6,11 +6,11 @@ platform: linux
 inputs:
   - name: bbl-state
   - name: cf-deployment-concourse-tasks
-  - name: log-cache-ci
+  - name: metric-store-ci
 params:
   BBL_STATE_DIR:
   ORG:
   SPACE:
   SYSTEM_DOMAIN:
 run:
-  path: log-cache-ci/tasks/create-org-and-space/task
+  path: metric-store-ci/tasks/create-org-and-space/task

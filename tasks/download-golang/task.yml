@@ -2,7 +2,7 @@ platform: linux
 
 inputs:
 # - The repo that contains run-release-script.sh.
-- name: log-cache-ci
+- name: metric-store-ci
 
 outputs:
 # - The directory where the result of running the script is copied. This will
@@ -15,4 +15,4 @@ params:
   VERSION:
 
 run:
-  path: log-cache-ci/tasks/download-golang/task
+  path: metric-store-ci/tasks/download-golang/task

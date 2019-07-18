@@ -1,7 +1,7 @@
 #!/bin/bash -eux
 echo "Running tile install"
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 if [ -f environment/metadata ]; then
   cp environment/metadata env.json

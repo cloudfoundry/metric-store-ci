@@ -6,7 +6,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: p-metric-store-release
 - name: p-metric-store-release-elect
 - name: oss-metric-store-release-master
@@ -15,4 +15,4 @@ outputs:
 - name: bumped-p-metric-store-release-elect
 
 run:
-  path: log-cache-ci/tasks/pre-bumper/task
+  path: metric-store-ci/tasks/pre-bumper/task

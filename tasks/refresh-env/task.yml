@@ -2,10 +2,10 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 
 run:
-  path: log-cache-ci/tasks/refresh-env/task
+  path: metric-store-ci/tasks/refresh-env/task
 
 params:
   # - Required.

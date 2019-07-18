@@ -2,7 +2,7 @@
 
 set -eoux pipefail
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 timestamp=$(date +%Y-%m-%d-%H%M%S)
 

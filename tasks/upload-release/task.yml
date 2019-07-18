@@ -5,13 +5,13 @@ caches:
 - path: bosh-release-dir/blobs
 
 inputs:
-- name: log-cache-ci # - This repo
+- name: metric-store-ci # - This repo
 - name: bbl-state  # - The Director's `bbl-state.json`
   optional: true
 - name: bosh-release-dir  # - The release to upload
 
 run:
-  path: log-cache-ci/tasks/upload-release/task
+  path: metric-store-ci/tasks/upload-release/task
 
 params:
   # - Optional; must provide this OR the BOSH_* variables below

@@ -8,7 +8,7 @@ inputs:
 - name: release-master
 - name: release-develop
 - name: release-version
-- name: log-cache-ci
+- name: metric-store-ci
 
 outputs:
 - name: release-tarball
@@ -16,7 +16,7 @@ outputs:
 - name: release-develop-modified
 
 run:
-  path: log-cache-ci/tasks/create-private-release/task
+  path: metric-store-ci/tasks/create-private-release/task
 
 params:
   JSON_KEY:

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 set -ex
 

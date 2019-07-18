@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 pushd oss-metric-store-release-master
   ACCEPTED_OSS_MS_SHA=$(git rev-parse HEAD)

@@ -7,7 +7,7 @@ inputs:
 # - The source bosh release repo where the script resides and will be ran.
 - name: release-repo
 # - The repo that contains run-release-script.sh.
-- name: log-cache-ci
+- name: metric-store-ci
 outputs:
 # - The directory where the result of running the script is copied. This will
 #   include all the files from the input bosh release.
@@ -17,4 +17,4 @@ params:
   # - The script to run inside the bosh release repo.
   SCRIPT:
 run:
-  path: log-cache-ci/tasks/run-release-script/task
+  path: metric-store-ci/tasks/run-release-script/task

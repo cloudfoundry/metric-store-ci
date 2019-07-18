@@ -4,7 +4,7 @@ inputs:
 # - The source bosh release repo where the script resides and will be ran.
 - name: release-repo
 # - The repo that contains the task scripts.
-- name: log-cache-ci
+- name: metric-store-ci
 # - The director that contains the downloaded golang blobs.
 - name: golang-blobs
 
@@ -23,5 +23,5 @@ params:
   JSON_KEY:
 
 run:
-  path: ../log-cache-ci/tasks/bump-golang/task
+  path: ../metric-store-ci/tasks/bump-golang/task
   dir: updated-release-repo

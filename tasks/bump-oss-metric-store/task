@@ -2,7 +2,7 @@
 
 set -exu
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
 set +x

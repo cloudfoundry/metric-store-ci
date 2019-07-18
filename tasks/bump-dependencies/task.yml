@@ -6,11 +6,11 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: repo
 
 run:
-  path: log-cache-ci/tasks/bump-dependencies/task
+  path: metric-store-ci/tasks/bump-dependencies/task
 
 params:
   GITHUB_REPO:

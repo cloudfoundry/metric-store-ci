@@ -8,7 +8,7 @@ inputs:
 - name: log-cache-release-master
 - name: log-cache-release-develop
 - name: log-cache-release-version
-- name: log-cache-ci
+- name: metric-store-ci
 - name: log-cache
 
 outputs:
@@ -18,7 +18,7 @@ outputs:
 - name: log-cache-modified
 
 run:
-  path: log-cache-ci/tasks/create-final-release/task
+  path: metric-store-ci/tasks/create-final-release/task
 
 params:
   JSON_KEY:

@@ -6,7 +6,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: slack-rate-limit-version
   optional: true
 
@@ -14,7 +14,7 @@ outputs:
 - name: metadata
 
 run:
-  path: log-cache-ci/tasks/alert-message-create/task
+  path: metric-store-ci/tasks/alert-message-create/task
 
 params:
   TITLE:

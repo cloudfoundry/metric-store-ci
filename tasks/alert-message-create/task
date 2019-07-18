@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 set -eoux pipefail
 
 alert_setup

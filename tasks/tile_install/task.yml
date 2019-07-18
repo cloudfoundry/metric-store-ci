@@ -5,7 +5,7 @@ inputs:
   - name: baked-tile
   - name: gcp-light-stemcell
   - name: tile-version
-  - name: log-cache-ci
+  - name: metric-store-ci
   - name: environment
     optional: true
 
@@ -16,4 +16,4 @@ PARAMS:
   TOOLSMITHS_ENV_JSON: ""
 
 run:
-  path: log-cache-ci/tasks/tile_install/task
+  path: metric-store-ci/tasks/tile_install/task

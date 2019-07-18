@@ -6,7 +6,7 @@ image_resource:
 inputs:
 - name: context-repo # repo that contains the source docker context
 - name: source-repo # repo to build static binaries from
-- name: log-cache-ci # repo for task file
+- name: metric-store-ci # repo for task file
 outputs:
 - name: build-image # the place to store the build context and tag
 params:
@@ -21,4 +21,4 @@ params:
   # - The sub-package, relative to the BASE_PACKAGE that is being built
   SUB_PACKAGE:
 run:
-  path: log-cache-ci/tasks/build-go-docker-image/task
+  path: metric-store-ci/tasks/build-go-docker-image/task

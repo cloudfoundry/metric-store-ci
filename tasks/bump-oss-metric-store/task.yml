@@ -6,7 +6,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: oss-metric-store
 - name: p-metric-store-release
 
@@ -14,7 +14,7 @@ outputs:
 - name: bumped-p-metric-store-release
 
 run:
-  path: log-cache-ci/tasks/bump-oss-metric-store/task
+  path: metric-store-ci/tasks/bump-oss-metric-store/task
 
 params:
   GITHUB_PRIVATE_KEY:

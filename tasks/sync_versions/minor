@@ -1,5 +1,5 @@
 #!/bin/bash -euf
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 this_major=$(major_from_semver `cat this-version/version`)
 main_major=$(major_from_semver `cat main-version/version`)

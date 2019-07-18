@@ -2,7 +2,7 @@
 
 set -exu
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 pushd linked-repo
   linked_repo_sha=$(git rev-parse HEAD)

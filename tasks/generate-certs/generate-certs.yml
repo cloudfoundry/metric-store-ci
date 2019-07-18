@@ -9,7 +9,7 @@ image_resource:
 
 inputs:
   - name: gcp-service-account
-  - name: log-cache-ci
+  - name: metric-store-ci
 
 outputs:
   - name: certs
@@ -19,4 +19,4 @@ params:
   CERT_EMAIL:
 
 run:
-  path: log-cache-ci/tasks/generate-certs/generate-certs
+  path: metric-store-ci/tasks/generate-certs/generate-certs

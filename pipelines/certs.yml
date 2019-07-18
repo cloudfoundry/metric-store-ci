@@ -11,10 +11,10 @@ resource_types:
     repository: frodenas/gcs-resource
 
 resources:
-- name: log-cache-ci
+- name: metric-store-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-ci
+    uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -35,19 +35,19 @@ jobs:
   plan:
   - get: monthly
     trigger: true
-  - get: log-cache-ci
+  - get: metric-store-ci
   - task: prepare-service-account
-    file: log-cache-ci/tasks/generate-certs/prepare-service-account.yml
+    file: metric-store-ci/tasks/generate-certs/prepare-service-account.yml
     params:
       GCP_SERVICE_ACCOUNT_JSON: ((yuzu-cert-service-account.json/Notes))
   - task: generate-certs
-    file: log-cache-ci/tasks/generate-certs/generate-certs.yml
+    file: metric-store-ci/tasks/generate-certs/generate-certs.yml
     attempts: 3
     params:
       CERT_DOMAINS: "*.yuzu.cf-denver.com,yuzu.cf-denver.com"
       CERT_EMAIL: "cf-log-cache@pivotal.io"
   - task: archive-certs
-    file: log-cache-ci/tasks/generate-certs/archive-certs.yml
+    file: metric-store-ci/tasks/generate-certs/archive-certs.yml
     params:
       ENV_NAME: "yuzu"
   - put: certs
@@ -57,18 +57,18 @@ jobs:
 - name: install-certs
   plan:
   - aggregate:
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: certs
       trigger: true
       passed: ["generate-certs"]
   - task: prepare-service-account
-    file: log-cache-ci/tasks/generate-certs/prepare-service-account.yml
+    file: metric-store-ci/tasks/generate-certs/prepare-service-account.yml
     params:
       GCP_SERVICE_ACCOUNT_JSON: ((yuzu-cert-service-account.json/Notes))
   - task: extract-certs
-    file: log-cache-ci/tasks/generate-certs/extract-certs.yml
+    file: metric-store-ci/tasks/generate-certs/extract-certs.yml
   - task: install-certs
-    file: log-cache-ci/tasks/generate-certs/install-certs.yml
+    file: metric-store-ci/tasks/generate-certs/install-certs.yml
     params:
       PROJECT_NAME: "cf-denver"
       ENV_NAME: "yuzu"

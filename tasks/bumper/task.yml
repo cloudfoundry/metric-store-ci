@@ -6,7 +6,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci # - This repo
+- name: metric-store-ci # - This repo
 - name: bumper-tool    # - The source repo for the bumper tool
 - name: source         # - The source repo to bump
 - name: dest           # - The destination repo to bump
@@ -15,7 +15,7 @@ outputs:
 - name: merged-dest # - The merged destination repo
 
 run:
-  path: log-cache-ci/tasks/bumper/task
+  path: metric-store-ci/tasks/bumper/task
 
 params:
   # - Required

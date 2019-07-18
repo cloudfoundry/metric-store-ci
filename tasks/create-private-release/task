@@ -4,7 +4,7 @@
 
 set -ex
 
-. ./log-cache-ci/tasks/shared_bash
+. ./metric-store-ci/tasks/shared_bash
 
 new_version=`cat release-version/version`
 tag_name="v${new_version}"

@@ -4,10 +4,10 @@ groups:
   - refresh-environments
 
 resources:
-- name: log-cache-ci
+- name: metric-store-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-ci
+    uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -25,13 +25,13 @@ resources:
 jobs:
 - name: refresh-environments
   plan:
-  - get: log-cache-ci
+  - get: metric-store-ci
   - get: daily
     trigger: true
   - get: cf-deployment-concourse-tasks-image
   - task: refresh-marina
     tags: [ cf-denver-shared-vsphere ]
     image: cf-deployment-concourse-tasks-image
-    file: log-cache-ci/tasks/refresh-env/task.yml
+    file: metric-store-ci/tasks/refresh-env/task.yml
     params:
       ID: 354

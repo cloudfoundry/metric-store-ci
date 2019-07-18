@@ -5,7 +5,7 @@ image_resource:
 platform: linux
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: log-cache-backport
 - name: log-cache-release-backport
 - name: log-cache-release-develop
@@ -18,7 +18,7 @@ outputs:
 - name: log-cache-release-develop-modified
 
 run:
-  path: log-cache-ci/tasks/create-final-backport-release/task
+  path: metric-store-ci/tasks/create-final-backport-release/task
 
 params:
   S3_ACCESS_KEY:

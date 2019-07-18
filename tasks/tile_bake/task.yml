@@ -2,7 +2,7 @@
 platform: linux
 
 inputs:
-  - name: log-cache-ci
+  - name: metric-store-ci
   - name: tile-version
   - name: metric-store-dev-release
   - name: metric-store-release
@@ -23,4 +23,4 @@ params:
   TILE_NAME: app-metric-store
 
 run:
-  path: log-cache-ci/tasks/tile_bake/task
+  path: metric-store-ci/tasks/tile_bake/task

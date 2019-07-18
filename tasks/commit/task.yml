@@ -2,14 +2,14 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: release-repo
 
 outputs:
 - name: committed-repo
 
 run:
-  path: ../log-cache-ci/tasks/commit/task
+  path: ../metric-store-ci/tasks/commit/task
   dir: committed-repo
 
 params:

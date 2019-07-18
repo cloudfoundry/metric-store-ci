@@ -7,8 +7,8 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci # - This repo
+- name: metric-store-ci # - This repo
 - name: source-repo    # - The Go package to test
 
 run:
-  path: log-cache-ci/tasks/go-test-module/task
+  path: metric-store-ci/tasks/go-test-module/task

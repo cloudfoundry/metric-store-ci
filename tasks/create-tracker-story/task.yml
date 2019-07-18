@@ -6,11 +6,11 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: linked-repo
 
 run:
-  path: log-cache-ci/tasks/create-tracker-story/task
+  path: metric-store-ci/tasks/create-tracker-story/task
 
 params:
   TRACKER_API_TOKEN:

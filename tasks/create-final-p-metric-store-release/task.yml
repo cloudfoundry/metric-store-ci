@@ -2,7 +2,7 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: pivnet-metadata
 - name: p-metric-store-release-develop
 - name: p-metric-store-release-master
@@ -19,4 +19,4 @@ params:
   JSON_KEY:
 
 run:
-  path: log-cache-ci/tasks/create-final-p-metric-store-release/task
+  path: metric-store-ci/tasks/create-final-p-metric-store-release/task

@@ -7,7 +7,7 @@ image_resource:
     repository: google/cloud-sdk
 
 inputs:
-  - name: log-cache-ci
+  - name: metric-store-ci
   - name: gcp-service-account
   - name: extracted-certs
 
@@ -16,4 +16,4 @@ params:
   ENV_NAME:
 
 run:
-  path: log-cache-ci/tasks/generate-certs/install-certs
+  path: metric-store-ci/tasks/generate-certs/install-certs

@@ -7,7 +7,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-  - name: log-cache-ci
+  - name: metric-store-ci
   - name: slack-rate-limit-version
   - name: metadata
 
@@ -19,4 +19,4 @@ params:
   ignore_first:
 
 run:
-  path: log-cache-ci/tasks/enable-disable-alert-failure/run.sh
+  path: metric-store-ci/tasks/enable-disable-alert-failure/run.sh

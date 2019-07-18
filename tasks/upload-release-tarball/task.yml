@@ -1,7 +1,7 @@
 platform: linux
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: bbl-state
 - name: release-tarball
 - name: cf-deployment-concourse-tasks
@@ -16,4 +16,4 @@ params:
   RELEASE_TARBALL_GLOB:
 
 run:
-  path: log-cache-ci/tasks/upload-release-tarball/task
+  path: metric-store-ci/tasks/upload-release-tarball/task

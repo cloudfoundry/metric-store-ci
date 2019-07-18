@@ -127,7 +127,7 @@ resources:
   source:
     initial_version: <%= projects[:oss_metric_store_release][:initial_version] %>
     driver: gcs
-    bucket: log-cache-ci-versions
+    bucket: metric-store-ci-versions
     key: oss-metric-store
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -136,7 +136,7 @@ resources:
   source:
     initial_version: <%= projects[:oss_metric_store_release][:initial_version] %>
     driver: gcs
-    bucket: log-cache-ci-versions
+    bucket: metric-store-ci-versions
     key: oss-metric-store
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -145,7 +145,7 @@ resources:
   source:
     initial_version: <%= projects[:oss_metric_store_release][:initial_version] %>
     driver: gcs
-    bucket: log-cache-ci-versions
+    bucket: metric-store-ci-versions
     key: oss-metric-store
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -154,7 +154,7 @@ resources:
   source:
     initial_version: <%= projects[:oss_metric_store_release][:initial_version] %>
     driver: gcs
-    bucket: log-cache-ci-versions
+    bucket: metric-store-ci-versions
     key: oss-metric-store
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -166,10 +166,10 @@ resources:
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
 
-- name: log-cache-ci
+- name: metric-store-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-ci
+    uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -276,11 +276,11 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-release-version-patch
       params: {bump: patch}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    file: metric-store-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       version: log-cache-release-version-patch
@@ -299,11 +299,11 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-release-version-minor
       params: {bump: minor}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    file: metric-store-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       version: log-cache-release-version-minor
@@ -322,11 +322,11 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-release-version-major
       params: {bump: major}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    file: metric-store-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       version: log-cache-release-version-major
@@ -358,11 +358,11 @@ jobs:
     - get: cf-deployment-concourse-tasks
     - get: log-cache-release-develop
     - get: log-cache-release-master
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-release-version
     - get: log-cache
   - task: create-final-release
-    file: log-cache-ci/tasks/create-final-release/task.yml
+    file: metric-store-ci/tasks/create-final-release/task.yml
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
   - put: log-cache-release-tarball
@@ -390,9 +390,9 @@ jobs:
       trigger: true
       passed: [create-lcr-final-release]
     - get: log-cache-release-tarball
-    - get: log-cache-ci
+    - get: metric-store-ci
   - task: github-publish-release-metadata
-    file: log-cache-ci/tasks/publish-github-release/task.yml
+    file: metric-store-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: log-cache-release-version
       release-tarball: log-cache-release-tarball
@@ -414,13 +414,13 @@ jobs:
     - get: log-cache-release-version
       trigger: true
       passed: [publish-lcr-github-release]
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-deployments
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
   - do:
     - task: snapshot-acceptance-environment
-      file: log-cache-ci/tasks/snapshot-acceptance-environment/task.yml
+      file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
       input_mapping:
         bbl-state: denver-locks
         log-cache-deployments: log-cache-deployments
@@ -432,16 +432,16 @@ jobs:
         repository: log-cache-deployments-modified
         tag_prefix: log-cache-v
         tag: log-cache-release-version/version
-  - put: log-cache-ci
+  - put: metric-store-ci
     params:
-      repository: log-cache-ci
+      repository: metric-store-ci
       tag: log-cache-release-version/version
       tag_prefix: log-cache-v
       only_tag: true
   on_success:
     do:
     - task: create-message
-      file: log-cache-ci/tasks/alert-message-release-end/task.yml
+      file: metric-store-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
         version: log-cache-release-version
     - <<: *send-alert-message
@@ -450,12 +450,12 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: oss-metric-store-release-version
     - get: oss-metric-store-release-version-patch
       params: {bump: patch}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    file: metric-store-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       version: oss-metric-store-release-version-patch
@@ -463,7 +463,7 @@ jobs:
       LEVEL: patch
       APP: metric-store
   - task: sync-versioning
-    file: log-cache-ci/tasks/sync_versions/patch.yml
+    file: metric-store-ci/tasks/sync_versions/patch.yml
     input_mapping:
       this-version: oss-metric-store-release-version-patch
       main-version: oss-metric-store-release-version
@@ -479,12 +479,12 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: oss-metric-store-release-version
     - get: oss-metric-store-release-version-minor
       params: {bump: minor}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    file: metric-store-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       version: oss-metric-store-release-version-minor
@@ -492,7 +492,7 @@ jobs:
       LEVEL: minor
       APP: metric-store
   - task: sync-versioning
-    file: log-cache-ci/tasks/sync_versions/minor.yml
+    file: metric-store-ci/tasks/sync_versions/minor.yml
     input_mapping:
       this-version: oss-metric-store-release-version-minor
       main-version: oss-metric-store-release-version
@@ -508,11 +508,11 @@ jobs:
   plan:
   - aggregate:
     - get: cf-deployment-concourse-tasks-image
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: oss-metric-store-release-version-major
       params: {bump: major}
   - task: create-message
-    file: log-cache-ci/tasks/alert-message-release-start/task.yml
+    file: metric-store-ci/tasks/alert-message-release-start/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       version: oss-metric-store-release-version-major
@@ -544,10 +544,10 @@ jobs:
     - get: cf-deployment-concourse-tasks
     - get: oss-metric-store-release-develop
     - get: oss-metric-store-release-master
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: oss-metric-store-release-version
   - task: create-private-release
-    file: log-cache-ci/tasks/create-private-release/task.yml
+    file: metric-store-ci/tasks/create-private-release/task.yml
     input_mapping:
       release-master: oss-metric-store-release-master
       release-develop: oss-metric-store-release-develop
@@ -572,9 +572,9 @@ jobs:
       trigger: true
       passed: [create-oss-msr-final-release]
     - get: oss-metric-store-release-tarball
-    - get: log-cache-ci
+    - get: metric-store-ci
   - task: github-publish-release-metadata
-    file: log-cache-ci/tasks/publish-github-release/task.yml
+    file: metric-store-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: oss-metric-store-release-version
       release-tarball: oss-metric-store-release-tarball
@@ -596,13 +596,13 @@ jobs:
     - get: oss-metric-store-release-version
       trigger: true
       passed: [publish-oss-msr-github-release]
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-deployments
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
   - do:
     - task: snapshot-acceptance-environment
-      file: log-cache-ci/tasks/snapshot-acceptance-environment/task.yml
+      file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
       input_mapping:
         bbl-state: denver-locks
         log-cache-deployments: log-cache-deployments
@@ -614,16 +614,16 @@ jobs:
         repository: log-cache-deployments-modified
         tag: oss-metric-store-release-version/version
         tag_prefix: oss-metric-store-v
-  - put: log-cache-ci
+  - put: metric-store-ci
     params:
-      repository: log-cache-ci
+      repository: metric-store-ci
       tag: oss-metric-store-release-version/version
       tag_prefix: oss-metric-store-v
       only_tag: true
   on_success:
     do:
     - task: create-message
-      file: log-cache-ci/tasks/alert-message-release-end/task.yml
+      file: metric-store-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
         version: oss-metric-store-release-version
     - <<: *send-alert-message

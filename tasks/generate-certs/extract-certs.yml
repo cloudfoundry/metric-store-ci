@@ -8,7 +8,7 @@ image_resource:
     tag: v5.26.0
 
 inputs:
-  - name: log-cache-ci
+  - name: metric-store-ci
   - name: certs
 
 outputs:
@@ -18,4 +18,4 @@ params:
   ENV_NAME:
 
 run:
-  path: log-cache-ci/tasks/generate-certs/extract-certs
+  path: metric-store-ci/tasks/generate-certs/extract-certs

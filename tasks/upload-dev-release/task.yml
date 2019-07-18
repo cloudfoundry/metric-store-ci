@@ -5,13 +5,13 @@ caches:
 - path: bosh-release-dir/blobs
 
 inputs:
-- name: log-cache-ci
+- name: metric-store-ci
 - name: bbl-state
   optional: true
 - name: bosh-release-tarball
 
 run:
-  path: log-cache-ci/tasks/upload-dev-release/task
+  path: metric-store-ci/tasks/upload-dev-release/task
 
 params:
   # - Optional; must provide this OR the BOSH_* variables below

@@ -6,7 +6,7 @@ image_resource:
     repository: logcache/base
 
 inputs:
-- name: log-cache-ci # - This repo
+- name: metric-store-ci # - This repo
 - name: release-repo   # - The parent bosh release repository
 - name: source-repo    # - The submodule to bump
 
@@ -14,7 +14,7 @@ outputs:
 - name: bumped-release-repo # - The updated release-repo with the bumped submodule.
 
 run:
-  path: log-cache-ci/tasks/bump-submodule/task
+  path: metric-store-ci/tasks/bump-submodule/task
 
 params:
   # - Required

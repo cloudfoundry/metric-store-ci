@@ -7,13 +7,13 @@ platform: linux
 inputs:
 - name: release-version
 - name: release-tarball
-- name: log-cache-ci
+- name: metric-store-ci
 
 outputs:
 - name: github-release
 
 run:
-  path: log-cache-ci/tasks/publish-github-release/task
+  path: metric-store-ci/tasks/publish-github-release/task
 
 params:
   PROJECT_NAME:

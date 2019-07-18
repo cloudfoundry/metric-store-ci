@@ -39,10 +39,10 @@ resources:
     initial_version: 0.1.2-edge.24
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: log-cache-ci
+- name: metric-store-ci
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-ci
+    uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -83,7 +83,7 @@ jobs:
 - name: build-metric-store-release
   plan:
     - aggregate:
-      - get: log-cache-ci
+      - get: metric-store-ci
       - get: p-metric-store-release-repo
         trigger: true
       - get: p-metric-store-edge-release-version
@@ -91,7 +91,7 @@ jobs:
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
     - task: create-dev-release
-      file: log-cache-ci/tasks/create-dev-release/task.yml
+      file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-dev-release-dir: p-metric-store-release-repo
@@ -123,10 +123,10 @@ jobs:
       passed: [build-metric-store-release]
     - get: p-metric-store-release-repo
       passed: [build-metric-store-release]
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-deployments
   - task: upload-p-metric-store-release
-    file: log-cache-ci/tasks/upload-dev-release/task.yml
+    file: metric-store-ci/tasks/upload-dev-release/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
       bosh-release-tarball: p-metric-store-edge-release
@@ -188,11 +188,11 @@ jobs:
       trigger: true
     - get: p-metric-store-release-repo
       passed: [metric-store-edge-deploy]
-    - get: log-cache-ci
+    - get: metric-store-ci
     - get: log-cache-deployments
   - aggregate:
     - task: upload-p-metric-store-release
-      file: log-cache-ci/tasks/upload-dev-release/task.yml
+      file: metric-store-ci/tasks/upload-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-release-tarball: p-metric-store-edge-release
