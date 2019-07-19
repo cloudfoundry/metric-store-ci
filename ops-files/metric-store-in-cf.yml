@@ -85,8 +85,6 @@
             uris:
             - metric-store.((system_domain))
             - "*.metric-store.((system_domain))"
-    - name: prom_scraper
-      release: loggregator-agent
     - name: metric-store-cf-auth-proxy
       release: metric-store
       provides:
