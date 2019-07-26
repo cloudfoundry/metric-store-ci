@@ -371,11 +371,6 @@ resources:
     repository: cloudfoundry-incubator/cf-routing-release
     regexp: .*188.*
 
-- name: log-cache-release
-  type: bosh-io-release
-  source:
-    repository: cloudfoundry/log-cache-release
-
 - name: loggregator-agent-release
   type: bosh-io-release
   source:
@@ -675,16 +670,6 @@ jobs:
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
     - do:
-      - get: loggregator-agent-release
-      - task: upload-loggregator-agent-release
-        file: metric-store-ci/tasks/upload-release-tarball/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          release-tarball: loggregator-agent-release
-        params:
-          BBL_STATE_DIR: ((bbl_state_dir))
-          RELEASE_TARBALL_GLOB: "release.*"
-    - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
         file: metric-store-ci/tasks/upload-release-tarball/task.yml
@@ -694,16 +679,6 @@ jobs:
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
           RELEASE_TARBALL_GLOB: "release-*"
-    - do:
-      - get: log-cache-release
-      - task: upload-log-cache-release
-        file: metric-store-ci/tasks/upload-release-tarball/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          release-tarball: log-cache-release
-        params:
-          BBL_STATE_DIR: ((bbl_state_dir))
-          RELEASE_TARBALL_GLOB: "release.*"
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
@@ -737,7 +712,6 @@ jobs:
           cp metric-store-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/p-metric-store-in-cf.yml ops-files
-          cp metric-store-ci/ops-files/awaiting-cf-deployment-prs.yml ops-files
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
           cp metric-store-ci/ops-files/test-clients.yml ops-files
           cp metric-store-ci/ops-files/use-latest.yml ops-files
