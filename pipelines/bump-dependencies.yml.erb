@@ -11,6 +11,13 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 
+- name: log-cache-base-image
+  type: docker-image
+  source:
+    repository: logcache/base
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+
 - name: metric-store-ci
   type: git
   source:
@@ -90,6 +97,11 @@ jobs:
 
             cp -r metric-store-ci/docker-images/base/. log-cache-base-build/.
             echo "go${GO_VERSION}" > log-cache-base-build/tag
+  - put: log-cache-base-image
+    params:
+      build: log-cache-base-build
+      tag: log-cache-base-build/tag
+      tag_as_latest: true
   - put: metric-store-ci
     params:
       repository: updated-metric-store-ci
