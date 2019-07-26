@@ -143,7 +143,7 @@ resources:
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: develop
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -163,7 +163,7 @@ resources:
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: release-elect
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     clean_tags: true
 
 - name: p-metric-store-release-master
@@ -171,7 +171,7 @@ resources:
   source:
     uri: git@github.com:pivotal/metric-store-release
     branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     disable_ci_skip: true
     clean_tags: true
 
@@ -180,7 +180,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -192,7 +192,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: release-elect
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     clean_tags: true
 
 - name: oss-metric-store-release-master
@@ -200,7 +200,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     disable_ci_skip: true
     clean_tags: true
 
@@ -269,7 +269,7 @@ resources:
     uri: git@github.com:bosh-packages/golang-release
     branch: master
     tag_filter: v*
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
 
 - name: slack-alert
   type: slack-notification
@@ -315,7 +315,7 @@ resources:
     bucket: metric-store-ci-versions
     key: metric-store-release-acceptance-tile
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    initial_version: 0.1.2-build.14
+    initial_version: 0.2.0-build.24
 
 - name: p-metric-store-dev-release
   type: gcs-resource
@@ -330,6 +330,7 @@ resources:
     bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: temp-baked-tiles/(.*).pivotal
+    initial_version: 0.2.0-build.24
 
 - name: freshly-baked-final-tiles
   type: gcs-resource
@@ -368,6 +369,7 @@ resources:
   type: bosh-io-release
   source:
     repository: cloudfoundry-incubator/cf-routing-release
+    regexp: .*188.*
 
 - name: log-cache-release
   type: bosh-io-release
@@ -401,12 +403,12 @@ jobs:
     file: metric-store-ci/tasks/build-go-docker-image/task.yml
     input_mapping:
       context-repo: docker-images
-      source-repo: metric-store-release
+      source-repo: p-metric-store-release
     output_mapping:
       build-image: build-metric-store-tile-image
     params:
       CONTEXT_PATH: docker-images/metric-store-tile
-      BASE_PACKAGE: code.cloudfoundry.org/log-cache
+      BASE_PACKAGE: ..
   - put: tile-image
     params:
       build: build-metric-store-tile-image/build
@@ -476,7 +478,7 @@ jobs:
   - task: bump-oss-metric-store
     file: metric-store-ci/tasks/bump-oss-metric-store/task.yml
     params:
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/github_key))
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
   - put: p-metric-store-release
     params:
       repository: bumped-p-metric-store-release
@@ -1397,7 +1399,7 @@ jobs:
     input_mapping:
       source-repo: log-cache-tools
     params:
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/github_key))
+      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
       SUB_FOLDERS: |
         lc-datadog-forwarder
         log-cache-emitter
