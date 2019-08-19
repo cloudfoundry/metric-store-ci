@@ -68,6 +68,8 @@
         client:
           id: metric_registrar
           secret: "((metric_registrar_uaa_client_secret))"
+        tls:
+          ca: "((service_cf_internal_ca.certificate))"
 
 - path: /instance_groups/name=scheduler/jobs/-
   type: replace
