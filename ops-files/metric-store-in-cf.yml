@@ -140,7 +140,7 @@
     type: certificate
     options:
       ca: metric_store_ca
-      common_name: metric-store
+      common_name: localhost
       alternative_names:
       - metric-store
       extended_key_usage:
