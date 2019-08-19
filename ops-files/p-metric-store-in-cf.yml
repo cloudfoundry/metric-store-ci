@@ -48,16 +48,6 @@
             ca_cert: ((p_metric_store_internode.ca))
             cert: ((p_metric_store_internode.certificate))
             key: ((p_metric_store_internode.private_key))
-    - name: metric-store-gateway
-      release: p-metric-store
-      provides:
-        metric-store-gateway: {as: p-metric-store-gateway}
-      consumes:
-        metric-store: {from: p-metric-store}
-      properties:
-        gateway_addr: localhost:8081
-        proxy_cert: "((p_metric_store_proxy_tls.certificate))"
-        proxy_key: "((p_metric_store_proxy_tls.private_key))"
     - name: metric-store-nozzle
       release: p-metric-store
       provides:
@@ -98,7 +88,6 @@
       consumes:
         cloud_controller: {from: cloud_controller, deployment: cf}
         metric-store-nozzle: {from: p-metric-store-nozzle}
-        metric-store-gateway: {from: p-metric-store-gateway}
         metric-store: {from: p-metric-store}
       properties:
         cc:
