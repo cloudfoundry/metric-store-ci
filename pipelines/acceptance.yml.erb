@@ -25,6 +25,8 @@ groups:
   - p-ms-🚬
   - create-oss-metric-store-dev-release
   - bump-oss-metric-store
+  - bump-p-metric-store-dev-release-version
+  - bump-oss-metric-store-dev-release-version
 - name: oss-metric-store
   jobs:
   - oss-metric-store-unit-tests
@@ -517,6 +519,22 @@ jobs:
             icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
             channel: ((slack-ci.yml/Notes/slack_alert_channel))
             attachments_file: metadata/alert_message_failure
+
+- name: bump-p-metric-store-dev-release-version
+  serial: true
+  plan:
+    - get: p-metric-store-dev-release-version
+      params: { pre: dev }
+    - put: p-metric-store-dev-release-version
+      params: { file: p-metric-store-dev-release-version/version }
+
+- name: bump-oss-metric-store-dev-release-version
+  serial: true
+  plan:
+    - get: oss-metric-store-dev-release-version
+      params: { pre: dev }
+    - put: oss-metric-store-dev-release-version
+      params: { file: oss-metric-store-dev-release-version/version }
 
 - name: create-p-metric-store-dev-release
   serial: true
