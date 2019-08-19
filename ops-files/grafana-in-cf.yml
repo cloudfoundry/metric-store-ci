@@ -6,7 +6,7 @@
     - name: default
     stemcell: default
     vm_type: minimal
-    persistent_disk: 1GB
+    persistent_disk_type: 1GB
     azs:
     - z1
     instances: 1
