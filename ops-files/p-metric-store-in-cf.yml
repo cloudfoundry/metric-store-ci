@@ -131,9 +131,8 @@
     type: certificate
     options:
       ca: p_metric_store_ca
-      common_name: localhost
+      common_name: metric-store
       alternative_names:
-      - localhost
       - metric_store
       - metric-store
       extended_key_usage:
