@@ -127,7 +127,6 @@
       ca: metric_store_ca
       common_name: metric-store
       alternative_names:
-      - metric_store
       - metric-store
       - localhost
       extended_key_usage:

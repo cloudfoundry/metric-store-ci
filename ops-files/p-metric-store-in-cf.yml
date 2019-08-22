@@ -135,6 +135,7 @@
       alternative_names:
       - metric_store
       - metric-store
+      - localhost
       extended_key_usage:
       - client_auth
       - server_auth
