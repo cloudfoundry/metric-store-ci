@@ -1,34 +1,3 @@
-- path: /instance_groups/-
-  type: replace
-  value:
-    name: grafana
-    networks:
-    - name: default
-    stemcell: default
-    vm_type: minimal
-    persistent_disk_type: 1GB
-    azs:
-    - z1
-    instances: 1
-    jobs:
-    - name: grafana
-      release: grafana
-      properties:
-        grafana:
-          admin_password: "((grafana_admin_password))"
-          admin_username: admin
-          root_url: http://grafana.((system_domain))/
-    - name: route_registrar
-      release: routing
-      properties:
-        route_registrar:
-          routes:
-          - name: grafana-reverse-proxy
-            port: 3000
-            registration_interval: 20s
-            uris:
-            - grafana.((system_domain))
-
 - path: /releases/-
   type: replace
   value:
@@ -64,6 +33,8 @@
     release: grafana
     properties:
       grafana:
+        admin_password: "((grafana_admin_password))"
+        admin_username: admin
         root_url: https://grafana.((system_domain))
         users:
           auto_assign_organization_role: Editor
