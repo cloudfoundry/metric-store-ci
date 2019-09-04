@@ -12,9 +12,7 @@
     scopes:
     - openid
     - logs.admin
-    - doppler.firehose
     - cloud_controller.read
-    - cloud_controller.write
     auth_url: https://login.((system_domain))/oauth/authorize
     token_url: https://login.((system_domain))/oauth/token
     api_url: https://login.((system_domain))/userinfo
