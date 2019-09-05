@@ -56,10 +56,3 @@
             auth_url: https://login.((system_domain))/oauth/authorize
             token_url: https://login.((system_domain))/oauth/token
             api_url: https://login.((system_domain))/userinfo
-        datasources:
-          - name: Metric Store
-            url: https://metric-store.((system_domain))
-            type: prometheus
-            editable: false
-            orgId: 1
-            jsonData: '{"httpMethod":"GET","keepCookies":[],"oauthPassThru":true}'
