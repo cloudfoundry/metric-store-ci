@@ -1,3 +1,54 @@
+- path: /instance_groups/-
+  type: replace
+  value:
+    name: grafana
+    networks:
+    - name: default
+    stemcell: default
+    vm_type: minimal
+    persistent_disk_type: 1GB
+    azs:
+    - z1
+    instances: 1
+    jobs:
+    - name: grafana
+      release: grafana
+      properties:
+        grafana:
+          admin_password: "((grafana_admin_password))"
+          admin_username: admin
+          root_url: http://grafana.((system_domain))/
+          users:
+            auto_assign_organization_role: Editor
+          auth:
+            generic_oauth:
+              name: UAA
+              enabled: true
+              allow_sign_up: true
+              client_id: grafana
+              client_secret: ((grafana_client_secret))
+
+              scopes:
+                - openid
+                - uaa.resource
+                - doppler.firehose
+                - logs.admin
+                - cloud_controller.read
+
+              auth_url: https://login.((system_domain))/oauth/authorize
+              token_url: https://login.((system_domain))/oauth/token
+              api_url: https://login.((system_domain))/userinfo
+    - name: route_registrar
+      release: routing
+      properties:
+        route_registrar:
+          routes:
+          - name: grafana-reverse-proxy
+            port: 3000
+            registration_interval: 20s
+            uris:
+            - grafana.((system_domain))
+
 - path: /releases/-
   type: replace
   value:
@@ -24,35 +75,4 @@
     authorized-grant-types: authorization_code,refresh_token
     override: true
     secret: ((grafana_client_secret))
-    redirect-uri: https://grafana.((system_domain))/login/generic_oauth
-
-- type: replace
-  path: /instance_groups/name=metric-store/jobs/-
-  value:
-    name: grafana
-    release: grafana
-    properties:
-      grafana:
-        admin_password: "((grafana_admin_password))"
-        admin_username: admin
-        root_url: https://grafana.((system_domain))
-        users:
-          auto_assign_organization_role: Editor
-        auth:
-          generic_oauth:
-            name: UAA
-            enabled: true
-            allow_sign_up: true
-            client_id: grafana
-            client_secret: ((grafana_client_secret))
-
-            scopes:
-              - openid
-              - uaa.resource
-              - doppler.firehose
-              - logs.admin
-              - cloud_controller.read
-
-            auth_url: https://login.((system_domain))/oauth/authorize
-            token_url: https://login.((system_domain))/oauth/token
-            api_url: https://login.((system_domain))/userinfo
+    redirect-uri: http://grafana.((system_domain))/login/generic_oauth
