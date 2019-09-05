@@ -681,12 +681,23 @@ jobs:
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
-        file: metric-store-ci/tasks/upload-release/task.yml
+        file: metric-store-ci/tasks/upload-release-tarball/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          bosh-release-dir: grafana-boshrelease
+          release-tarball: grafana-boshrelease
+          RELEASE_TARBALL_GLOB: "release*"
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
+    - do:
+      - get: loggregator-agent-release
+      - task: upload-loggregator-agent-release
+        file: metric-store-ci/tasks/upload-release-tarball/task.yml
+        image: cf-deployment-concourse-tasks-image
+        input_mapping:
+          release-tarball: loggregator-agent-release
+        params:
+          BBL_STATE_DIR: ((bbl_state_dir))
+          RELEASE_TARBALL_GLOB: "release*"
     - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
@@ -732,6 +743,7 @@ jobs:
           cp metric-store-ci/ops-files/test-clients.yml ops-files
           cp metric-store-ci/ops-files/use-latest.yml ops-files
           erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
+          cp metric-store-ci/ops-files/metrics-certs-in-cf.yml ops-files
 
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
@@ -758,6 +770,7 @@ jobs:
         grafana-in-cf.yml
         metric-registrar-in-cf.yml
         msats.yml
+        metrics-certs-in-cf.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
