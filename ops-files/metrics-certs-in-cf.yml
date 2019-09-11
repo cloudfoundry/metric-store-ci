@@ -103,6 +103,14 @@
     key: "((loggr_udp_forwarder_tls.private_key))"
     server_name: loggr_udp_forwarder
 
+# - type: replace
+#   path: /instance_groups/name=scheduler/jobs/name=leadership-election/properties/metrics?
+#   value:
+#     ca_cert: "((leadership_election_metrics_tls.ca))"
+#     cert: "((leadership_election_metrics_tls.certificate))"
+#     key: "((leadership_election_metrics_tls.private_key))"
+#     server_name: leadership_election_metrics
+
 - type: replace
   path: /variables/name=metric_scraper_ca?
   value:
@@ -199,3 +207,50 @@
       common_name: prom_scraper_metrics
       extended_key_usage:
       - server_auth
+
+# - type: replace
+#   path: /variables/name=leadership_election_metrics_tls?
+#   value:
+#     name: leadership_election_metrics_tls
+#     type: certificate
+#     options:
+#       ca: metric_scraper_ca
+#       common_name: leadership_election_metrics
+#       extended_key_usage:
+#       - server_auth
+
+- type: replace
+  path: /instance_groups/name=scheduler/jobs/name=loggr-metric-scraper/properties/leadership_election?
+  value:
+    ca_cert: "((leadership_election_client_tls.ca))"
+    cert: "((leadership_election_client_tls.certificate))"
+    key: "((leadership_election_client_tls.private_key))"
+
+# - type: replace
+#   path: /instance_groups/name=scheduler/jobs/name=leadership-election/properties/tls?
+#   value:
+#     ca_cert: "((leadership_election_tls.ca))"
+#     cert: "((leadership_election_tls.certificate))"
+#     key: "((leadership_election_tls.private_key))"
+
+- type: replace
+  path: /variables/name=leadership_election_client_tls?
+  value:
+    name: leadership_election_client_tls
+    type: certificate
+    options:
+      ca: loggregator_ca
+      common_name: leadership_election_client
+      extended_key_usage:
+      - client_auth
+
+# - type: replace
+#   path: /variables/name=leadership_election_client_tls?
+#   value:
+#     name: leadership_election_client_tls
+#     type: certificate
+#     options:
+#       ca: loggregator_ca
+#       common_name: leadership_election_client
+#       extended_key_usage:
+#       - client_auth
