@@ -5,6 +5,7 @@ groups:
   - p-metric-store-unit-tests
   - build-docker-images
   - cf-deploy
+  - blackbox-deploy
   - "🥖 Bake Tile 🍰"
   - "🚽 Install Tile 🍾"
   <% envs_we_care_about.each do |name, _| %>
@@ -44,6 +45,7 @@ groups:
   - p-metric-store-master-promotion
   - create-p-metric-store-dev-release
   - cf-deploy
+  - blackbox-deploy
   - p-ms-🚬
   - "🥖 Bake Tile 🍰"
   - "🚽 Install Tile 🍾"
@@ -745,6 +747,16 @@ jobs:
           erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
           cp metric-store-ci/ops-files/metrics-certs-in-cf.yml ops-files
 
+          cat > ops-files/add-blackbox-client.yml <<EOF
+            - type: replace
+              path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/logcache-metrics-datadog-forwarder?
+              value:
+                authorities: logs.admin
+                authorized-grant-types: client_credentials
+                scope: logs.admin
+                secret: ((yuzu-datadog-forwarder-client/Password))
+          EOF
+
   - task: upload-stemcell
     file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
     params:
@@ -771,6 +783,7 @@ jobs:
         metric-registrar-in-cf.yml
         msats.yml
         metrics-certs-in-cf.yml
+        add-blackbox-client.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:
@@ -826,6 +839,99 @@ jobs:
         attachments_file: modified-metadata/alert_message_success
     - put: notification-cf-deploy-version
       params: { bump: minor }
+
+- name: blackbox-deploy
+  serial: true
+  plan:
+  - aggregate:
+    - get: cf-deployment-concourse-tasks
+    - get: cf-deployment-concourse-tasks-image
+    - get: p-metric-store-dev-release
+      passed: [cf-deploy]
+      trigger: true
+    - get: p-metric-store-release
+      passed: [cf-deploy]
+    - get: metric-store-ci
+    - get: bbl-state
+      resource: denver-locks
+  - task: metric-store-blackbox-deploy
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: cf-deployment-concourse-tasks
+      - name: p-metric-store-dev-release
+      - name: p-metric-store-release
+      - name: bbl-state
+      params:
+        BBL_STATE_DIR: ((bbl_state_dir))
+        DEPLOYMENT_NAME: p-metric-store-blackbox
+        #DATADOG_API_KEY: ((datadog-api-key-pws.yml/Notes/datadog_api_key))
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+
+          source cf-deployment-concourse-tasks/shared-functions
+
+          setup_bosh_env_vars
+
+          cat > manifest.yml <<EOF
+            name: p-metric-store-blackbox
+
+            stemcells:
+            - alias: default
+              os: ubuntu-xenial
+              version: latest
+
+            releases:
+            - name: p-metric-store
+              version: latest
+            - name: bpm
+              version: latest
+
+            instance_groups:
+            - name: metric-store-blackbox
+              azs:
+              - z2
+              - z3
+              instances: 1
+              persistent_disk_type: 5GB
+              vm_type: minimal
+              stemcell: default
+              networks:
+              - name: default
+              jobs:
+              - name: metric-store-blackbox
+                release: p-metric-store
+                properties:
+                  source_id: p-metric-store
+                  cf_blackbox:
+                    enabled: true
+                    metric_store_address: https://ms.((sys_domain))
+                    client_id: ((pws-datadog-forwarder-client/Username))
+                    client_secret: ((pws-datadog-forwarder-client/Password))
+                consumes:
+                  metric-store: {from: p-metric-store, deployment: cf}
+                  cloud_controller: {from: cloud_controller, deployment: cf}
+              - name: bpm
+                release: bpm
+
+            update:
+              canaries: 10
+              max_in_flight: 10
+              canary_watch_time: 30000-60000
+              update_watch_time: 5000-60000
+              serial: true
+          EOF
+
+          bosh \
+            deploy "manifest.yml" \
+            --deployment "$DEPLOYMENT_NAME" \
+            --non-interactive
 
 - name: p-ms-🚬
   serial: true

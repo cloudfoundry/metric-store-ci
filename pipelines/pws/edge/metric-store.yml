@@ -259,7 +259,7 @@ jobs:
           EOF
 
           bosh \
-            deploy "p-metric-store-release-repo/$MANIFEST_FILE" \
+            deploy "manifest.yml" \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive \
             --ops-file on-the-fly.yml
