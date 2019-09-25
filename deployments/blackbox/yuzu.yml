@@ -75,3 +75,36 @@ instance_groups:
         cert: "((prom_scraper_metrics_tls.certificate))"
         key: "((prom_scraper_metrics_tls.private_key))"
         server_name: prom_scraper_metrics
+
+variables:
+- name: loggregator_tls_agent
+  type: certificate
+  options:
+    ca: /bosh-yuzu/cf/loggregator_ca
+    common_name: metron
+    extended_key_usage:
+    - client_auth
+    - server_auth
+
+- name: prom_scraper_scrape_tls
+  type: certificate
+  options:
+    ca: /bosh-yuzu/cf/metric_scraper_ca
+    common_name: prom_scraper
+    extended_key_usage:
+    - client_auth
+
+- name: prom_scraper_metrics_tls
+  type: certificate
+  options:
+    ca: /bosh-yuzu/cf/metric_scraper_ca
+    common_name: prom_scraper_metrics
+    extended_key_usage:
+    - server_auth
+
+update:
+  canaries: 10
+  canary_watch_time: 30000-60000
+  max_in_flight: 10
+  serial: true
+  update_watch_time: 5000-60000
