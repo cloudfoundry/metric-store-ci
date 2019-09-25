@@ -862,10 +862,12 @@ jobs:
       - name: cf-deployment-concourse-tasks
       - name: p-metric-store-dev-release
       - name: p-metric-store-release
+      - name: metric-store-ci
       - name: bbl-state
       params:
         BBL_STATE_DIR: ((bbl_state_dir))
         DEPLOYMENT_NAME: p-metric-store-blackbox
+        ENV_NAME: ((env_name))
         #DATADOG_API_KEY: ((datadog-api-key-pws.yml/Notes/datadog_api_key))
       run:
         path: bash
@@ -879,57 +881,8 @@ jobs:
 
           setup_bosh_env_vars
 
-          cat > manifest.yml <<EOF
-            name: p-metric-store-blackbox
-
-            stemcells:
-            - alias: default
-              os: ubuntu-xenial
-              version: latest
-
-            releases:
-            - name: p-metric-store
-              version: latest
-            - name: bpm
-              version: latest
-
-            instance_groups:
-            - name: metric-store-blackbox
-              azs:
-              - z2
-              - z3
-              instances: 1
-              persistent_disk_type: 5GB
-              vm_type: minimal
-              stemcell: default
-              networks:
-              - name: default
-              jobs:
-              - name: metric-store-blackbox
-                release: p-metric-store
-                properties:
-                  source_id: p-metric-store
-                  cf_blackbox:
-                    enabled: true
-                    metric_store_address: https://ms.((sys_domain))
-                    client_id: ((pws-datadog-forwarder-client/Username))
-                    client_secret: ((pws-datadog-forwarder-client/Password))
-                consumes:
-                  metric-store: {from: p-metric-store, deployment: cf}
-                  cloud_controller: {from: cloud_controller, deployment: cf}
-              - name: bpm
-                release: bpm
-
-            update:
-              canaries: 10
-              max_in_flight: 10
-              canary_watch_time: 30000-60000
-              update_watch_time: 5000-60000
-              serial: true
-          EOF
-
           bosh \
-            deploy "manifest.yml" \
+            deploy metric-store-ci/deployments/blackbox/yuzu.yml \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive
 
