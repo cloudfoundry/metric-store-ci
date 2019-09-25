@@ -1,0 +1,77 @@
+name: p-metric-store-blackbox
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: latest
+
+releases:
+- name: p-metric-store
+  version: latest
+- name: bpm
+  version: latest
+- name: loggregator-agent
+  version: latest
+
+instance_groups:
+- name: metric-store-blackbox
+  azs:
+  - z2
+  - z3
+  instances: 1
+  persistent_disk_type: 5GB
+  vm_type: minimal
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: metric-store-blackbox
+    release: p-metric-store
+    properties:
+      source_id: p-metric-store
+      cf_blackbox:
+        enabled: true
+        metric_store_address: https://ms.((sys_domain))
+        client_id: ((pws-datadog-forwarder-client/Username))
+        client_secret: ((pws-datadog-forwarder-client/Password))
+    consumes:
+      metric-store: {from: p-metric-store, deployment: cf}
+      cloud_controller: {from: cloud_controller, deployment: cf}
+  - name: bpm
+    release: bpm
+  - name: loggregator_agent
+    release: loggregator-agent
+    consumes:
+      doppler:
+        deployment: cf
+        from: doppler
+    properties:
+      disable_udp: true
+      loggregator:
+        tls:
+          ca_cert: "((loggregator_tls_agent.ca))"
+          agent:
+            cert: "((loggregator_tls_agent.certificate))"
+            key: "((loggregator_tls_agent.private_key))"
+      metrics:
+        ca_cert: "((/bosh-yuzu/cf/loggregator_agent_metrics_tls.ca))"
+        cert: "((/bosh-yuzu/cf/loggregator_agent_metrics_tls.certificate))"
+        key: "((/bosh-yuzu/cf/loggregator_agent_metrics_tls.private_key))"
+        server_name: loggregator_agent_metrics
+  - name: prom_scraper
+    release: loggregator-agent
+    consumes:
+      loggregator:
+        deployment: cf
+        from: loggregator
+    properties:
+      scrape:
+        tls:
+          ca_cert: "((prom_scraper_scrape_tls.ca))"
+          cert: "((prom_scraper_scrape_tls.certificate))"
+          key: "((prom_scraper_scrape_tls.private_key))"
+      metrics:
+        ca_cert: "((prom_scraper_metrics_tls.ca))"
+        cert: "((prom_scraper_metrics_tls.certificate))"
+        key: "((prom_scraper_metrics_tls.private_key))"
+        server_name: prom_scraper_metrics
