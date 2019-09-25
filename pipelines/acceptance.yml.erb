@@ -742,6 +742,7 @@ jobs:
           cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/p-metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
+          cp metric-store-ci/ops-files/share-loggregator-link.yml ops-files
           cp metric-store-ci/ops-files/test-clients.yml ops-files
           cp metric-store-ci/ops-files/use-latest.yml ops-files
           erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
@@ -784,6 +785,7 @@ jobs:
         msats.yml
         metrics-certs-in-cf.yml
         add-blackbox-client.yml
+        share-loggregator-link.yml
   - task: enable-feature-flags
     file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
     params:

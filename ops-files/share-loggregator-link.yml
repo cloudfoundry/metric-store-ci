@@ -1,0 +1,11 @@
+# Loggregator link needs to be shared for access by loggregator-agent &
+# prom-scraper from other deployments.
+#
+# 25Sep2019 - loggregator team is submitting a PR to change this in cf-d, so
+# this should be removed soon
+
+- type: replace
+  path: /instance_groups/name=doppler/jobs/name=doppler/provides?/loggregator
+  value:
+    as: loggregator
+    shared: true
