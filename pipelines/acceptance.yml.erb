@@ -867,7 +867,6 @@ jobs:
       params:
         BBL_STATE_DIR: ((bbl_state_dir))
         DEPLOYMENT_NAME: p-metric-store-blackbox
-        ENV_NAME: ((env_name))
         #DATADOG_API_KEY: ((datadog-api-key-pws.yml/Notes/datadog_api_key))
       run:
         path: bash
@@ -881,8 +880,19 @@ jobs:
 
           setup_bosh_env_vars
 
+          cat > blackbox-creds.yml <<EOF
+            - type: replace
+              path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties/cf_blackbox?
+              value:
+                enabled: true
+                metric_store_address: https://ms.((sys_domain))
+                client_id: ((pws-datadog-forwarder-client/Username))
+                client_secret: ((pws-datadog-forwarder-client/Password))
+          EOF
+
           bosh \
             deploy metric-store-ci/deployments/blackbox/yuzu.yml \
+            -o blackbox-creds.yml \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive
 
