@@ -82,7 +82,7 @@ resources:
 jobs:
 - name: build-metric-store-release
   plan:
-    - aggregate:
+    - in_parallel:
       - get: metric-store-ci
       - get: p-metric-store-release-repo
         trigger: true
@@ -116,7 +116,7 @@ jobs:
       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
       channel: ((slack-ci.yml/Notes/slack_alert_channel))
       text: ":yellow_heart: Started :metric: Metric Store deployment to :knife: PWS Edge"
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: p-metric-store-edge-release
       trigger: true
@@ -181,7 +181,7 @@ jobs:
 - name: blackbox-deploy
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: p-metric-store-edge-release
       passed: [metric-store-edge-deploy]
@@ -190,7 +190,7 @@ jobs:
       passed: [metric-store-edge-deploy]
     - get: metric-store-ci
     - get: log-cache-deployments
-  - aggregate:
+  - in_parallel:
     - task: upload-p-metric-store-release
       file: metric-store-ci/tasks/upload-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
@@ -275,7 +275,7 @@ jobs:
       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
       channel: ((slack-ci.yml/Notes/slack_alert_channel))
       text: ":monkey: Starting nightly :metric: Metric Store Edge redeployment"
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: nightly
       trigger: true
@@ -329,7 +329,7 @@ jobs:
       icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
       channel: ((slack-ci.yml/Notes/slack_alert_channel))
       text: ":monkey: Killing a :metric: Metric Store Edge vm"
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: p-metric-store-edge-release
       passed: [blackbox-deploy]
