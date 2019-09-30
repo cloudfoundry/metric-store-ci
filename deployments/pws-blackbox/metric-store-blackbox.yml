@@ -40,6 +40,7 @@ instance_groups:
         deployment: cf-cfapps-io2
         from: doppler
     release: loggregator-agent
+    properties:
       loggregator:
         tls:
           agent:
