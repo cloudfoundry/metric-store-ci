@@ -212,9 +212,10 @@ jobs:
       - name: p-metric-store-edge-release
       - name: p-metric-store-release-repo
       - name: log-cache-deployments
+      - name: metric-store-ci
       params:
         DEPLOYMENT_NAME: metric-store-edge-blackbox
-        MANIFEST_FILE: manifests/metric-store-blackbox.yml
+        MANIFEST_FILE: deployments/pws-blackbox/metric-store-blackbox.yml
         SECRETS_FILE: shared-secrets.yml
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
@@ -259,7 +260,7 @@ jobs:
           EOF
 
           bosh \
-            deploy "manifest.yml" \
+            deploy "metric-store-ci/$MANIFEST_FILE" \
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive \
             --ops-file on-the-fly.yml

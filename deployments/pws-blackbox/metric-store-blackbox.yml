@@ -1,0 +1,55 @@
+name: metric-store-blackbox
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: latest
+
+releases:
+- name: p-metric-store
+  version: latest
+- name: loggregator-agent
+  version: latest
+
+instance_groups:
+- name: metric-store-blackbox
+  azs:
+  - z1
+  - z2
+  - z3
+  instances: 1
+  persistent_disk_type: 5GB
+  vm_type: minimal
+  stemcell: default
+  networks:
+  - name: default
+  jobs:
+  - name: metric-store-blackbox
+    release: p-metric-store
+    consumes:
+      metric-store: {from: metric-store, deployment: default}
+  - name: prom_scraper
+    consumes:
+      loggregator:
+        deployment: cf-cfapps-io2
+        from: loggregator
+    release: loggregator-agent
+  - name: loggregator_agent
+    consumes:
+      doppler:
+        deployment: cf-cfapps-io2
+        from: doppler
+    release: loggregator-agent
+      loggregator:
+        tls:
+          agent:
+            cert: "((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_tls_agent.certificate))"
+            key: "((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_tls_agent.private_key))"
+          ca_cert: "((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_ca.certificate))"
+
+update:
+  canaries: 10
+  max_in_flight: 10
+  canary_watch_time: 30000-60000
+  update_watch_time: 5000-60000
+  serial: true
