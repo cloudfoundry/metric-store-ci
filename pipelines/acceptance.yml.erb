@@ -550,6 +550,29 @@ jobs:
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
+    - task: tag-oss-version
+      image: cf-deployment-concourse-tasks-image
+      config:
+        platform: linux
+        inputs:
+          - name: p-metric-store-release
+        outputs:
+          - name: p-metric-store-release
+        run:
+          path: /bin/bash
+          args:
+            - -e
+            - -c
+            - |
+              # bosh often ignores vendor only changes. Force a local code
+              # change when vendored open source metric store code changes
+              cat > p-metric-store-release/src/internal/oss_version.go <<EOF
+                package internal
+
+                const (
+                   oss_version = "$(grep \"cloudfoundry/metric-store-release\" p-metric-store-release/go.mod)"
+                )
+              EOF
     - task: create-dev-release
       file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
