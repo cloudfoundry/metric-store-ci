@@ -419,7 +419,7 @@ jobs:
 - name: p-metric-store-unit-tests
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
     - get: p-metric-store-release
@@ -462,7 +462,7 @@ jobs:
 - name: bump-oss-metric-store
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: p-metric-store-release
       passed: [p-metric-store-unit-tests]
@@ -541,7 +541,7 @@ jobs:
 - name: create-p-metric-store-dev-release
   serial: true
   plan:
-    - aggregate:
+    - in_parallel:
       - get: metric-store-ci
       - get: p-metric-store-release
         trigger: true
@@ -591,7 +591,7 @@ jobs:
 - name: oss-metric-store-unit-tests
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
     - get: oss-metric-store
@@ -633,7 +633,7 @@ jobs:
 - name: create-oss-metric-store-dev-release
   serial: true
   plan:
-    - aggregate:
+    - in_parallel:
       - get: metric-store-ci
       - get: oss-metric-store
         trigger: true
@@ -661,7 +661,7 @@ jobs:
 - name: cf-deploy
   serial_groups: [cf-deploy]
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: bbl-state
       resource: denver-locks
@@ -676,7 +676,7 @@ jobs:
     params:
       TITLE: Log Cache CF Deploy
       TEAM: metric-store-log-cache
-  - aggregate:
+  - in_parallel:
     - do:
       - get: p-metric-store-release
         passed: ["create-p-metric-store-dev-release"]
@@ -868,7 +868,7 @@ jobs:
 - name: blackbox-deploy
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
     - get: p-metric-store-dev-release
@@ -924,7 +924,7 @@ jobs:
 - name: p-ms-🚬
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: cf-deployment-concourse-tasks-image
     - get: denver-locks
@@ -960,7 +960,7 @@ jobs:
 
 - name: "🥖 Bake Tile 🍰"
   plan:
-    - aggregate:
+    - in_parallel:
       - get: concourse-tasks
       - get: metric-store-ci
       - get: p-metric-store-release
@@ -999,7 +999,7 @@ jobs:
 
 - name: "🚽 Install Tile 🍾"
   plan:
-    - aggregate:
+    - in_parallel:
       - get: concourse-tasks
       - get: metric-store-ci
       - get: p-metric-store-release
@@ -1029,7 +1029,7 @@ jobs:
 <% envs_we_care_about.each do |env_version, pool_name| %>
 - name: "Install on PCF <%= env_version %>"
   plan:
-  - aggregate:
+  - in_parallel:
     - get: concourse-tasks
     - get: metric-store-ci
     - get: p-metric-store-release
@@ -1122,7 +1122,7 @@ jobs:
 - name: cats
   serial_groups: [cf-deploy]
   plan:
-  - aggregate:
+  - in_parallel:
     - get: denver-locks
     - get: oss-metric-store
       trigger: true
@@ -1160,7 +1160,7 @@ jobs:
 - name: p-metric-store-test-gate
   serial: true
   plan:
-    - aggregate:
+    - in_parallel:
       - get: gcp-light-stemcell
         passed: ["🥖 Bake Tile 🍰"]
       - get: bpm-release
@@ -1181,7 +1181,7 @@ jobs:
 - name: p-metric-store-release-elect-promotion
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: p-metric-store-release
       trigger: true
       passed:
@@ -1198,7 +1198,7 @@ jobs:
 - name: p-metric-store-master-promotion
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: hourly-during-the-workday
       trigger: true
     - get: p-metric-store-release
@@ -1226,7 +1226,7 @@ jobs:
 - name: oss-ms-🚬
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: cf-deployment-concourse-tasks-image
     - get: denver-locks
@@ -1264,7 +1264,7 @@ jobs:
 - name: oss-metric-store-release-elect-promotion
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: develop
       resource: oss-metric-store
       trigger: true
@@ -1277,7 +1277,7 @@ jobs:
 - name: oss-metric-store-master-promotion
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: hourly-during-the-workday
       trigger: true
     - get: oss-metric-store-release-elect
@@ -1302,7 +1302,7 @@ jobs:
 
 - name: build-final-release
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: p-metric-store-pivnet-metadata
@@ -1382,7 +1382,7 @@ jobs:
 
 - name: 🥖 Bake Final Tile 🥖
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: p-metric-store-pivnet-metadata
@@ -1476,7 +1476,7 @@ jobs:
 - name: log-cache-tools-tests
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: log-cache-tools
       trigger: true
