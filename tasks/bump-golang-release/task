@@ -11,14 +11,8 @@ if ! [[ -z "${GITHUB_PRIVATE_KEY}" ]]; then
 fi
 set -x
 
-# checkout golang-release repo at given tag
-pushd golang-release
-  release_tag=$(cat tag)
-  pull_request_body=$(cat body | sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g')
-popd
-
 pushd golang-release-repo
-  git checkout ${release_tag}
+  release_tag=$(git tag --points-at HEAD | sort | tail -n 1)
 popd
 
 pushd repo
@@ -44,6 +38,13 @@ EOF
   git commit -m "Bump Golang Release ${release_tag}"
 
   git push origin bump-golang-release-${release_tag}
+
+  go_version=$(bosh create-release --tarball=/dev/stdout --force \
+    | tar xz packages/golang-1.12-linux.tgz -O 2>/dev/null \
+    | tar tz --wildcards './go*' 2>/dev/null \
+    | grep -ohE "go[0-9]\.[0-9]{1,2}\.[0-9]{1,2}")
+
+  pull_request_body="bump to use $go_version"
 popd
 
 cat << EOF > new_pull_request.json

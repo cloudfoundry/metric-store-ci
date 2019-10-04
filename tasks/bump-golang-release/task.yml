@@ -9,7 +9,6 @@ inputs:
 - name: metric-store-ci
 - name: repo
 - name: golang-release-repo
-- name: golang-release
 
 run:
   path: metric-store-ci/tasks/bump-golang-release/task

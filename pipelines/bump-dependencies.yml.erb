@@ -44,14 +44,8 @@ resources:
   source:
     uri: git@github.com:bosh-packages/golang-release
     branch: master
+    tag_filter: v*
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
-
-- name: golang-release
-  type: github-release
-  source:
-    owner: bosh-packages
-    repository: golang-release
-    access_token: ((github-key-ci.yml/Notes/metric-store-access-token))
 
 - name: weekly-on-sunday
   type: time
@@ -113,7 +107,6 @@ jobs:
   - aggregate:
     - get: p-metric-store-release-develop
     - get: golang-release-repo
-    - get: golang-release
       trigger: true
     - get: metric-store-ci
   - task: bump-golang-release
@@ -134,7 +127,6 @@ jobs:
   - aggregate:
     - get: oss-metric-store-release-develop
     - get: golang-release-repo
-    - get: golang-release
       trigger: true
     - get: metric-store-ci
   - task: bump-golang-release
