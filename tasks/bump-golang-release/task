@@ -39,6 +39,8 @@ EOF
 
   git push origin bump-golang-release-${release_tag}
 
+  touch oss_sha
+  touch css_sha
   go_version=$(bosh create-release --tarball=/dev/stdout --force \
     | tar xz packages/golang-1.12-linux.tgz -O 2>/dev/null \
     | tar tz --wildcards './go*' 2>/dev/null \
