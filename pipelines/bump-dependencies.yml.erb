@@ -58,7 +58,7 @@ resources:
 jobs:
 - name: bump-docker-golang
   plan:
-  - aggregate:
+  - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
   - task: bump-logcache-base-golang
@@ -104,7 +104,7 @@ jobs:
 - name: bump-p-metric-store-golang-release
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: p-metric-store-release-develop
     - get: golang-release-repo
       trigger: true
@@ -124,7 +124,7 @@ jobs:
 - name: bump-oss-metric-store-golang-release
   serial: true
   plan:
-  - aggregate:
+  - in_parallel:
     - get: oss-metric-store-release-develop
     - get: golang-release-repo
       trigger: true
@@ -146,7 +146,7 @@ jobs:
   plan:
   - get: weekly-on-sunday
     trigger: true
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: p-metric-store-release-develop
   - task: bump-dependencies
@@ -165,7 +165,7 @@ jobs:
   plan:
   - get: weekly-on-sunday
     trigger: true
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: oss-metric-store-release-develop
   - task: bump-dependencies
