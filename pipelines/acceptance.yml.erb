@@ -809,12 +809,6 @@ jobs:
         metrics-certs-in-cf.yml
         add-blackbox-client.yml
         share-loggregator-link.yml
-  - task: enable-feature-flags
-    file: cf-deployment-concourse-tasks/set-feature-flags/task.yml
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      SYSTEM_DOMAIN: ((sys_domain))
-      ENABLED_FEATURE_FLAGS: diego_docker
   - task: cleanup
     file: cf-deployment-concourse-tasks/bosh-cleanup/task.yml
     params:
