@@ -6,7 +6,7 @@ source cf-deployment-concourse-tasks/shared-functions
 setup_bosh_env_vars
 
 cf api api.$SYSTEM_DOMAIN --skip-ssl-validation
-cf auth admin "$(get_password_from_credhub cf_admin_password)"
+cf auth admin "$(get_password_from_credhub /bosh-yuzu/cf/cf_admin_password)"
 cf target -o system
 
 set +e

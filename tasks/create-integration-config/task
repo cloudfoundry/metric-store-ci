@@ -10,7 +10,7 @@ pushd integration-config
   {
     "api": "api.${SYSTEM_DOMAIN}",
     "admin_user": "admin",
-    "admin_password": "$(get_password_from_credhub cf_admin_password)",
+    "admin_password": "$(get_password_from_credhub /bosh-yuzu/cf/cf_admin_password)",
     "apps_domain": "${SYSTEM_DOMAIN}",
     "skip_ssl_validation": true,
     "use_log_cache": true
