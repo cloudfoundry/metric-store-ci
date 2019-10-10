@@ -80,6 +80,14 @@ resources:
     interval: 23h
 
 jobs:
+- name: bump-p-metric-store-edge-release-version
+  serial: true
+  plan:
+    - get: p-metric-store-edge-release-version
+      params: { pre: edge }
+    - put: p-metric-store-edge-release-version
+      params: { file: p-metric-store-edge-release-version/version }
+
 - name: build-metric-store-release
   plan:
     - in_parallel:
