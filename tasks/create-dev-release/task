@@ -29,6 +29,14 @@ EOF
 
   if [ $DEPLOY_REPO_VERSION_BUMP = true ]; then
     echo "${dev_version}" > src/version
+
+    mkdir -p src/internal/version
+    touch src/internal/version/version.go
+    cat << EOF > src/internal/version/version.go
+package version
+
+const VERSION = "${dev_version}"
+EOF
   fi
 
   git rev-parse HEAD > css_sha
