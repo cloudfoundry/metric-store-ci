@@ -757,7 +757,6 @@ jobs:
 
           cp cf-deployment/operations/use-compiled-releases.yml ops-files
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
-          cp cf-deployment/operations/experimental/add-system-metrics-agent.yml ops-files
           cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
           cp metric-store-ci/ops-files/grafana-in-cf.yml ops-files
           cp metric-store-ci/ops-files/alertmanager-p-metric-store.yml ops-files
@@ -795,7 +794,6 @@ jobs:
       OPS_FILES: |
         use-compiled-releases.yml
         scale-to-one-az.yml
-        add-system-metrics-agent.yml
         test-clients.yml
         bosh-speed.yml
         add-metric-store.yml
