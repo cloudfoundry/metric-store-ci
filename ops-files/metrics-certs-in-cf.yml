@@ -7,14 +7,6 @@
     key: "((forwarder_agent_metrics_tls.private_key))"
     server_name: forwarder_agent
 
-# - type: replace
-#   path: /addons/name=loggr-syslog-agent/jobs/name=loggr-syslog-agent/properties/metrics?
-#   value:
-#     ca_cert: "((syslog_agent_metrics_tls.ca))"
-#     cert: "((syslog_agent_metrics_tls.certificate))"
-#     key: "((syslog_agent_metrics_tls.private_key))"
-#     server_name: syslog_agent
-
 - type: replace
   path: /addons/name=loggregator_agent/jobs/name=loggregator_agent/properties/metrics?
   value:
@@ -38,14 +30,6 @@
     cert: "((prom_scraper_metrics_tls.certificate))"
     key: "((prom_scraper_metrics_tls.private_key))"
     server_name: prom_scraper_metrics
-
-- type: replace
-  path: /instance_groups/name=scheduler/jobs/name=loggr-metric-scraper/properties/metrics?
-  value:
-    ca_cert: "((loggr_metric_scraper_metrics_tls.ca))"
-    cert: "((loggr_metric_scraper_metrics_tls.certificate))"
-    key: "((loggr_metric_scraper_metrics_tls.private_key))"
-    server_name: loggr_metric_scraper
 
 # - type: replace
 #   path: /instance_groups/name=scheduler/jobs/name=loggr-syslog-binding-cache/properties/metrics?
