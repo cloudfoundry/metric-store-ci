@@ -19,3 +19,6 @@ params:
   OSS_RELEASE: false
   # A keyword to be added to the release version to identify branch builds
   RELEASE_KEYWORD: dev
+  # copy bosh-dev-release-version into src/version. This change will "trick"
+  # bosh to deploy a new version, even if just vendor files changed
+  DEPLOY_REPO_VERSION_BUMP: false

@@ -107,6 +107,7 @@ jobs:
       params:
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
         RELEASE_KEYWORD: edge
+        DEPLOY_REPO_VERSION_BUMP: true
     - put: p-metric-store-edge-release
       params:
         file: metric-store-dev-release/release-*.tgz
