@@ -674,7 +674,7 @@ jobs:
     file: metric-store-ci/tasks/alert-message-create/task.yml
     input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
     params:
-      TITLE: Log Cache CF Deploy
+      TITLE: Metric Store CF Deploy
       TEAM: metric-store-log-cache
   - in_parallel:
     - do:
