@@ -31,14 +31,6 @@
     key: "((prom_scraper_metrics_tls.private_key))"
     server_name: prom_scraper_metrics
 
-# - type: replace
-#   path: /instance_groups/name=scheduler/jobs/name=loggr-syslog-binding-cache/properties/metrics?
-#   value:
-#     ca_cert: "((loggr_syslog_binding_cache_metrics_tls.ca))"
-#     cert: "((loggr_syslog_binding_cache_metrics_tls.certificate))"
-#     key: "((loggr_syslog_binding_cache_metrics_tls.private_key))"
-#     server_name: loggr_syslog_binding_cache
-
 - type: replace
   path: /instance_groups/name=api/jobs/name=loggr-udp-forwarder/properties/metrics?
   value:
@@ -87,14 +79,6 @@
     key: "((loggr_udp_forwarder_tls.private_key))"
     server_name: loggr_udp_forwarder
 
-# - type: replace
-#   path: /instance_groups/name=scheduler/jobs/name=leadership-election/properties/metrics?
-#   value:
-#     ca_cert: "((leadership_election_metrics_tls.ca))"
-#     cert: "((leadership_election_metrics_tls.certificate))"
-#     key: "((leadership_election_metrics_tls.private_key))"
-#     server_name: leadership_election_metrics
-
 - type: replace
   path: /variables/name=metric_scraper_ca?
   value:
@@ -114,17 +98,6 @@
       common_name: forwarder_agent
       extended_key_usage:
       - server_auth
-
-# - type: replace
-#   path: /variables/name=syslog_agent_metrics_tls?
-#   value:
-#     name: syslog_agent_metrics_tls
-#     type: certificate
-#     options:
-#       ca: metric_scraper_ca
-#       common_name: syslog_agent
-#       extended_key_usage:
-#       - server_auth
 
 - type: replace
   path: /variables/name=loggregator_agent_metrics_tls?
@@ -147,17 +120,6 @@
       common_name: loggr_metric_scraper
       extended_key_usage:
       - server_auth
-
-# - type: replace
-#   path: /variables/name=loggr_syslog_binding_cache_metrics_tls?
-#   value:
-#     name: loggr_syslog_binding_cache_metrics_tls
-#     type: certificate
-#     options:
-#       ca: metric_scraper_ca
-#       common_name: loggr_syslog_binding_cache
-#       extended_key_usage:
-#       - server_auth
 
 - type: replace
   path: /variables/name=loggr_udp_forwarder_tls?
@@ -191,50 +153,3 @@
       common_name: prom_scraper_metrics
       extended_key_usage:
       - server_auth
-
-# - type: replace
-#   path: /variables/name=leadership_election_metrics_tls?
-#   value:
-#     name: leadership_election_metrics_tls
-#     type: certificate
-#     options:
-#       ca: metric_scraper_ca
-#       common_name: leadership_election_metrics
-#       extended_key_usage:
-#       - server_auth
-
-- type: replace
-  path: /instance_groups/name=scheduler/jobs/name=loggr-metric-scraper/properties/leadership_election?
-  value:
-    ca_cert: "((leadership_election_client_tls.ca))"
-    cert: "((leadership_election_client_tls.certificate))"
-    key: "((leadership_election_client_tls.private_key))"
-
-# - type: replace
-#   path: /instance_groups/name=scheduler/jobs/name=leadership-election/properties/tls?
-#   value:
-#     ca_cert: "((leadership_election_tls.ca))"
-#     cert: "((leadership_election_tls.certificate))"
-#     key: "((leadership_election_tls.private_key))"
-
-- type: replace
-  path: /variables/name=leadership_election_client_tls?
-  value:
-    name: leadership_election_client_tls
-    type: certificate
-    options:
-      ca: loggregator_ca
-      common_name: leadership_election_client
-      extended_key_usage:
-      - client_auth
-
-# - type: replace
-#   path: /variables/name=leadership_election_client_tls?
-#   value:
-#     name: leadership_election_client_tls
-#     type: certificate
-#     options:
-#       ca: loggregator_ca
-#       common_name: leadership_election_client
-#       extended_key_usage:
-#       - client_auth
