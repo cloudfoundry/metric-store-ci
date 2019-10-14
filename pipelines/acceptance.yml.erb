@@ -380,6 +380,13 @@ resources:
   source:
     repository: cloudfoundry/loggregator-agent-release
 
+- name: loggregator-agent-release-3
+  type: bosh-io-release
+  version:
+  source:
+    repository: cloudfoundry/loggregator-agent-release
+    regexp: 3.*
+
 - name: hourly-during-the-workday
   type: time
   source:
@@ -969,7 +976,7 @@ jobs:
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
-      - get: loggregator-agent-release
+      - get: loggregator-agent-release-3
       attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -978,6 +985,7 @@ jobs:
         metric-store-release: p-metric-store-release
         metric-store-dev-release: p-metric-store-dev-release
         oss-metric-store-release: oss-metric-store-dev-release
+        loggregator-agent-release: loggregator-agent-release-3
         tile-version: p-metric-store-version
         stemcell: gcp-light-stemcell
     - put: temp-baked-tile
@@ -1159,7 +1167,7 @@ jobs:
         passed: ["🥖 Bake Tile 🍰"]
       - get: cf-routing-release
         passed: ["🥖 Bake Tile 🍰"]
-      - get: loggregator-agent-release
+      - get: loggregator-agent-release-3
         passed: ["🥖 Bake Tile 🍰"]
       - get: develop
         resource: p-metric-store-release
@@ -1309,7 +1317,7 @@ jobs:
       passed: [ p-metric-store-test-gate ]
     - get: cf-routing-release
       passed: [ p-metric-store-test-gate ]
-    - get: loggregator-agent-release
+    - get: loggregator-agent-release-3
       passed: [ p-metric-store-test-gate ]
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
@@ -1387,7 +1395,7 @@ jobs:
       passed: [ build-final-release ]
     - get: cf-routing-release
       passed: [ build-final-release ]
-    - get: loggregator-agent-release
+    - get: loggregator-agent-release-3
       passed: [ build-final-release ]
     - get: p-metric-store-final-bosh-release
       passed: [ build-final-release ]
