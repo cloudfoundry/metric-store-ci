@@ -573,11 +573,13 @@ jobs:
             - |
               # bosh often ignores vendor only changes. Force a local code
               # change when vendored open source metric store code changes
+              #
+              export OSS_VERSION=$(grep "cloudfoundry/metric-store-release" p-metric-store-release/go.mod)
               cat > p-metric-store-release/src/internal/oss_version.go <<EOF
                 package internal
 
                 const (
-                   oss_version = "$(grep \"cloudfoundry/metric-store-release\" p-metric-store-release/go.mod)"
+                  oss_version = "${OSS_VERSION}"
                 )
               EOF
     - task: create-dev-release
