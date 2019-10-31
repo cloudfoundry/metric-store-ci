@@ -16,8 +16,9 @@ export OM_SKIP_SSL_VALIDATION=true
 
 export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
 export RELEASE_VERSION=$(cat tile-version/version)
-export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)
+export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 5)
 export STEMCELL_SHA=$(shasum gcp-light-stemcell/stemcell.tgz | cut -d ' ' -f 1)
+
 mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
 
 om upload-product --product ${TILE_FILE}
