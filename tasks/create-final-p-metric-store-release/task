@@ -23,9 +23,8 @@ pushd p-metric-store-release-master
 
   echo_green "BOSH creating p-metric-store-release ${RELEASE_VERSION}"
 
-  echo $RELEASE_VERSION > src/version
-
   # commit version bump
+  write_version ${RELEASE_VERSION} src/internal/version
   git add .
   git commit -m "Bump version to ${RELEASE_VERSION}"
 

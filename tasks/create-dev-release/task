@@ -4,7 +4,7 @@ set -exu
 
 . ./metric-store-ci/tasks/shared_bash
 
-calculate_version bosh-dev-release-dir/src/version bosh-dev-release-version bosh-new-dev-release-version ${RELEASE_KEYWORD}
+calculate_version bosh-dev-release-dir/src/internal/version/version.go bosh-dev-release-version bosh-new-dev-release-version ${RELEASE_KEYWORD}
 dev_version=$(cat bosh-new-dev-release-version/version | sed -r 's/-/+/')
 
 pushd bosh-dev-release-dir
@@ -28,15 +28,7 @@ EOF
   fi
 
   if [ $DEPLOY_REPO_VERSION_BUMP = true ]; then
-    echo "${dev_version}" > src/version
-
-    mkdir -p src/internal/version
-    touch src/internal/version/version.go
-    cat << EOF > src/internal/version/version.go
-package version
-
-const VERSION = "${dev_version}"
-EOF
+    write_version ${dev_version} src/internal/version
   fi
 
   git rev-parse HEAD > css_sha

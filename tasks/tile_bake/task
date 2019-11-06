@@ -9,7 +9,7 @@ mv metric-store-dev-release/*.tgz releases
 mv oss-metric-store-release/*.tgz releases
 set -f
 
-calculate_version metric-store-release/src/version tile-version new-tile-version "build"
+calculate_version metric-store-release/src/internal/version/version.go tile-version new-tile-version "build"
 export RELEASE_VERSION=$(cat new-tile-version/version)
 
 mv bpm-release/release.tgz releases/bpm-release.tgz

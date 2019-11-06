@@ -20,7 +20,7 @@ pushd release-master
   git checkout master
 
   # commit version bump
-  echo $new_version > src/version
+  write_version ${new_version} src/internal/version
   git add .
   git commit -m "Bump version to ${new_version}"
 
