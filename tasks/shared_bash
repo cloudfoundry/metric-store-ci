@@ -136,6 +136,13 @@ calculate_version() {
   fi
 }
 
+extract_version() {
+  local current_version_file=${1}
+  local extracted_version_dir=${2}
+
+  grep "=" ${current_version_file} | cut -d \" -f 2 > ${extracted_version_dir}/version
+}
+
 write_version() {
     local version=${1}
     local destination_dir=${2}

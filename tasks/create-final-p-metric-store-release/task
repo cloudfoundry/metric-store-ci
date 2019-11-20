@@ -65,6 +65,10 @@ pushd p-metric-store-release-develop
 popd
 
 echo_green "BOSH creating oss-metric-store-release for $RELEASE_VERSION"
+
+mkdir -p tmp-extracted-oss-version
+extract_version oss-metric-store-release-master/src/internal/version/version.go tmp-extracted-oss-version
+
 pushd oss-metric-store-release-master
   cat << EOF > config/private.yml
 ---
@@ -74,7 +78,7 @@ blobstore:
     json_key: |
       $(echo ${JSON_KEY})
 EOF
-  OSS_RELEASE_VERSION="$(cat src/version)-tile.${TIMESTAMP}"
+  OSS_RELEASE_VERSION="$(cat ../tmp-extracted-oss-version/version)-tile.${TIMESTAMP}"
   bosh create-release --final \
     --tarball ../oss-metric-store-final-bosh-release/release-oss-metric-store-${OSS_RELEASE_VERSION}.tgz \
     --version "${OSS_RELEASE_VERSION}"
