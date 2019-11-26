@@ -6,7 +6,6 @@ inputs:
   - name: tile-version
   - name: metric-store-dev-release
   - name: metric-store-release
-  - name: oss-metric-store-release
   - name: stemcell
   - name: bpm-release
   - name: cf-routing-release

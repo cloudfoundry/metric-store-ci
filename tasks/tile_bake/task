@@ -6,7 +6,6 @@ echo "running tile build"
 mkdir -p releases
 set +f
 mv metric-store-dev-release/*.tgz releases
-mv oss-metric-store-release/*.tgz releases
 set -f
 
 calculate_version metric-store-release/src/internal/version/version.go tile-version new-tile-version "build"

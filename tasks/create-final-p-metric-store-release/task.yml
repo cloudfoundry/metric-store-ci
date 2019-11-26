@@ -4,16 +4,14 @@ platform: linux
 inputs:
 - name: metric-store-ci
 - name: pivnet-metadata
-- name: p-metric-store-release-develop
-- name: p-metric-store-release-master
-- name: oss-metric-store-release-master
+- name: metric-store-release-develop
+- name: metric-store-release-master
 
 outputs:
 - name: release-version
-- name: p-metric-store-release-master-modified
-- name: p-metric-store-release-develop-modified
-- name: p-metric-store-final-bosh-release
-- name: oss-metric-store-final-bosh-release
+- name: metric-store-release-master-modified
+- name: metric-store-release-develop-modified
+- name: metric-store-final-bosh-release
 
 params:
   JSON_KEY:
