@@ -23,7 +23,7 @@ mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
 
 om delete-unused-products
 om upload-product --product ${TILE_FILE}
-om stage-product --product-name "p-metric-store" --product-version ${RELEASE_VERSION}
+om stage-product --product-name "metric-store" --product-version ${RELEASE_VERSION}
 
 ert_subnet=$(jq -r .ert_subnet < env.json)
 zone_1=$(jq -r .azs[0] < env.json)
@@ -31,7 +31,7 @@ zone_2=$(jq -r .azs[1] < env.json)
 zone_3=$(jq -r .azs[2] < env.json)
 cat > metric-store-tile-config.yml <<EOF
 ---
-product-name: p-metric-store
+product-name: metric-store
 network-properties:
   network:
     name: ${ert_subnet}
@@ -45,5 +45,5 @@ EOF
 
 om configure-product --config metric-store-tile-config.yml
 om upload-stemcell --stemcell gcp-light-stemcell/${STEMCELL_FILE} --floating true --shasum ${STEMCELL_SHA}
-om apply-changes --product-name "p-metric-store"
+om apply-changes --product-name "metric-store"
 
