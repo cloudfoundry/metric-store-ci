@@ -28,9 +28,9 @@
     - name: metric-store
       release: metric-store
       provides:
-        metric-store: {shared: true, as: metric-store-node}
+        metric-store: {shared: true, as: metric-store}
       consumes:
-        metric-store: {from: metric-store-node}
+        metric-store: {from: metric-store}
       properties:
         egress_port: 8080
         health_addr: localhost:6060
@@ -51,11 +51,11 @@
     - name: metric-store-nozzle
       release: metric-store
       provides:
-        metric-store-nozzle: {as: metric-store-nozzle-node}
+        metric-store-nozzle: {as: metric-store-nozzle}
       consumes:
         reverse_log_proxy: {from: reverse_log_proxy, deployment: cf}
-        metric-store-nozzle: {from: metric-store-nozzle-node}
-        metric-store: {from: metric-store-node}
+        metric-store-nozzle: {from: metric-store-nozzle}
+        metric-store: {from: metric-store}
       properties:
         metric_store_client:
           tls:
@@ -83,11 +83,11 @@
     - name: metric-store-cf-auth-proxy
       release: metric-store
       provides:
-        metric-store-cf-auth-proxy: {as: metric-store-cf-auth-proxy-node}
+        metric-store-cf-auth-proxy: {as: metric-store-cf-auth-proxy}
       consumes:
         cloud_controller: {from: cloud_controller, deployment: cf}
-        metric-store-nozzle: {from: metric-store-nozzle-node}
-        metric-store: {from: metric-store-node}
+        metric-store-nozzle: {from: metric-store-nozzle}
+        metric-store: {from: metric-store}
       properties:
         cc:
           ca_cert: ((service_cf_internal_ca.certificate))
