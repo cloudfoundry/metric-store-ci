@@ -12,17 +12,3 @@
       skip_cert_verify: true
       metric_store_url: https://metric-store.<%= ENV["SYS_DOMAIN"] %>
       metric_store_internal_url: localhost:8080
-- type: replace
-  path: /instance_groups/name=p-metric-store/jobs/-
-  value:
-    name: metric-store-smoke-tests
-    release: metric-store
-    consumes:
-      metric-store: {from: p-metric-store}
-    properties:
-      client_id: msats
-      client_secret: ((/bosh-<%= ENV["ENV_NAME"] %>/cf/msats_client_secret))
-      uaa_url: https://uaa.<%= ENV["SYS_DOMAIN"] %>
-      skip_cert_verify: true
-      metric_store_url: https://ms.<%= ENV["SYS_DOMAIN"] %>
-      metric_store_internal_url: localhost:8080
