@@ -519,7 +519,7 @@ jobs:
           cp cf-deployment/operations/scale-to-one-az.yml ops-files
           cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
           cp metric-store-ci/ops-files/grafana-in-cf.yml ops-files
-          cp metric-store-ci/ops-files/alertmanager-p-metric-store.yml ops-files
+          cp metric-store-ci/ops-files/alertmanager-metric-store.yml ops-files
           cp metric-store-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
@@ -557,7 +557,7 @@ jobs:
         bosh-speed.yml
         add-metric-store.yml
         metric-store-in-cf.yml
-        alertmanager-p-metric-store.yml
+        alertmanager-metric-store.yml
         use-latest.yml
         grafana-in-cf.yml
         metric-registrar-in-cf.yml

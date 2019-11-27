@@ -1,4 +1,4 @@
-- path: /instance_groups/name=p-metric-store/jobs/-
+- path: /instance_groups/name=metric-store/jobs/-
   type: replace
   value:
     name: alertmanager
@@ -24,11 +24,11 @@
               severity: 'warning'
             equal: ['alertname', 'dev', 'instance']
 
-- path: /instance_groups/name=p-metric-store/jobs/name=metric-store/properties/alertmanager?
+- path: /instance_groups/name=metric-store/jobs/name=metric-store/properties/alertmanager?
   type: replace
   value:
     addr: "localhost:9093"
-- path: /instance_groups/name=p-metric-store/jobs/name=metric-store/properties/rules_path?
+- path: /instance_groups/name=metric-store/jobs/name=metric-store/properties/rules_path?
   type: replace
   value: '/var/vcap/jobs/metric-store/config/rules.yml'
 
