@@ -18,7 +18,7 @@
     name: metric-store
     azs:
     - z1
-    instances: 1
+    instances: 3
     persistent_disk_type: 5GB
     vm_type: minimal
     stemcell: default
