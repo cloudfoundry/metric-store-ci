@@ -153,7 +153,7 @@
       - client_auth
 
 - type: replace
-  path: /variables/metric_store_server?
+  path: /variables/name=metric_store_server?
   value:
     name: metric_store_server
     type: certificate
@@ -166,7 +166,7 @@
       - server_auth
 
 - type: replace
-  path: /variables/nozzle_to_metric_store_client?
+  path: /variables/name=nozzle_to_metric_store_client?
   value:
     name: nozzle_to_metric_store_client
     type: certificate
