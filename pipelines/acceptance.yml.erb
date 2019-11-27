@@ -525,7 +525,6 @@ jobs:
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
           cp metric-store-ci/ops-files/share-loggregator-link.yml ops-files
           cp metric-store-ci/ops-files/test-clients.yml ops-files
-          cp metric-store-ci/ops-files/use-latest.yml ops-files
           erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
           cp metric-store-ci/ops-files/metrics-certs-in-cf.yml ops-files
 
@@ -558,7 +557,6 @@ jobs:
         add-metric-store.yml
         metric-store-in-cf.yml
         alertmanager-metric-store.yml
-        use-latest.yml
         grafana-in-cf.yml
         metric-registrar-in-cf.yml
         msats.yml

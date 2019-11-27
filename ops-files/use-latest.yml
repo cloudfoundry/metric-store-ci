@@ -1,5 +1,0 @@
-- type: replace
-  path: /releases/name=metric-store?
-  value:
-    name: metric-store
-    version: latest
