@@ -4,7 +4,7 @@
     name: metric-store-smoke-tests
     release: metric-store
     consumes:
-      metric-store: {from: oss-metric-store}
+      metric-store: {from: metric-store}
     properties:
       client_id: msats
       client_secret: ((/bosh-<%= ENV["ENV_NAME"] %>/cf/msats_client_secret))
