@@ -449,6 +449,11 @@ jobs:
     params:
       TITLE: Metric Store CF Deploy
       TEAM: metric-store-log-cache
+
+  - task: set-credhub-vars
+    file: metric-store-ci/tasks/add-credhub-vars/task.yml
+    params:
+      WEBHOOK_URL: ((slack-ci.yml/Notes/slack_alert_webhook_url))
   - in_parallel:
     - do:
       - get: oss-metric-store
