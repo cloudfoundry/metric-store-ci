@@ -57,6 +57,6 @@ RUN wget -O /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-rel
   && chmod +x /usr/local/bin/kubectl
 
 RUN cd /tmp \
-  && wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/1.7.5/credhub-linux-1.7.5.tgz \
+  && wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/2.6.2/credhub-linux-2.6.2.tgz \
   && tar xzvf credhub*.tgz ./credhub \
   && cp ./credhub /usr/local/bin/

@@ -6,7 +6,9 @@ image_resource:
     repository: logcache/base
 
 inputs:
+- name: bbl-state
 - name: metric-store-ci
+- name: cf-deployment-concourse-tasks
 
 run:
   path: metric-store-ci/tasks/add-credhub-vars/task
@@ -14,4 +16,5 @@ run:
 params:
   WEBHOOK_URL:
   BBL_STATE_DIR:
+  SYSTEM_DOMAIN:
 

@@ -454,6 +454,7 @@ jobs:
     params:
       WEBHOOK_URL: ((slack-ci.yml/Notes/slack_alert_webhook_url))
       BBL_STATE_DIR: ((bbl_state_dir))
+      SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
     - do:
       - get: oss-metric-store

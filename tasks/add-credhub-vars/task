@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
-. ./metric-store-ci/tasks/shared_bash
+source cf-deployment-concourse-tasks/shared-functions
+
 set -eoux pipefail
 
 setup_bosh_env_vars
+cf api api.$SYSTEM_DOMAIN --skip-ssl-validation
+cf auth admin "$(get_password_from_credhub /bosh-yuzu/cf/cf_admin_password)"
+
 credhub set -t value -n /bosh-yuzu/cf/slack_api_url -v "${WEBHOOK_URL}"
