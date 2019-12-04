@@ -3,4 +3,5 @@
 . ./metric-store-ci/tasks/shared_bash
 set -eoux pipefail
 
+setup_bosh_env_vars
 credhub set -t value -n /bosh-yuzu/cf/slack_api_url -v "${WEBHOOK_URL}"

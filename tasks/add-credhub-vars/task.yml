@@ -13,4 +13,5 @@ run:
 
 params:
   WEBHOOK_URL:
+  BBL_STATE_DIR:
 
