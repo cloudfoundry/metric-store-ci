@@ -4,6 +4,7 @@ resource_types:
   source:
     repository: cfcommunity/slack-notification-resource
     tag: latest
+
 - name: gcs-resource
   type: docker-image
   source:
@@ -16,27 +17,27 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.24.0
 
-- name: p-metric-store-release-repo
+- name: metric-store-release-repo
   type: git
   source:
-    uri: git@github.com:pivotal/metric-store-release
+    uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: p-metric-store-edge-release
+- name: metric-store-edge-release
   type: gcs-resource
   source:
-    bucket: branch-p-metric-store-dev-releases
+    bucket: edge-metric-store-releases
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: releases/release-(.*).tgz
 
-- name: p-metric-store-edge-release-version
+- name: metric-store-edge-release-version
   type: semver
   source:
     driver: gcs
-    bucket: branch-p-metric-store-dev-releases
+    bucket: edge-metric-store-releases
     key: metric-store-edge-release-version
-    initial_version: 0.1.2-edge.24
+    initial_version: 1.2.2-edge.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: metric-store-ci
@@ -83,18 +84,18 @@ jobs:
 - name: bump-p-metric-store-edge-release-version
   serial: true
   plan:
-    - get: p-metric-store-edge-release-version
+    - get: metric-store-edge-release-version
       params: { pre: edge }
-    - put: p-metric-store-edge-release-version
-      params: { file: p-metric-store-edge-release-version/version }
+    - put: metric-store-edge-release-version
+      params: { file: metric-store-edge-release-version/version }
 
 - name: build-metric-store-release
   plan:
     - in_parallel:
       - get: metric-store-ci
-      - get: p-metric-store-release-repo
+      - get: metric-store-release-repo
         trigger: true
-      - get: p-metric-store-edge-release-version
+      - get: metric-store-edge-release-version
         params: { pre: edge }
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
@@ -102,17 +103,17 @@ jobs:
       file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
-        bosh-dev-release-dir: p-metric-store-release-repo
-        bosh-dev-release-version: p-metric-store-edge-release-version
+        bosh-dev-release-dir: metric-store-release-repo
+        bosh-dev-release-version: metric-store-edge-release-version
       params:
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
         RELEASE_KEYWORD: edge
         DEPLOY_REPO_VERSION_BUMP: true
-    - put: p-metric-store-edge-release
+    - put: metric-store-edge-release
       params:
         file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
-    - put: p-metric-store-edge-release-version
+    - put: metric-store-edge-release-version
       params: { file: bosh-new-dev-release-version/version }
 
 - name: metric-store-edge-deploy
@@ -127,10 +128,10 @@ jobs:
       text: ":yellow_heart: Started :metric: Metric Store deployment to :knife: PWS Edge"
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
-    - get: p-metric-store-edge-release
+    - get: metric-store-edge-release
       trigger: true
       passed: [build-metric-store-release]
-    - get: p-metric-store-release-repo
+    - get: metric-store-release-repo
       passed: [build-metric-store-release]
     - get: metric-store-ci
     - get: log-cache-deployments
@@ -138,7 +139,7 @@ jobs:
     file: metric-store-ci/tasks/upload-dev-release/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      bosh-release-tarball: p-metric-store-edge-release
+      bosh-release-tarball: metric-store-edge-release
     params:
       BOSH_CA_CERT: ((bosh-ca-cert.certificate))
       BOSH_CLIENT: ((bosh-admin-client.username))
@@ -192,10 +193,10 @@ jobs:
   plan:
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
-    - get: p-metric-store-edge-release
+    - get: metric-store-edge-release
       passed: [metric-store-edge-deploy]
       trigger: true
-    - get: p-metric-store-release-repo
+    - get: metric-store-release-repo
       passed: [metric-store-edge-deploy]
     - get: metric-store-ci
     - get: log-cache-deployments
@@ -204,7 +205,7 @@ jobs:
       file: metric-store-ci/tasks/upload-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
-        bosh-release-tarball: p-metric-store-edge-release
+        bosh-release-tarball: metric-store-edge-release
       params:
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_CLIENT: ((bosh-admin-client.username))
@@ -218,8 +219,8 @@ jobs:
     config:
       platform: linux
       inputs:
-      - name: p-metric-store-edge-release
-      - name: p-metric-store-release-repo
+      - name: metric-store-edge-release
+      - name: metric-store-release-repo
       - name: log-cache-deployments
       - name: metric-store-ci
       params:
@@ -340,7 +341,7 @@ jobs:
       text: ":monkey: Killing a :metric: Metric Store Edge vm"
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
-    - get: p-metric-store-edge-release
+    - get: metric-store-edge-release
       passed: [blackbox-deploy]
     - get: every-23-hours
       trigger: true
