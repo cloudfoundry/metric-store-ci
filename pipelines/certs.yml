@@ -22,7 +22,7 @@ resources:
   type: gcs-resource
   source:
     bucket: yuzu-certs
-    json_key: ((yuzu-cert-service-account.json/Notes))
+    json_key: ((envs-gcp-service-account.json/Notes))
     regexp: yuzu-certs-(.*).tgz
 
 - name: monthly
@@ -39,7 +39,7 @@ jobs:
   - task: prepare-service-account
     file: metric-store-ci/tasks/generate-certs/prepare-service-account.yml
     params:
-      GCP_SERVICE_ACCOUNT_JSON: ((yuzu-cert-service-account.json/Notes))
+      GCP_SERVICE_ACCOUNT_JSON: ((envs-gcp-service-account.json/Notes))
   - task: generate-certs
     file: metric-store-ci/tasks/generate-certs/generate-certs.yml
     attempts: 3
@@ -64,7 +64,7 @@ jobs:
   - task: prepare-service-account
     file: metric-store-ci/tasks/generate-certs/prepare-service-account.yml
     params:
-      GCP_SERVICE_ACCOUNT_JSON: ((yuzu-cert-service-account.json/Notes))
+      GCP_SERVICE_ACCOUNT_JSON: ((envs-gcp-service-account.json/Notes))
   - task: extract-certs
     file: metric-store-ci/tasks/generate-certs/extract-certs.yml
   - task: install-certs
