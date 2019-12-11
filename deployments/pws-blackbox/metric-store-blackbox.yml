@@ -6,7 +6,7 @@ stemcells:
   version: latest
 
 releases:
-- name: p-metric-store
+- name: metric-store
   version: latest
 - name: loggregator-agent
   version: latest
