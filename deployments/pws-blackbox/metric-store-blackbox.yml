@@ -25,7 +25,7 @@ instance_groups:
   - name: default
   jobs:
   - name: metric-store-blackbox
-    release: p-metric-store
+    release: metric-store
     consumes:
       metric-store: {from: metric-store, deployment: default}
   - name: prom_scraper
