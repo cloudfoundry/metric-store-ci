@@ -1,4 +1,4 @@
-name: p-metric-store-blackbox
+name: metric-store-blackbox
 
 stemcells:
 - alias: default
@@ -6,7 +6,7 @@ stemcells:
   version: latest
 
 releases:
-- name: p-metric-store
+- name: metric-store
   version: latest
 - name: bpm
   version: latest
@@ -26,16 +26,16 @@ instance_groups:
   - name: default
   jobs:
   - name: metric-store-blackbox
-    release: p-metric-store
+    release: metric-store
     properties:
-      source_id: p-metric-store
+      source_id: metric-store
       cf_blackbox:
         enabled: true
-        metric_store_address: https://ms.((sys_domain))
+        metric_store_address: https://metric-store.((sys_domain))
         client_id: ((pws-datadog-forwarder-client/Username))
         client_secret: ((pws-datadog-forwarder-client/Password))
     consumes:
-      metric-store: {from: p-metric-store, deployment: cf}
+      metric-store: {from: metric-store, deployment: cf}
       cloud_controller: {from: cloud_controller, deployment: cf}
   - name: bpm
     release: bpm
