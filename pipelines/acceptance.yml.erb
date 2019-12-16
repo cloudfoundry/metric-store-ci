@@ -963,7 +963,6 @@ jobs:
     params:
       SOURCE_BRANCH: release-elect
       DEST_BRANCH: master
-      FOLLOW_BUMPS_OF: src/github.com/pivotal/metric-store
       TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
   - put: oss-metric-store-release-master
     params:
