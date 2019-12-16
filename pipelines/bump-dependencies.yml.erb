@@ -25,14 +25,7 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
 
-- name: p-metric-store-release-develop
-  type: git
-  source:
-    uri: git@github.com:pivotal/metric-store-release
-    branch: develop
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
-
-- name: oss-metric-store-release-develop
+- name: metric-store-release-develop
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
@@ -101,38 +94,18 @@ jobs:
       repository: updated-metric-store-ci
       rebase: false
 
-- name: bump-p-metric-store-golang-release
-  serial: true
-  plan:
-  - in_parallel:
-    - get: p-metric-store-release-develop
-    - get: golang-release-repo
-      trigger: true
-    - get: metric-store-ci
-  - task: bump-golang-release
-    file: metric-store-ci/tasks/bump-golang-release/task.yml
-    input_mapping:
-      repo: p-metric-store-release-develop
-    params:
-      GITHUB_REPO: "pivotal/metric-store-release"
-      GITHUB_EMAIL: "cf-log-cache+github@pivotal.io"
-      GITHUB_NAME: "Metric Store CI"
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-
 - name: bump-oss-metric-store-golang-release
   serial: true
   plan:
   - in_parallel:
-    - get: oss-metric-store-release-develop
+    - get: metric-store-release-develop
     - get: golang-release-repo
       trigger: true
     - get: metric-store-ci
   - task: bump-golang-release
     file: metric-store-ci/tasks/bump-golang-release/task.yml
     input_mapping:
-      repo: oss-metric-store-release-develop
+      repo: metric-store-release-develop
     params:
       GITHUB_REPO: "cloudfoundry/metric-store-release"
       GITHUB_EMAIL: "cf-log-cache+github@pivotal.io"
@@ -141,25 +114,6 @@ jobs:
       GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: bump-p-metric-store-dependencies
-  serial: true
-  plan:
-  - get: weekly-on-sunday
-    trigger: true
-  - in_parallel:
-    - get: metric-store-ci
-    - get: p-metric-store-release-develop
-  - task: bump-dependencies
-    file: metric-store-ci/tasks/bump-dependencies/task.yml
-    input_mapping:
-      repo: p-metric-store-release-develop
-    params:
-      GITHUB_REPO: "pivotal/metric-store-release"
-      GITHUB_USER: "metric-store-ci"
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      EXCEPT: "google.golang.org/grpc,github.com/cloudfoundry/metric-store-release"
-
 - name: bump-oss-metric-store-dependencies
   serial: true
   plan:
@@ -167,11 +121,11 @@ jobs:
     trigger: true
   - in_parallel:
     - get: metric-store-ci
-    - get: oss-metric-store-release-develop
+    - get: metric-store-release-develop
   - task: bump-dependencies
     file: metric-store-ci/tasks/bump-dependencies/task.yml
     input_mapping:
-      repo: oss-metric-store-release-develop
+      repo: metric-store-release-develop
     params:
       GITHUB_REPO: "cloudfoundry/metric-store-release"
       GITHUB_USER: "metric-store-ci"
