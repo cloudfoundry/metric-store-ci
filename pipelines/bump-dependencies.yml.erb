@@ -94,7 +94,7 @@ jobs:
       repository: updated-metric-store-ci
       rebase: false
 
-- name: bump-oss-metric-store-golang-release
+- name: bump-metric-store-golang-release
   serial: true
   plan:
   - in_parallel:
@@ -114,7 +114,7 @@ jobs:
       GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: bump-oss-metric-store-dependencies
+- name: bump-metric-store-dependencies
   serial: true
   plan:
   - get: weekly-on-sunday
