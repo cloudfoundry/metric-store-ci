@@ -665,7 +665,7 @@ jobs:
               path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties/cf_blackbox?
               value:
                 enabled: true
-                metric_store_address: https://ms.((sys_domain))
+                metric_store_address: https://metric-store.((sys_domain))
                 client_id: ((pws-datadog-forwarder-client/Username))
                 client_secret: ((pws-datadog-forwarder-client/Password))
           EOF
