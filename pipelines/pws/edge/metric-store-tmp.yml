@@ -15,7 +15,7 @@ resources:
 - name: metric-store-release
   type: git
   source:
-    uri: git@github.com:pivotal/metric-store-release
+    uri: git@github.com:cloudfondry/metric-store-release
     branch: develop
     private_key: ((github-key-ci.yml/Notes/github_key))
 
