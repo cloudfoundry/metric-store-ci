@@ -9,7 +9,7 @@ TIMESTAMP=$(date +%s)
 
 git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
 
-pushd metric-store-release-master
+pushd metric-store-master
   git checkout master
   echo_green "Adding SHA to metric-store-release"
   git rev-parse HEAD > sha
@@ -33,7 +33,7 @@ blobstore:
 EOF
 
   bosh -n create-release --sha2 --final \
-    --tarball ../metric-store-final-bosh-release/release-${RELEASE_VERSION}.tgz \
+    --tarball ../metric-store-final-release/release-${RELEASE_VERSION}.tgz \
     --version "${RELEASE_VERSION}"
 
   # commit release creation changes
@@ -46,14 +46,14 @@ EOF
   final_release_sha=$(git rev-parse HEAD)
   git tag "${tag_name}" ${final_release_sha}
 
-  cp -r . ../metric-store-release-master-modified
+  cp -r . ../metric-store-master-modified
 popd
 
 echo_green "Merging version and release artifacts to develop"
-pushd metric-store-release-develop
+pushd metric-store-develop
   git checkout develop
-  git remote add -f local_master ../metric-store-release-master
+  git remote add -f local_master ../metric-store-master
   git merge -v --no-ff -m "Merge final release artifacts" "local_master/${final_release_abbrev}"
 
-  cp -r . ../metric-store-release-develop-modified
+  cp -r . ../metric-store-develop-modified
 popd

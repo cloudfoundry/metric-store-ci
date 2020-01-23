@@ -11,37 +11,37 @@ groups:
   - "Install on PCF <%= name %>"
   <% end %>
   - build-final-release
-  - publish-oss-msr-github-release
-  - tag-oss-msr-for-backports
+  - publish-github-release
+  - tag-dependencies
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
   - cats
-  - oss-metric-store-test-gate
-  - oss-metric-store-release-elect-promotion
-  - oss-metric-store-master-promotion
-  - oss-metric-store-unit-tests
-  - oss-ms-🚬
-  - create-oss-metric-store-dev-release
-  - bump-oss-metric-store-dev-release-version
-- name: oss-metric-store
+  - promotion-gate
+  - promote-to-release-elect
+  - promote-to-master
+  - unit-tests
+  - smoke-tests
+  - create-dev-release
+  - bump-dev-release-version
+- name: metric-store
   jobs:
-  - oss-metric-store-unit-tests
-  - create-oss-metric-store-dev-release
+  - unit-tests
+  - create-dev-release
   - cf-deploy
   - blackbox-deploy
   - cats
-  - oss-ms-🚬
+  - smoke-tests
   - "🥖 Bake Tile 🍰"
   - "🚽 Install Tile 🍾"
   <% envs_we_care_about.each do |name, _| %>
   - "Install on PCF <%= name %>"
   <% end %>
-  - oss-metric-store-release-elect-promotion
-  - oss-metric-store-master-promotion
-  - oss-metric-store-test-gate
+  - promote-to-release-elect
+  - promote-to-master
+  - promotion-gate
   - build-final-release
-  - publish-oss-msr-github-release
-  - tag-oss-msr-for-backports
+  - publish-github-release
+  - tag-dependencies
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
 - name: log-cache-tools
@@ -135,7 +135,7 @@ resources:
     username: _json_key
     password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: oss-metric-store
+- name: metric-store-develop
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
@@ -147,7 +147,7 @@ resources:
     disable_ci_skip: false
     clean_tags: true
 
-- name: oss-metric-store-release-elect
+- name: metric-store-release-elect
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
@@ -155,7 +155,7 @@ resources:
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     clean_tags: true
 
-- name: oss-metric-store-release-master
+- name: metric-store-master
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
@@ -164,31 +164,30 @@ resources:
     disable_ci_skip: true
     clean_tags: true
 
-- name: oss-metric-store-dev-release-version
+- name: metric-store-dev-release-version
   type: semver
   source:
     driver: gcs
     bucket: metric-store-ci-notifications
-    key: oss-metric-store-dev-release-version
+    key: metric-store-dev-release-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: oss-metric-store-dev-release
+- name: metric-store-dev-release
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    regexp: oss-metric-store-dev-releases/release-(.*).tgz
+    regexp: metric-store-dev-releases/release-(.*).tgz
 
-# TODO: rename, but use this one!!!
-- name: oss-metric-store-final-bosh-release
+- name: metric-store-final-release
   type: gcs-resource
   source:
     bucket: oss-metric-store-releases
     versioned_file: release.tgz
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: oss-metric-store-github-release
+- name: metric-store-github-release
   type: github-release
   source:
     user: cloudfoundry
@@ -261,7 +260,7 @@ resources:
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
-- name: oss-metric-store-version
+- name: metric-store-version
   type: semver
   source:
     driver: gcs
@@ -270,7 +269,7 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     initial_version: 0.2.0-build.24
 
-- name: temp-baked-tile
+- name: dev-tile
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
@@ -278,7 +277,7 @@ resources:
     regexp: temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
 
-- name: freshly-baked-final-tiles
+- name: final-tile
   type: gcs-resource
   source:
     bucket: p-metric-store-release
@@ -355,14 +354,14 @@ jobs:
   public: true
   plan:
   - get: metric-store-ci
-  - get: oss-metric-store
+  - get: metric-store
   - get: docker-images
     trigger: true
   - task: build-metric-store-tile-image
     file: metric-store-ci/tasks/build-go-docker-image/task.yml
     input_mapping:
       context-repo: docker-images
-      source-repo: oss-metric-store
+      source-repo: metric-store
     output_mapping:
       build-image: build-metric-store-tile-image
     params:
@@ -376,21 +375,21 @@ jobs:
       cache: true
       cache_tag: latest
 
-- name: bump-oss-metric-store-dev-release-version
+- name: bump-dev-release-version
   serial: true
   plan:
-    - get: oss-metric-store-dev-release-version
+    - get: metric-store-dev-release-version
       params: { pre: dev }
-    - put: oss-metric-store-dev-release-version
-      params: { file: oss-metric-store-dev-release-version/version }
+    - put: metric-store-dev-release-version
+      params: { file: metric-store-dev-release-version/version }
 
-- name: oss-metric-store-unit-tests
+- name: unit-tests
   serial: true
   plan:
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
-    - get: oss-metric-store
+    - get: metric-store-develop
       trigger: true
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
@@ -406,7 +405,7 @@ jobs:
         source:
           repository: logcache/base
       inputs:
-        - name: oss-metric-store
+        - name: metric-store-develop
       run:
         path: bash
         args:
@@ -414,7 +413,7 @@ jobs:
           - |
             #!/bin/bash
             set -ex
-            pushd oss-metric-store
+            pushd metric-store-develop
               scripts/test unit
             popd
   on_failure:
@@ -427,15 +426,15 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
-- name: create-oss-metric-store-dev-release
+- name: create-dev-release
   serial: true
   plan:
     - in_parallel:
       - get: metric-store-ci
-      - get: oss-metric-store
+      - get: metric-store-develop
         trigger: true
-        passed: ["oss-metric-store-unit-tests"]
-      - get: oss-metric-store-dev-release-version
+        passed: ["unit-tests"]
+      - get: metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
@@ -443,15 +442,15 @@ jobs:
       file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
-        bosh-dev-release-dir: oss-metric-store
-        bosh-dev-release-version: oss-metric-store-dev-release-version
+        bosh-dev-release-dir: metric-store-develop
+        bosh-dev-release-version: metric-store-dev-release-version
       params:
         JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-    - put: oss-metric-store-dev-release
+    - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
-    - put: oss-metric-store-dev-release-version
+    - put: metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
 
 - name: cf-deploy
@@ -480,16 +479,16 @@ jobs:
       SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
     - do:
-      - get: oss-metric-store
-        passed: ["create-oss-metric-store-dev-release"]
-      - get: oss-metric-store-dev-release
+      - get: metric-store-develop
+        passed: ["create-dev-release"]
+      - get: metric-store-dev-release
         trigger: true
-        passed: ["create-oss-metric-store-dev-release"]
-      - task: upload-oss-metric-store-release
+        passed: ["create-dev-release"]
+      - task: upload-metric-store-release
         file: metric-store-ci/tasks/upload-dev-release/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          bosh-release-tarball: oss-metric-store-dev-release
+          bosh-release-tarball: metric-store-dev-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
     - do:
@@ -531,7 +530,7 @@ jobs:
       - name: bbl-state
       - name: cf-deployment
       - name: metric-store-ci
-      - name: oss-metric-store
+      - name: metric-store-develop
       outputs:
       - name: ops-files
       params:
@@ -648,10 +647,10 @@ jobs:
   - in_parallel:
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
-    - get: oss-metric-store-dev-release
+    - get: metric-store-dev-release
       passed: [cf-deploy]
       trigger: true
-    - get: oss-metric-store
+    - get: metric-store-develop
       passed: [cf-deploy]
     - get: metric-store-ci
     - get: bbl-state
@@ -662,8 +661,8 @@ jobs:
       platform: linux
       inputs:
       - name: cf-deployment-concourse-tasks
-      - name: oss-metric-store-dev-release
-      - name: oss-metric-store
+      - name: metric-store-dev-release
+      - name: metric-store-develop
       - name: metric-store-ci
       - name: bbl-state
       params:
@@ -704,12 +703,12 @@ jobs:
     - in_parallel:
       - get: concourse-tasks
       - get: metric-store-ci
-      - get: oss-metric-store
-        passed: ["create-oss-metric-store-dev-release"]
-      - get: oss-metric-store-dev-release
+      - get: metric-store-develop
+        passed: ["create-dev-release"]
+      - get: metric-store-dev-release
         trigger: true
-        passed: ["create-oss-metric-store-dev-release"]
-      - get: oss-metric-store-version
+        passed: ["create-dev-release"]
+      - get: metric-store-version
         params:
           pre: build
       - get: pcf-observability-ci-image
@@ -722,17 +721,17 @@ jobs:
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_bake/task.yml
       input_mapping:
-        metric-store-release: oss-metric-store
-        metric-store-dev-release: oss-metric-store-dev-release
+        metric-store-release: metric-store-develop
+        metric-store-dev-release: metric-store-dev-release
         loggregator-agent-release: loggregator-agent-release-3
-        tile-version: oss-metric-store-version
+        tile-version: metric-store-version
         stemcell: gcp-light-stemcell
-    - put: temp-baked-tile
+    - put: dev-tile
       params:
         file: baked-tile/*.pivotal
         content_type: application/octet-stream
   ensure:
-    put: oss-metric-store-version
+    put: metric-store-version
     params:
       file: new-tile-version/version
 
@@ -741,14 +740,14 @@ jobs:
     - in_parallel:
       - get: concourse-tasks
       - get: metric-store-ci
-      - get: oss-metric-store
+      - get: metric-store-develop
         passed: ["🥖 Bake Tile 🍰"]
-      - get: oss-metric-store-dev-release
+      - get: metric-store-dev-release
         passed: ["🥖 Bake Tile 🍰"]
       - get: pcf-observability-ci-image
-      - get: oss-metric-store-version
+      - get: metric-store-version
         passed: ["🥖 Bake Tile 🍰"]
-      - get: temp-baked-tile
+      - get: dev-tile
         trigger: true
         passed: ["🥖 Bake Tile 🍰"]
       - get: gcp-light-stemcell
@@ -758,8 +757,8 @@ jobs:
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task.yml
       input_mapping:
-        tile-version: oss-metric-store-version
-        baked-tile: temp-baked-tile
+        tile-version: metric-store-version
+        baked-tile: dev-tile
       params:
         TOOLSMITHS_ENV_JSON: ((ms-pas-acceptance.json/Notes))
 
@@ -769,14 +768,14 @@ jobs:
   - in_parallel:
     - get: concourse-tasks
     - get: metric-store-ci
-    - get: oss-metric-store
+    - get: metric-store-develop
       passed: ["🥖 Bake Tile 🍰"]
-    - get: oss-metric-store-dev-release
+    - get: metric-store-dev-release
       passed: ["🥖 Bake Tile 🍰"]
     - get: pcf-observability-ci-image
-    - get: oss-metric-store-version
+    - get: metric-store-version
       passed: ["🥖 Bake Tile 🍰"]
-    - get: temp-baked-tile
+    - get: dev-tile
       trigger: true
       passed: ["🥖 Bake Tile 🍰"]
     - get: gcp-light-stemcell
@@ -825,13 +824,13 @@ jobs:
   - task: "Upload and Install"
     tags: [ cf-denver-shared-vsphere ]
     input_mapping:
-      tile-version: oss-metric-store-version
-      baked-tile: temp-baked-tile
+      tile-version: metric-store-version
+      baked-tile: dev-tile
     image: pcf-observability-ci-image
     file: metric-store-ci/tasks/tile_install/task.yml
     input_mapping:
-      tile-version: oss-metric-store-version
-      baked-tile: temp-baked-tile
+      tile-version: metric-store-version
+      baked-tile: dev-tile
     on_success:
       task: release-env
       tags: [ cf-denver-shared-vsphere ]
@@ -859,7 +858,7 @@ jobs:
   plan:
   - in_parallel:
     - get: denver-locks
-    - get: oss-metric-store
+    - get: metric-store-develop
       trigger: true
       passed: [cf-deploy]
     - get: metric-store-ci
@@ -892,29 +891,7 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
-- name: oss-metric-store-test-gate
-  serial: true
-  plan:
-    - in_parallel:
-      - get: gcp-light-stemcell
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: bpm-release
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: cf-routing-release
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: loggregator-agent-release-3
-        passed: ["🥖 Bake Tile 🍰"]
-      - get: develop
-        resource: oss-metric-store
-        trigger: true
-        passed:
-          - "oss-ms-🚬"
-          - cats
-          <% envs_we_care_about.each do |name, _| %>
-          - "Install on PCF <%= name %>"
-          <% end %>
-
-- name: oss-ms-🚬
+- name: smoke-tests
   serial: true
   plan:
   - in_parallel:
@@ -922,8 +899,8 @@ jobs:
     - get: cf-deployment-concourse-tasks-image
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
-    - get: oss-metric-store-release
-      resource: oss-metric-store
+    - get: metric-store-release
+      resource: metric-store-develop
       trigger: true
       passed: ["cf-deploy"]
   - task: create-slack-message
@@ -952,42 +929,64 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
-- name: oss-metric-store-release-elect-promotion
+- name: promotion-gate
+  serial: true
+  plan:
+    - in_parallel:
+      - get: gcp-light-stemcell
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: bpm-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: cf-routing-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: loggregator-agent-release-3
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: develop
+        resource: metric-store-develop
+        trigger: true
+        passed:
+          - smoke-tests
+          - cats
+          <% envs_we_care_about.each do |name, _| %>
+          - "Install on PCF <%= name %>"
+          <% end %>
+
+- name: promote-to-release-elect
   serial: true
   plan:
   - in_parallel:
     - get: develop
-      resource: oss-metric-store
+      resource: metric-store-develop
       trigger: true
       passed:
-        - oss-metric-store-test-gate
-  - get: oss-metric-store-release-elect
-  - put: oss-metric-store-release-elect
+        - promotion-gate
+  - get: metric-store-release-elect
+  - put: metric-store-release-elect
     params:
       repository: develop
 
-- name: oss-metric-store-master-promotion
+- name: promote-to-master
   serial: true
   plan:
   - in_parallel:
     - get: hourly-during-the-workday
       trigger: true
-    - get: oss-metric-store-release-elect
-      passed: ["oss-metric-store-release-elect-promotion"]
+    - get: metric-store-release-elect
+      passed: ["promote-to-release-elect"]
       trigger: true
-    - get: oss-metric-store-release-master
+    - get: metric-store-master
     - get: bumper-tool
     - get: metric-store-ci
   - task: bumper
     file: metric-store-ci/tasks/bumper/task.yml
     input_mapping:
-      source: oss-metric-store-release-elect
-      dest: oss-metric-store-release-master
+      source: metric-store-release-elect
+      dest: metric-store-master
     params:
       SOURCE_BRANCH: release-elect
       DEST_BRANCH: master
       TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
-  - put: oss-metric-store-release-master
+  - put: metric-store-master
     params:
       repository: merged-dest
 
@@ -997,17 +996,17 @@ jobs:
     - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: metric-store-pivnet-metadata
-    - get: oss-metric-store
-    - get: oss-metric-store-release-master
-      passed: [ oss-metric-store-master-promotion ]
+    - get: metric-store-develop
+    - get: metric-store-master
+      passed: [ promote-to-master ]
     - get: gcp-light-stemcell
-      passed: [ oss-metric-store-test-gate ]
+      passed: [ promotion-gate ]
     - get: bpm-release
-      passed: [ oss-metric-store-test-gate ]
+      passed: [ promotion-gate ]
     - get: cf-routing-release
-      passed: [ oss-metric-store-test-gate ]
+      passed: [ promotion-gate ]
     - get: loggregator-agent-release-3
-      passed: [ oss-metric-store-test-gate ]
+      passed: [ promotion-gate ]
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
@@ -1018,22 +1017,20 @@ jobs:
     file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
-      metric-store-release-develop: oss-metric-store
-      metric-store-release-master: oss-metric-store-release-master
+      metric-store-develop: metric-store-develop
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
-    # TODO: rename
-  - put: oss-metric-store
+  - put: metric-store-develop
     params:
-      repository: metric-store-release-develop-modified
+      repository: metric-store-develop-modified
       rebase: false
-  - put: oss-metric-store-release-master
+  - put: metric-store-master
     params:
-      repository: metric-store-release-master-modified
+      repository: metric-store-master-modified
       rebase: false
-  - put: oss-metric-store-final-bosh-release
+  - put: metric-store-final-release
     params:
-      file: metric-store-final-bosh-release/release-*.tgz
+      file: metric-store-final-release/release-*.tgz
       content_type: application/octet-stream
   on_failure:
     do:
@@ -1054,7 +1051,7 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_success
 
-- name: publish-oss-msr-github-release
+- name: publish-github-release
   serial: true
   disable_manual_trigger: true
   plan:
@@ -1062,16 +1059,16 @@ jobs:
     - get: metric-store-pivnet-metadata
       trigger: true
       passed: [build-final-release]
-    - get: oss-metric-store-final-bosh-release
+    - get: metric-store-final-release
     - get: metric-store-ci
   - task: github-publish-release-metadata
     file: metric-store-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: metric-store-pivnet-metadata
-      release-tarball: oss-metric-store-final-bosh-release
+      release-tarball: metric-store-final-release
     params:
       PROJECT_NAME: Metric Store
-  - put: oss-metric-store-github-release
+  - put: metric-store-github-release
     params:
       name: github-release/name
       tag: github-release/tag
@@ -1079,14 +1076,14 @@ jobs:
       globs:
       - github-release/*.tgz
 
-- name: tag-oss-msr-for-backports
+- name: tag-dependencies
   serial: true
   disable_manual_trigger: true
   plan:
   - in_parallel:
     - get: metric-store-pivnet-metadata
       trigger: true
-      passed: [publish-oss-msr-github-release]
+      passed: [publish-github-release]
     - get: metric-store-ci
     - get: log-cache-deployments
     - get: denver-locks
@@ -1096,26 +1093,26 @@ jobs:
       file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
       input_mapping:
         bbl-state: denver-locks
-        release-version: oss-metric-store-release-version
+        release-version: metric-store-release-version
       params:
         BBL_STATE_DIR: ((bbl_state_dir))
     - put: log-cache-deployments
       params:
         repository: log-cache-deployments-modified
-        tag: oss-metric-store-release-version/version
-        tag_prefix: oss-metric-store-v
+        tag: metric-store-release-version/version
+        tag_prefix: metric-store-v
   - put: metric-store-ci
     params:
       repository: metric-store-ci
-      tag: oss-metric-store-release-version/version
-      tag_prefix: oss-metric-store-v
+      tag: metric-store-release-version/version
+      tag_prefix: metric-store-v
       only_tag: true
   on_success:
     do:
     - task: create-message
       file: metric-store-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
-        version: oss-metric-store-release-version
+        version: metric-store-release-version
     - <<: *send-alert-message
 
 - name: 🥖 Bake Final Tile 🥖
@@ -1125,7 +1122,7 @@ jobs:
     - get: pcf-observability-ci-image
     - get: metric-store-pivnet-metadata
       passed: [ build-final-release ]
-    - get: oss-metric-store-release-master
+    - get: metric-store-master
       passed: [ build-final-release ]
     - get: gcp-light-stemcell
       passed: [ build-final-release ]
@@ -1135,7 +1132,7 @@ jobs:
       passed: [ build-final-release ]
     - get: loggregator-agent-release-3
       passed: [ build-final-release ]
-    - get: oss-metric-store-final-bosh-release
+    - get: metric-store-final-release
       passed: [ build-final-release ]
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
@@ -1149,7 +1146,7 @@ jobs:
       pivnet-metadata: metric-store-pivnet-metadata
       stemcell: gcp-light-stemcell
       loggregator-agent-release: loggregator-agent-release-3
-  - put: freshly-baked-final-tiles
+  - put: final-tile
     params:
       file: baked-tile/*.pivotal
       content_type: application/octet-stream
@@ -1180,7 +1177,7 @@ jobs:
     params:
       TITLE: Uploading Final Tile to PivNet
       TEAM: metric-store-log-cache
-  - get: freshly-baked-final-tiles
+  - get: final-tile
     passed:
     - "🥖 Bake Final Tile 🥖"
   - get: metric-store-pivnet-metadata
@@ -1188,7 +1185,7 @@ jobs:
     - "🥖 Bake Final Tile 🥖"
   - put: metric-store-pivnet
     params:
-      file_glob: freshly-baked-final-tiles/*.pivotal
+      file_glob: final-tile/*.pivotal
       metadata_file: metric-store-pivnet-metadata/metadata.yml
       override: false # do not re-upload already uploaded version
   on_failure:

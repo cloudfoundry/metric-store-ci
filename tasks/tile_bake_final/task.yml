@@ -9,8 +9,7 @@ inputs:
   - name: bpm-release
   - name: cf-routing-release
   - name: loggregator-agent-release
-  - name: p-metric-store-final-bosh-release
-  - name: oss-metric-store-final-bosh-release
+  - name: metric-store-final-bosh-release
 
 outputs:
   - name: baked-tile
