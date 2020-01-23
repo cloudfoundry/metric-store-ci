@@ -4,10 +4,10 @@
 
 set -ex
 
-new_version=`cat release-version/version`
-tag_name="v${new_version}"
+RELEASE_VERSION=$(yq r release-version/metadata.yml release.version)
+tag_name="v${RELEASE_VERSION}"
 
-echo "${PROJECT_NAME} ${new_version}" > github-release/name
+echo "${PROJECT_NAME} ${RELEASE_VERSION}" > github-release/name
 echo ${tag_name} > github-release/tag
 echo "TBD" > github-release/body
 cp release-tarball/*.tgz github-release/

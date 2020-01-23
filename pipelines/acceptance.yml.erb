@@ -11,6 +11,8 @@ groups:
   - "Install on PCF <%= name %>"
   <% end %>
   - build-final-release
+  - publish-oss-msr-github-release
+  - tag-oss-msr-for-backports
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
   - cats
@@ -38,6 +40,8 @@ groups:
   - oss-metric-store-master-promotion
   - oss-metric-store-test-gate
   - build-final-release
+  - publish-oss-msr-github-release
+  - tag-oss-msr-for-backports
   - 🥖 Bake Final Tile 🥖
   - 🚀 Push to Pivnet 🚀
 - name: log-cache-tools
@@ -85,6 +89,13 @@ resources:
   type: git
   source:
     uri: git@github.com:pivotal-cf/denver-locks.git
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
+- name: log-cache-deployments
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/log-cache-deployments
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -169,12 +180,13 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: oss-metric-store-dev-releases/release-(.*).tgz
 
+# TODO: rename, but use this one!!!
 - name: oss-metric-store-final-bosh-release
   type: gcs-resource
   source:
-    bucket: metric-store-ci-notifications
+    bucket: oss-metric-store-releases
+    versioned_file: release.tgz
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    regexp: oss-metric-store-final-bosh-releases/release-(.*).tgz
 
 - name: oss-metric-store-github-release
   type: github-release
@@ -182,7 +194,7 @@ resources:
     user: cloudfoundry
     repository: metric-store-release
     access_token: ((github-key-ci.yml/Notes/github-access-token))
-    drafts: false
+    drafts: true
 
 - name: log-cache-tools
   type: git
@@ -325,6 +337,17 @@ resources:
     start: 7:00 AM
     stop: 7:00 PM
     days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+
+shared:
+  - &send-alert-message
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        text_file: messages/success.txt
 
 jobs:
 - name: build-docker-images
@@ -991,14 +1014,15 @@ jobs:
       TITLE: Building Final Release
       TEAM: metric-store-log-cache
   - task: create-final-release
-    image: pcf-observability-ci-image
-    file: metric-store-ci/tasks/create-final-p-metric-store-release/task.yml
+    image: logcache/base
+    file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       metric-store-release-develop: oss-metric-store
       metric-store-release-master: oss-metric-store-release-master
     params:
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+    # TODO: rename
   - put: oss-metric-store
     params:
       repository: metric-store-release-develop-modified
@@ -1007,19 +1031,6 @@ jobs:
     params:
       repository: metric-store-release-master-modified
       rebase: false
-  - task: github-publish-release-metadata
-    file: metric-store-ci/tasks/publish-github-release/task.yml
-    input_mapping:
-      release-tarball: metric-store-final-bosh-release
-    params:
-      PROJECT_NAME: Pivotal Metric Store
-  - put: oss-metric-store-github-release
-    params:
-      name: github-release/name
-      tag: github-release/tag
-      body: github-release/body
-      globs:
-      - github-release/*.tgz
   - put: oss-metric-store-final-bosh-release
     params:
       file: metric-store-final-bosh-release/release-*.tgz
@@ -1042,6 +1053,70 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_success
+
+- name: publish-oss-msr-github-release
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - in_parallel:
+    - get: metric-store-pivnet-metadata
+      trigger: true
+      passed: [build-final-release]
+    - get: oss-metric-store-final-bosh-release
+    - get: metric-store-ci
+  - task: github-publish-release-metadata
+    file: metric-store-ci/tasks/publish-github-release/task.yml
+    input_mapping:
+      release-version: metric-store-pivnet-metadata
+      release-tarball: oss-metric-store-final-bosh-release
+    params:
+      PROJECT_NAME: Metric Store
+  - put: oss-metric-store-github-release
+    params:
+      name: github-release/name
+      tag: github-release/tag
+      body: github-release/body
+      globs:
+      - github-release/*.tgz
+
+- name: tag-oss-msr-for-backports
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - in_parallel:
+    - get: metric-store-pivnet-metadata
+      trigger: true
+      passed: [publish-oss-msr-github-release]
+    - get: metric-store-ci
+    - get: log-cache-deployments
+    - get: denver-locks
+    - get: cf-deployment-concourse-tasks
+  - do:
+    - task: snapshot-acceptance-environment
+      file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
+      input_mapping:
+        bbl-state: denver-locks
+        release-version: oss-metric-store-release-version
+      params:
+        BBL_STATE_DIR: ((bbl_state_dir))
+    - put: log-cache-deployments
+      params:
+        repository: log-cache-deployments-modified
+        tag: oss-metric-store-release-version/version
+        tag_prefix: oss-metric-store-v
+  - put: metric-store-ci
+    params:
+      repository: metric-store-ci
+      tag: oss-metric-store-release-version/version
+      tag_prefix: oss-metric-store-v
+      only_tag: true
+  on_success:
+    do:
+    - task: create-message
+      file: metric-store-ci/tasks/alert-message-release-end/task.yml
+      input_mapping:
+        version: oss-metric-store-release-version
+    - <<: *send-alert-message
 
 - name: 🥖 Bake Final Tile 🥖
   plan:

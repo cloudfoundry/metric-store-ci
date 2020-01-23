@@ -8,7 +8,6 @@ inputs:
 - name: metric-store-release-master
 
 outputs:
-- name: release-version
 - name: metric-store-release-master-modified
 - name: metric-store-release-develop-modified
 - name: metric-store-final-bosh-release
@@ -17,4 +16,4 @@ params:
   JSON_KEY:
 
 run:
-  path: metric-store-ci/tasks/create-final-p-metric-store-release/task
+  path: metric-store-ci/tasks/create-final-metric-store-release/task
