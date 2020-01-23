@@ -2,8 +2,21 @@ groups:
 - name: all
   jobs:
   - refresh-environments
+  - build-docker-images
 
 resources:
+- name: metric-store-develop
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-release
+    branch: develop
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    ignore_paths:
+    - .final_builds
+    - releases
+    disable_ci_skip: false
+    clean_tags: true
+
 - name: metric-store-ci
   type: git
   source:
@@ -17,12 +30,54 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
 
+- name: docker-images
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-ci
+    branch: master
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    paths:
+    - docker-images
+
+- name: tile-image
+  type: docker-image
+  source:
+    repository: logcache/metric-store-tile
+    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
+    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+
 - name: daily
   type: time
   source:
     interval: 24h
 
 jobs:
+- name: build-docker-images
+  serial: true
+  public: true
+  plan:
+  - get: metric-store-ci
+  - get: metric-store-develop
+  - get: docker-images
+    trigger: true
+  - task: build-metric-store-tile-image
+    file: metric-store-ci/tasks/build-go-docker-image/task.yml
+    input_mapping:
+      context-repo: docker-images
+      source-repo: metric-store
+    output_mapping:
+      build-image: build-metric-store-tile-image
+    params:
+      CONTEXT_PATH: docker-images/metric-store-tile
+      BASE_PACKAGE: ..
+  - put: tile-image
+    params:
+      build: build-metric-store-tile-image/build
+      tag: build-metric-store-tile-image/tag
+      tag_as_latest: true
+      cache: true
+      cache_tag: latest
+
 - name: refresh-environments
   plan:
   - get: metric-store-ci
