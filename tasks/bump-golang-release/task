@@ -39,8 +39,7 @@ EOF
 
   git push origin bump-golang-release-${release_tag}
 
-  touch oss_sha
-  touch css_sha
+  touch sha
   tarball=`mktemp`
   bosh create-release --tarball=${tarball} --force
   go_version=$(tar xz packages/golang-1.13-linux.tgz -O 2>/dev/null < ${tarball} \
