@@ -3,6 +3,15 @@ groups:
   jobs:
   - refresh-environments
   - build-docker-images
+  - action-items
+
+resource_types:
+  - name: slack-notification
+    type: docker-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+
 
 resources:
 - name: metric-store-develop
@@ -51,6 +60,26 @@ resources:
   source:
     interval: 24h
 
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+
+- name: concourse-tasks
+  type: git
+  source:
+    uri: https://github.com/pivotal-cf/concourse-tasks
+    branch: master
+
+- name: after-standup
+  type: time
+  source:
+    interval: 23h
+    location: America/Denver
+    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
+    start: 9:06 AM
+    stop: 5:00 PM
+
 jobs:
 - name: build-docker-images
   serial: true
@@ -90,3 +119,24 @@ jobs:
     file: metric-store-ci/tasks/refresh-env/task.yml
     params:
       ID: 354
+
+- name: action-items
+  plan:
+  - in_parallel:
+    - get: concourse-tasks
+    - get: after-standup
+      trigger: true
+
+  - task: create-action-item-reminder
+    file: concourse-tasks/postfacto/slack-action-items/task.yml
+    params:
+      POSTFACTO_RETRO_URL: "https://retros.cfapps.io/retros/metric-store"
+      POSTFACTO_API_URL: "https://retros-iad-api.cfapps.io/retros/metric-store"
+      POSTFACTO_PASSWORD: $$$$
+
+  - put: slack-alert
+    params:
+      attachments_file: alert/attachments
+      username: postfacto
+      icon_emoji: ":ballot_box_with_check:"
+
