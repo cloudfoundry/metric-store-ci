@@ -837,6 +837,7 @@ jobs:
       BBL_STATE_DIR: ((bbl_state_dir))
       SYSTEM_DOMAIN: ((sys_domain))
   - task: cats
+    attempts: 10
     file: cf-deployment-concourse-tasks/run-cats/task.yml
   on_failure:
     do:
