@@ -47,13 +47,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: log-cache-deployments
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/log-cache-deployments
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
-
 - name: slack-alert
   type: slack-notification
   source:
@@ -134,7 +127,6 @@ jobs:
     - get: metric-store-release-repo
       passed: [build-metric-store-release]
     - get: metric-store-ci
-    - get: log-cache-deployments
   - task: upload-p-metric-store-release
     file: metric-store-ci/tasks/upload-dev-release/task.yml
     image: cf-deployment-concourse-tasks-image
@@ -164,10 +156,10 @@ jobs:
           set -eux
 
           bosh \
-            deploy "log-cache-deployments/pws/edge/metric-store-edge-manifest.yml" \
+            deploy "metric-store-ci/deployments/pws/edge.yml" \
             --non-interactive
       inputs:
-      - name: log-cache-deployments
+      - name: metric-store-ci
   on_success:
     do:
     - put: slack-alert
@@ -199,7 +191,6 @@ jobs:
     - get: metric-store-release-repo
       passed: [metric-store-edge-deploy]
     - get: metric-store-ci
-    - get: log-cache-deployments
   - in_parallel:
     - task: upload-p-metric-store-release
       file: metric-store-ci/tasks/upload-dev-release/task.yml
@@ -221,7 +212,6 @@ jobs:
       inputs:
       - name: metric-store-edge-release
       - name: metric-store-release-repo
-      - name: log-cache-deployments
       - name: metric-store-ci
       params:
         DEPLOYMENT_NAME: metric-store-edge-blackbox
