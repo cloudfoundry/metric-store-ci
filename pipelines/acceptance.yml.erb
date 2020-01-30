@@ -1,52 +1,4 @@
 <% envs_we_care_about = { "2.6": "us_2_6", "2.7": "us_2_7", "2.8": "us_2_8" } %>
-groups:
-- name: all
-  jobs:
-  - cf-deploy
-  - blackbox-deploy
-  - "🥖 Bake Tile 🍰"
-  - "🚽 Install Tile 🍾"
-  <% envs_we_care_about.each do |name, _| %>
-  - "Install on PCF <%= name %>"
-  <% end %>
-  - build-final-release
-  - publish-github-release
-  - tag-dependencies
-  - 🥖 Bake Final Tile 🥖
-  - 🚀 Push to Pivnet 🚀
-  - cats
-  - promotion-gate
-  - promote-to-release-elect
-  - promote-to-master
-  - unit-tests
-  - smoke-tests
-  - create-dev-release
-  - bump-dev-release-version
-- name: metric-store
-  jobs:
-  - unit-tests
-  - create-dev-release
-  - cf-deploy
-  - blackbox-deploy
-  - cats
-  - smoke-tests
-  - "🥖 Bake Tile 🍰"
-  - "🚽 Install Tile 🍾"
-  <% envs_we_care_about.each do |name, _| %>
-  - "Install on PCF <%= name %>"
-  <% end %>
-  - promote-to-release-elect
-  - promote-to-master
-  - promotion-gate
-  - build-final-release
-  - publish-github-release
-  - tag-dependencies
-  - 🥖 Bake Final Tile 🥖
-  - 🚀 Push to Pivnet 🚀
-- name: log-cache-tools
-  jobs:
-  - log-cache-tools-tests
-
 resource_types:
 - name: slack-notification
   type: docker-image
@@ -178,12 +130,6 @@ resources:
     access_token: ((github-key-ci.yml/Notes/github-access-token))
     drafts: true
 
-- name: log-cache-tools
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry-incubator/log-cache-tools
-    branch: master
-
 - name: bumper-tool
   type: git
   source:
@@ -224,15 +170,6 @@ resources:
   type: slack-notification
   source:
     url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
-
-- name: notification-tools-tests-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: metric-store-ci-notifications
-    key: log-cache-slack-tools-tests-version
-    initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: notification-cf-deploy-version
   type: semver
@@ -1164,60 +1101,3 @@ jobs:
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_success
-
-- name: log-cache-tools-tests
-  serial: true
-  plan:
-  - in_parallel:
-    - get: metric-store-ci
-    - get: log-cache-tools
-      trigger: true
-    - get: notification-tools-tests-version
-      params: { bump: patch }
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
-    params:
-      TITLE: Log Cache Tools Tests
-      TEAM: metric-store-log-cache
-  - task: run-tests
-    file: metric-store-ci/tasks/go-test-module-with-mod/task.yml
-    input_mapping:
-      source-repo: log-cache-tools
-    params:
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-      SUB_FOLDERS: |
-        lc-datadog-forwarder
-        log-cache-emitter
-        ms-datadog-forwarder
-  on_failure:
-    do:
-    - put: notification-tools-tests-version
-      params: { file: notification-tools-tests-version/version }
-    - task: enable-disable-alert-failure
-      file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
-      params: { alert_multiple: 5 }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_failure
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-tools-tests-version }
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-tools-tests-version
-      params: { bump: minor }
