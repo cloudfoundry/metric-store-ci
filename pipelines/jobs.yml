@@ -93,7 +93,7 @@ jobs:
     file: metric-store-ci/tasks/build-go-docker-image/task.yml
     input_mapping:
       context-repo: docker-images
-      source-repo: metric-store
+      source-repo: metric-store-develop
     output_mapping:
       build-image: build-metric-store-tile-image
     params:
