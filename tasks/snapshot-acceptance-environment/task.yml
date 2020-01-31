@@ -8,11 +8,11 @@ inputs:
 - name: bbl-state
 - name: cf-deployment-concourse-tasks
 - name: release-version
-- name: log-cache-deployments
+- name: metric-store-deployments
 - name: metric-store-ci
 
 outputs:
-- name: log-cache-deployments-modified
+- name: metric-store-deployments-modified
 
 params:
   BBL_STATE_DIR:

@@ -43,10 +43,10 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: log-cache-deployments
+- name: metric-store-deployments
   type: git
   source:
-    uri: git@github.com:cloudfoundry/log-cache-deployments
+    uri: git@github.com:cloudfoundry/metric-store-deployments
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
@@ -980,7 +980,7 @@ jobs:
       trigger: true
       passed: [publish-github-release]
     - get: metric-store-ci
-    - get: log-cache-deployments
+    - get: metric-store-deployments
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
   - do:
@@ -991,9 +991,9 @@ jobs:
         release-version: metric-store-release-version
       params:
         BBL_STATE_DIR: ((bbl_state_dir))
-    - put: log-cache-deployments
+    - put: metric-store-deployments
       params:
-        repository: log-cache-deployments-modified
+        repository: metric-store-deployments-modified
         tag: metric-store-release-version/version
         tag_prefix: metric-store-v
   - put: metric-store-ci

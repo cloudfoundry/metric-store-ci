@@ -5,7 +5,7 @@ source cf-deployment-concourse-tasks/shared-functions
 
 setup_bosh_env_vars
 
-pushd log-cache-deployments
+pushd metric-store-deployments
   mkdir -p release-artifacts
   pushd release-artifacts
     bosh -d cf manifest > cf-manifest.yml
@@ -14,5 +14,5 @@ pushd log-cache-deployments
 
   git commit --allow-empty -m "Save acceptance manifest for $(cat ../release-version/version)"
 
-  cp -r . ../log-cache-deployments-modified
+  cp -r . ../metric-store-deployments-modified
 popd
