@@ -72,8 +72,9 @@ instance_groups:
         client_secret: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/uaa_clients_doppler_secret))
         internal_addr: https://uaa.service.cf.internal:8443
       metric_store_client:
-        cert: ((metric_store.certificate))
-        key: ((metric_store.private_key))
+        tls:
+          cert: ((metric_store.certificate))
+          key: ((metric_store.private_key))
     release: metric-store
   - name: loggregator_agent
     consumes:
