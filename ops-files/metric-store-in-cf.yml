@@ -101,6 +101,10 @@
           client_id: doppler
           client_secret: ((uaa_clients_doppler_secret))
           internal_addr: https://uaa.service.cf.internal:8443
+        metric_store_client:
+          tls:
+            cert: ((metric_store.certificate))
+            key: ((metric_store.private_key))
 
 - type: replace
   path: /variables/name=metric_store_to_logs_provider?
