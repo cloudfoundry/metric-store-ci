@@ -28,12 +28,24 @@ instance_groups:
     release: metric-store
     consumes:
       metric-store: {from: metric-store, deployment: default}
+    properties:
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
   - name: prom_scraper
     consumes:
       loggregator:
         deployment: cf-cfapps-io2
         from: loggregator
     release: loggregator-agent
+    properties:
+      scrape:
+        tls:
+          ca_cert: ((metric_store_metrics_client.ca))
+          cert: ((metric_store_metrics_client.certificate))
+          key: ((metric_store_metrics_client.private_key))
   - name: loggregator_agent
     consumes:
       doppler:
@@ -54,3 +66,20 @@ update:
   canary_watch_time: 30000-60000
   update_watch_time: 5000-60000
   serial: true
+
+variables:
+- name: metric_store_ca
+  options:
+    common_name: metric-store
+    is_ca: true
+  type: certificate
+- name: metric_store_metrics_server
+  type: certificate
+  options:
+    ca: metric_store_ca
+    common_name: metric-store
+- name: metric_store_metrics_client
+  type: certificate
+  options:
+    ca: metric_store_ca
+    common_name: metric-store-client

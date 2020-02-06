@@ -30,6 +30,16 @@ instance_groups:
           ca_cert: ((metric_store_internode.ca))
           cert: ((metric_store_internode.certificate))
           key: ((metric_store_internode.private_key))
+      metric_store_metrics_server:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
+      metric_store_metrics_client:
+        tls:
+          ca_cert: ((metric_store_metrics_client.ca))
+          cert: ((metric_store_metrics_client.certificate))
+          key: ((metric_store_metrics_client.private_key))
     provides:
       metric-store:
         as: metric-store-edge
@@ -46,6 +56,11 @@ instance_groups:
           ca_cert: ((nozzle_to_metric_store_client.ca))
           cert: ((nozzle_to_metric_store_client.certificate))
           key: ((nozzle_to_metric_store_client.private_key))
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
       logs_provider:
         tls:
           ca_cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/logs_provider.ca))
@@ -75,6 +90,11 @@ instance_groups:
         tls:
           cert: ((metric_store.certificate))
           key: ((metric_store.private_key))
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
     release: metric-store
   - name: loggregator_agent
     consumes:
@@ -95,6 +115,12 @@ instance_groups:
         from: loggregator
     name: prom_scraper
     release: loggregator-agent
+    properties:
+      scrape:
+        tls:
+          ca_cert: ((metric_store_metrics_client.ca))
+          cert: ((metric_store_metrics_client.certificate))
+          key: ((metric_store_metrics_client.private_key))
   - consumes:
       nats:
         deployment: cf-cfapps-io2
@@ -188,3 +214,13 @@ variables:
   options:
     ca: metric_store_ca
     common_name: localhost
+- name: metric_store_metrics_server
+  type: certificate
+  options:
+    ca: metric_store_ca
+    common_name: metric-store
+- name: metric_store_metrics_client
+  type: certificate
+  options:
+    ca: metric_store_ca
+    common_name: metric-store-client
