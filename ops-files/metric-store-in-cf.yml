@@ -48,6 +48,16 @@
             ca_cert: ((metric_store_internode.ca))
             cert: ((metric_store_internode.certificate))
             key: ((metric_store_internode.private_key))
+        metric_store_metrics_server:
+          tls:
+            ca_cert: ((metric_store_metrics_server.ca))
+            cert: ((metric_store_metrics_server.certificate))
+            key: ((metric_store_metrics_server.private_key))
+        metric_store_metrics_client:
+          tls:
+            ca_cert: ((metric_store_metrics_client.ca))
+            cert: ((metric_store_metrics_client.certificate))
+            key: ((metric_store_metrics_client.private_key))
     - name: metric-store-nozzle
       release: metric-store
       provides:
@@ -67,6 +77,11 @@
             ca_cert: ((metric_store_to_logs_provider.ca))
             cert: ((metric_store_to_logs_provider.certificate))
             key: ((metric_store_to_logs_provider.private_key))
+        metric_store_metrics:
+          tls:
+            ca_cert: ((metric_store_metrics_server.ca))
+            cert: ((metric_store_metrics_server.certificate))
+            key: ((metric_store_metrics_server.private_key))
     - name: route_registrar
       release: routing
       properties:
@@ -89,6 +104,11 @@
         metric-store-nozzle: {from: metric-store-nozzle}
         metric-store: {from: metric-store}
       properties:
+        metric_store_metrics:
+          tls:
+            ca_cert: ((metric_store_metrics_server.ca))
+            cert: ((metric_store_metrics_server.certificate))
+            key: ((metric_store_metrics_server.private_key))
         cc:
           ca_cert: ((service_cf_internal_ca.certificate))
           common_name: cloud-controller-ng.service.cf.internal
@@ -202,3 +222,21 @@
     options:
       ca: metric_store_ca
       common_name: localhost
+
+- type: replace
+  path: /variables/name=metric_store_metrics_server?
+  value:
+    name: metric_store_metrics_server
+    type: certificate
+    options:
+      ca: metric_scraper_ca
+      common_name: metric-store
+
+- type: replace
+  path: /variables/name=metric_store_metrics_client?
+  value:
+    name: metric_store_metrics_client
+    type: certificate
+    options:
+      ca: metric_scraper_ca
+      common_name: metric-store-client

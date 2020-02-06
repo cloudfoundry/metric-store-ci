@@ -34,6 +34,11 @@ instance_groups:
         metric_store_address: https://metric-store.((sys_domain))
         client_id: ((pws-datadog-forwarder-client/Username))
         client_secret: ((pws-datadog-forwarder-client/Password))
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
     consumes:
       metric-store: {from: metric-store, deployment: cf}
       cloud_controller: {from: cloud_controller, deployment: cf}
@@ -101,6 +106,12 @@ variables:
     common_name: prom_scraper_metrics
     extended_key_usage:
     - server_auth
+
+- name: metric_store_metrics_server
+  type: certificate
+  options:
+    ca: /bosh-yuzu/cf/metric_scraper_ca
+    common_name: metric-store
 
 update:
   canaries: 10
