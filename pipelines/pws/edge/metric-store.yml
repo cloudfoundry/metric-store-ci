@@ -249,14 +249,15 @@ jobs:
               metric-store: {from: metric-store-edge, deployment: metric-store-edge}
               cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
           - type: replace
-            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties?/-
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties/source_id?
+            value: metric-store-edge
+          - type: replace
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties/cf_blackbox?
             value:
-              source_id: metric-store-edge
-              cf_blackbox:
-                enabled: true
-                metric_store_address: https://metric-store-edge.run.pivotal.io
-                client_id: ((pws-datadog-forwarder-client/Username))
-                client_secret: ((pws-datadog-forwarder-client/Password))
+              enabled: true
+              metric_store_address: https://metric-store-edge.run.pivotal.io
+              client_id: ((pws-datadog-forwarder-client/Username))
+              client_secret: ((pws-datadog-forwarder-client/Password))
           EOF
 
           bosh \
