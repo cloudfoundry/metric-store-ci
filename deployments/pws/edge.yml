@@ -123,9 +123,9 @@ instance_groups:
     properties:
       scrape:
         tls:
-          ca_cert: ((metric_store_metrics_client.ca))
-          cert: ((metric_store_metrics_client.certificate))
-          key: ((metric_store_metrics_client.private_key))
+          ca_cert: ((prom_scraper_scrape_tls.ca))
+          cert: ((prom_scraper_scrape_tls.certificate))
+          key: ((prom_scraper_scrape_tls.private_key))
       metrics:
         ca_cert: ((prom_scraper_metrics_tls.ca))
         cert: ((prom_scraper_metrics_tls.certificate))
@@ -169,6 +169,11 @@ variables:
 - name: metric_store_ca
   options:
     common_name: metric-store
+    is_ca: true
+  type: certificate
+- name: metric_scraper_ca
+  options:
+    common_name: metricScraperCA
     is_ca: true
   type: certificate
 - name: metric_store
@@ -227,18 +232,13 @@ variables:
 - name: metric_store_metrics_server
   type: certificate
   options:
-    ca: metric_store_ca
+    ca: metric_scraper_ca
     common_name: metric-store
 - name: metric_store_metrics_client
   type: certificate
   options:
-    ca: metric_store_ca
+    ca: metric_scraper_ca
     common_name: metric-store-client
-- name: metric_scraper_ca
-  options:
-    common_name: metricScraperCA
-    is_ca: true
-  type: certificate
 - name: loggregator_agent_metrics_tls
   type: certificate
   options:
@@ -253,3 +253,10 @@ variables:
     common_name: prom_scraper_metrics
     extended_key_usage:
     - server_auth
+- name: prom_scraper_scrape_tls
+  type: certificate
+  options:
+    ca: metric_scraper_ca
+    common_name: prom_scraper
+    extended_key_usage:
+    - client_auth
