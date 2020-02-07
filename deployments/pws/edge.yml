@@ -144,7 +144,7 @@ releases:
 - name: routing
   version: latest
 - name: loggregator-agent
-  version: latest
+  version: 5.3.6
 stemcells:
 - alias: default
   os: ubuntu-xenial
