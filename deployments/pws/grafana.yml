@@ -17,7 +17,7 @@ instance_groups:
     properties:
       grafana:
         security:
-          admin_password: "((grafana_admin_password))"
+          admin_password: ((grafana-admin-password))
           admin_username: admin
         server:
           root_url: https://grafana.observe.run.pivotal.io
