@@ -3,8 +3,8 @@ platform: linux
 inputs:
 - name: metric-store-ci
 - name: bbl-state
-  optional: true
 - name: release-tarball
+- name: cf-deployment-concourse-tasks
 
 params:
   # - Optional
@@ -13,6 +13,7 @@ params:
   # - Defaults to the root of the `bbl-state` input
   BBL_STATE_DIR:
 
+  RELEASE_TARBALL_GLOB:
 
 run:
   path: metric-store-ci/tasks/upload-release-tarball/task
