@@ -28,8 +28,8 @@ instance_groups:
             name: UAA
             enabled: true
             allow_sign_up: true
-            client_id: ((metric-store-observe-client.yml/clientId))
-            client_secret: ((metric-store-observe-client.yml/password))
+            client_id: ((uaa-client-id))
+            client_secret: ((uaa-client-secret))
 
             scopes:
               - openid
