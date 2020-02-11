@@ -73,6 +73,13 @@ resources:
   source:
     interval: 23h
 
+- name: bosh-grafana-release
+  type: github-release
+  source:
+    owner: bosh-prometheus
+    repository: prometheus-boshrelease
+    private_key: ((github-key-ci.yml/Notes/github_key))
+
 jobs:
 - name: bump-p-metric-store-edge-release-version
   serial: true
@@ -390,3 +397,39 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         text: ":broken_heart: Failed to kill a :metric: Metric Store Edge vm
           Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
+
+- name: grafana-deploy
+  serial: true
+  plan:
+  - in_parallel:
+    - get: cf-deployment-concourse-tasks-image
+    - get: metric-store-ci
+    - get: bosh-grafana-release
+      version: { tag: 'v26.2.0' }
+  - task: grafana-deploy
+    image: cf-deployment-concourse-tasks-image
+    config:
+      platform: linux
+      inputs:
+      - name: metric-store-ci
+      - name: bosh-grafana-release
+      params:
+        DEPLOYMENT_NAME: metric-store-grafana
+        MANIFEST_FILE: deployments/pws/grafana.yml
+        BOSH_CLIENT: ((bosh-admin-client.username))
+        BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
+        BOSH_CA_CERT: ((bosh-ca-cert.certificate))
+        BOSH_ENVIRONMENT: bosh.run.pivotal.io
+      run:
+        path: bash
+        args:
+        - -c
+        - |
+          #!/bin/bash
+          set -eux
+          bosh upload-release bosh-grafana-release/prometheus-*.tgz
+          bosh \
+            deploy "metric-store-ci/$MANIFEST_FILE" \
+            --deployment "$DEPLOYMENT_NAME" \
+            --non-interactive
+

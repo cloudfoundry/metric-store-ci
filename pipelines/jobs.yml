@@ -119,6 +119,12 @@ jobs:
     file: metric-store-ci/tasks/refresh-env/task.yml
     params:
       ID: 354
+  - task: refresh-manila
+    tags: [ cf-denver-shared-vsphere ]
+    image: cf-deployment-concourse-tasks-image
+    file: metric-store-ci/tasks/refresh-env/task.yml
+    params:
+      ID: 66
 
 - name: action-items
   plan:
