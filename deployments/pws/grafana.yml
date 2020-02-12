@@ -77,6 +77,3 @@ addons:
   jobs:
   - name: bpm
     release: bpm
-  include:
-    deployments:
-      - metric-store-grafana
