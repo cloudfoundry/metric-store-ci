@@ -109,22 +109,24 @@ jobs:
 
 - name: refresh-environments
   plan:
-  - get: metric-store-ci
-  - get: daily
-    trigger: true
-  - get: cf-deployment-concourse-tasks-image
-  - task: refresh-marina
-    tags: [ cf-denver-shared-vsphere ]
-    image: cf-deployment-concourse-tasks-image
-    file: metric-store-ci/tasks/refresh-env/task.yml
-    params:
-      ID: 354
-  - task: refresh-manila
-    tags: [ cf-denver-shared-vsphere ]
-    image: cf-deployment-concourse-tasks-image
-    file: metric-store-ci/tasks/refresh-env/task.yml
-    params:
-      ID: 66
+  - in_parallel:
+    - get: metric-store-ci
+    - get: daily
+      trigger: true
+    - get: cf-deployment-concourse-tasks-image
+  - in_parallel:
+    - task: refresh-marina
+      tags: [ cf-denver-shared-vsphere ]
+      image: cf-deployment-concourse-tasks-image
+      file: metric-store-ci/tasks/refresh-env/task.yml
+      params:
+        ID: 354
+    - task: refresh-manila
+      tags: [ cf-denver-shared-vsphere ]
+      image: cf-deployment-concourse-tasks-image
+      file: metric-store-ci/tasks/refresh-env/task.yml
+      params:
+        ID: 66
 
 - name: action-items
   plan:
