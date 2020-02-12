@@ -31,13 +31,7 @@ instance_groups:
             client_id: ((uaa-client-id))
             client_secret: ((uaa-client-secret))
 
-            scopes:
-              - openid
-              - uaa.resource
-              - doppler.firehose
-              - logs.admin
-              - cloud_controller.read
-
+            scopes: openid
             auth_url: https://login.run.pivotal.io/oauth/authorize
             token_url: https://login.run.pivotal.io/oauth/token
             api_url: https://login.run.pivotal.io/userinfo
