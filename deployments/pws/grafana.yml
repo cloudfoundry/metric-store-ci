@@ -13,7 +13,7 @@ instance_groups:
   instances: 1
   jobs:
   - name: grafana
-    release: grafana
+    release: prometheus
     properties:
       grafana:
         security:
@@ -54,8 +54,8 @@ instance_groups:
 releases:
 - name: routing
   version: latest
-  name: prometheus-boshrelease
-  version: latest
+- name: prometheus
+  version: 26.2.0
 stemcells:
 - alias: default
   os: ubuntu-xenial
