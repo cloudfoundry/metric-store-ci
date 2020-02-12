@@ -67,5 +67,3 @@ update:
   serial: true
   update_watch_time: 5000-60000
 variables:
-  - name: grafana_admin_password
-    type: password
