@@ -2,14 +2,14 @@ name: metric-store-grafana
 features:
   converge_variables: true
 instance_groups:
-  name: grafana
+- name: grafana
   networks:
-  - name: default
+  - name: pws-cf
   stemcell: default
   vm_type: minimal
   persistent_disk_type: 1GB
   azs:
-  - z1
+  - z2
   instances: 1
   jobs:
   - name: grafana
@@ -43,6 +43,10 @@ instance_groups:
             api_url: https://login.run.pivotal.io/userinfo
   - name: route_registrar
     release: routing
+    consumes:
+      nats:
+        deployment: cf-cfapps-io2
+        from: nats
     properties:
       route_registrar:
         routes:
@@ -56,6 +60,8 @@ releases:
   version: latest
 - name: prometheus
   version: 26.2.0
+- name: bpm
+  version: latest
 stemcells:
 - alias: default
   os: ubuntu-xenial
@@ -66,3 +72,8 @@ update:
   max_in_flight: 1
   serial: true
   update_watch_time: 5000-60000
+addons:
+- name: bpm
+  jobs:
+  - name: bpm
+    release: bpm

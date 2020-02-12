@@ -420,6 +420,9 @@ jobs:
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_CA_CERT: ((bosh-ca-cert.certificate))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
+        UAA_CLIENT: ((metric-store-observe-client.yml/Notes/clientId))
+        UAA_CLIENT_SECRET: ((metric-store-observe-client.yml/Notes/password))
+        GRAFANA_ADMIN_PASSWORD: ((metric-store-observe-client.yml/Notes/grafana_admin_password))
       run:
         path: bash
         args:
@@ -431,5 +434,8 @@ jobs:
           bosh \
             deploy "metric-store-ci/$MANIFEST_FILE" \
             --deployment "$DEPLOYMENT_NAME" \
+            --var uaa-client-id="${UAA_CLIENT}" \
+            --var uaa-client-secret="${UAA_CLIENT_SECRET}" \
+            --var grafana-admin-password="${GRAFANA_ADMIN_PASSWORD}" \
             --non-interactive
 
