@@ -14,6 +14,7 @@ outputs:
 
 PARAMS:
   TOOLSMITHS_ENV_JSON: ""
+  FOUNDATION_TYPE: PAS
 
 run:
   path: metric-store-ci/tasks/tile_install/task

@@ -682,6 +682,7 @@ jobs:
         baked-tile: dev-tile
       params:
         TOOLSMITHS_ENV_JSON: ((ms-pks-acceptance.json/Notes))
+        FOUNDATION_TYPE: PKS
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
 - name: "Install on PCF <%= env_version %>"

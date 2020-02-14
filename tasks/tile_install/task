@@ -25,16 +25,25 @@ om delete-unused-products
 om upload-product --product ${TILE_FILE}
 om stage-product --product-name "metric-store" --product-version ${RELEASE_VERSION}
 
-ert_subnet=$(jq -r .ert_subnet < env.json)
-zone_1=$(jq -r .azs[0] < env.json)
-zone_2=$(jq -r .azs[1] < env.json)
-zone_3=$(jq -r .azs[2] < env.json)
+
+if [[ ${FOUNDATION_TYPE} -eq "PAS" ]]; then
+  subnet=$(jq -r .ert_subnet < env.json)
+  zone_1=$(jq -r .azs[0] < env.json)
+  zone_2=$(jq -r .azs[1] < env.json)
+  zone_3=$(jq -r .azs[2] < env.json)
+elif
+  subnet=manila-management-subnet
+  zone_1=us-central1-f
+  zone_2=
+  zone_3=
+fi
+
 cat > metric-store-tile-config.yml <<EOF
 ---
 product-name: metric-store
 network-properties:
   network:
-    name: ${ert_subnet}
+    name: ${subnet}
   other_availability_zones:
     - name: ${zone_1}
     - name: ${zone_2}
