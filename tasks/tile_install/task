@@ -26,16 +26,16 @@ om upload-product --product ${TILE_FILE}
 om stage-product --product-name "metric-store" --product-version ${RELEASE_VERSION}
 
 
-if [[ ${FOUNDATION_TYPE} -eq "PAS" ]]; then
+if [[ ${FOUNDATION_TYPE} = "PAS" ]]; then
   subnet=$(jq -r .ert_subnet < env.json)
   zone_1=$(jq -r .azs[0] < env.json)
   zone_2=$(jq -r .azs[1] < env.json)
   zone_3=$(jq -r .azs[2] < env.json)
-elif
+else
   subnet=manila-management-subnet
   zone_1=us-central1-f
-  zone_2=
-  zone_3=
+  zone_2=us-central1-f
+  zone_3=us-central1-f
 fi
 
 cat > metric-store-tile-config.yml <<EOF
