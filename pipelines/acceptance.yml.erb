@@ -629,7 +629,7 @@ jobs:
     params:
       file: new-tile-version/version
 
-- name: "🚽 Install Tile 🍾"
+- name: "🚽 Install Tile on PAS 🍾"
   plan:
     - in_parallel:
       - get: concourse-tasks
@@ -655,6 +655,33 @@ jobs:
         baked-tile: dev-tile
       params:
         TOOLSMITHS_ENV_JSON: ((ms-pas-acceptance.json/Notes))
+
+- name: "🚽 Install Tile on PKS 🍾"
+  plan:
+    - in_parallel:
+      - get: concourse-tasks
+      - get: metric-store-ci
+      - get: metric-store-develop
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: metric-store-dev-release
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: pcf-observability-ci-image
+      - get: metric-store-version
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: dev-tile
+        trigger: true
+        passed: ["🥖 Bake Tile 🍰"]
+      - get: gcp-light-stemcell
+        passed: ["🥖 Bake Tile 🍰"]
+      attempts: 3
+    - task: "install tile"
+      image: pcf-observability-ci-image
+      file: metric-store-ci/tasks/tile_install/task.yml
+      input_mapping:
+        tile-version: metric-store-version
+        baked-tile: dev-tile
+      params:
+        TOOLSMITHS_ENV_JSON: ((ms-pks-acceptance.json/Notes))
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
 - name: "Install on PCF <%= env_version %>"
