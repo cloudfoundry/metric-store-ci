@@ -138,9 +138,9 @@ jobs:
   - task: create-action-item-reminder
     file: concourse-tasks/postfacto/slack-action-items/task.yml
     params:
-      POSTFACTO_RETRO_URL: "https://retros.cfapps.io/retros/metric-store"
-      POSTFACTO_API_URL: "https://retros-iad-api.cfapps.io/retros/metric-store"
-      POSTFACTO_PASSWORD: $$$$
+      POSTFACTO_RETRO_URL: ((postfacto.yml/Notes/retro_url))
+      POSTFACTO_API_URL: ((postfacto.yml/Notes/api_url))
+      POSTFACTO_PASSWORD: ((postfacto.yml/Notes/password))
 
   - put: slack-alert
     params:
