@@ -7,12 +7,6 @@
     version: latest
 
 - type: replace
-  path: /releases/name=loggregator-agent?
-  value:
-    name: loggregator-agent
-    version: latest
-
-- type: replace
   path: /instance_groups/name=metric-store?
   value:
     name: metric-store
@@ -31,6 +25,9 @@
         metric-store: {shared: true, as: metric-store}
       consumes:
         metric-store: {from: metric-store}
+        metric-store-nozzle: {from: metric-store-nozzle}
+        metric-store-cf-auth-proxy: {from: metric-store-cf-auth-proxy}
+        metric-store-blackbox: {from: metric-store-blackbox, deployment: metric-store-blackbox}
       properties:
         egress_port: 8080
         health_addr: localhost:6060

@@ -42,6 +42,8 @@ instance_groups:
     consumes:
       metric-store: {from: metric-store, deployment: cf}
       cloud_controller: {from: cloud_controller, deployment: cf}
+    provides:
+      metric-store-blackbox: {as: metric-store-blackbox, shared: true}
   - name: bpm
     release: bpm
   - name: loggregator_agent

@@ -256,6 +256,10 @@ jobs:
               metric-store: {from: metric-store-edge, deployment: metric-store-edge}
               cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
           - type: replace
+            path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/provides
+            value:
+              metric-store-blackbox: {as: metric-store-edge-blackbox, shared: true}
+          - type: replace
             path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties/source_id?
             value: metric-store-edge
           - type: replace

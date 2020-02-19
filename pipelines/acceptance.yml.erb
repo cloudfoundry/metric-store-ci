@@ -445,7 +445,6 @@ jobs:
           cp metric-store-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
-          cp metric-store-ci/ops-files/share-loggregator-link.yml ops-files
           cp metric-store-ci/ops-files/test-clients.yml ops-files
           erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
           cp metric-store-ci/ops-files/metrics-certs-in-cf.yml ops-files
@@ -484,7 +483,6 @@ jobs:
         msats.yml
         metrics-certs-in-cf.yml
         add-blackbox-client.yml
-        share-loggregator-link.yml
   - task: cleanup
     file: cf-deployment-concourse-tasks/bosh-cleanup/task.yml
     params:

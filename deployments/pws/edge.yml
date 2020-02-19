@@ -14,6 +14,10 @@ instance_groups:
   instances: 6
   jobs:
   - name: metric-store
+    consumes:
+      metric-store-blackbox:
+        from: metric-store-edge-blackbox
+        deployment: metric-store-edge-blackbox
     properties:
       replication_factor: 2
       tls:
@@ -96,41 +100,6 @@ instance_groups:
           cert: ((metric_store_metrics_server.certificate))
           key: ((metric_store_metrics_server.private_key))
     release: metric-store
-  - name: loggregator_agent
-    consumes:
-      doppler:
-        deployment: cf-cfapps-io2
-        from: doppler
-    properties:
-      loggregator:
-        tls:
-          agent:
-            cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_tls_agent.certificate))
-            key: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_tls_agent.private_key))
-          ca_cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_ca.certificate))
-      metrics:
-        ca_cert: ((loggregator_agent_metrics_tls.ca))
-        cert: ((loggregator_agent_metrics_tls.certificate))
-        key: ((loggregator_agent_metrics_tls.private_key))
-        server_name: loggregator_agent
-    release: loggregator-agent
-  - consumes:
-      loggregator:
-        deployment: cf-cfapps-io2
-        from: loggregator
-    name: prom_scraper
-    release: loggregator-agent
-    properties:
-      scrape:
-        tls:
-          ca_cert: ((prom_scraper_scrape_tls.ca))
-          cert: ((prom_scraper_scrape_tls.certificate))
-          key: ((prom_scraper_scrape_tls.private_key))
-      metrics:
-        ca_cert: ((prom_scraper_metrics_tls.ca))
-        cert: ((prom_scraper_metrics_tls.certificate))
-        key: ((prom_scraper_metrics_tls.private_key))
-        server_name: prom_scraper_metrics
   - consumes:
       nats:
         deployment: cf-cfapps-io2
@@ -153,8 +122,6 @@ releases:
   version: latest
 - name: routing
   version: latest
-- name: loggregator-agent
-  version: 5.3.6
 stemcells:
 - alias: default
   os: ubuntu-xenial
@@ -239,24 +206,3 @@ variables:
   options:
     ca: metric_scraper_ca
     common_name: metric-store-client
-- name: loggregator_agent_metrics_tls
-  type: certificate
-  options:
-    ca: metric_scraper_ca
-    common_name: loggregator_agent
-    extended_key_usage:
-    - server_auth
-- name: prom_scraper_metrics_tls
-  type: certificate
-  options:
-    ca: metric_scraper_ca
-    common_name: prom_scraper_metrics
-    extended_key_usage:
-    - server_auth
-- name: prom_scraper_scrape_tls
-  type: certificate
-  options:
-    ca: metric_scraper_ca
-    common_name: prom_scraper
-    extended_key_usage:
-    - client_auth

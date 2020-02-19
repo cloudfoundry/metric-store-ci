@@ -28,6 +28,8 @@ instance_groups:
     release: metric-store
     consumes:
       metric-store: {from: metric-store, deployment: default}
+    provides:
+      metric-store-blackbox: {as: metric-store-blackbox, shared: true}
     properties:
       metric_store_metrics:
         tls:
