@@ -60,3 +60,5 @@ RUN cd /tmp \
   && wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/2.6.2/credhub-linux-2.6.2.tgz \
   && tar xzvf credhub*.tgz ./credhub \
   && cp ./credhub /usr/local/bin/
+
+RUN wget -O- https://k14s.io/install.sh | bash
