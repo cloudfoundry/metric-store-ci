@@ -51,13 +51,9 @@ update:
   serial: true
 
 variables:
-- name: metric_store_ca
-  options:
-    common_name: metric-store
-    is_ca: true
-  type: certificate
 - name: metric_store_metrics_server
   type: certificate
   options:
     ca: metric_store_ca
+    ca: "/vpc-bosh-run-pivotal-io/metric-store-edge/metric_store_ca"
     common_name: metric-store
