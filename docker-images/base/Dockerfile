@@ -3,12 +3,25 @@ FROM golang:1.13
 RUN go version
 
 RUN apt-get update; apt-get install --yes \
-    bundler \
-    jq \
-    rsync \
-    unzip \
-    psmisc \
-    vim
+  apt-transport-https \
+  bundler \
+  ca-certificates \
+  curl \
+  gnupg-agent \
+  jq \
+  psmisc \
+  rsync \
+  software-properties-common \
+  unzip \
+  vim
+
+RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+RUN add-apt-repository \
+  "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
+RUN apt-get update; apt-get install --yes \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io
 
 RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz \
   && tar -xzvf chruby-0.3.9.tar.gz \
