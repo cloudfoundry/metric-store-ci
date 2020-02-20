@@ -12,6 +12,8 @@
     name: metric-store
     azs:
     - z1
+    - z2
+    - z3
     instances: 3
     persistent_disk_type: 5GB
     vm_type: minimal
