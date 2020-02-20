@@ -1,0 +1,63 @@
+name: metric-store-prod-blackbox
+
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: latest
+
+releases:
+- name: metric-store
+  version: latest
+- name: loggregator-agent
+  version: 5.3.6
+
+instance_groups:
+- name: metric-store-blackbox
+  azs:
+  - z2
+  - z3
+  instances: 2
+  persistent_disk_type: 5GB
+  vm_type: minimal
+  stemcell: default
+  networks:
+  - name: pws-cf
+  jobs:
+  - name: metric-store-blackbox
+    release: metric-store
+    consumes:
+      metric-store: {from: metric-store, deployment: metric-store}
+      cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
+    provides:
+      metric-store-blackbox: {as: metric-store-blackbox, shared: true}
+    properties:
+      source_id: metric-store
+      cf_blackbox:
+        enabled: true
+        metric_store_address: https://metric-store.run.pivotal.io
+        client_id: ((pws-datadog-forwarder-client/Username))
+        client_secret: ((pws-datadog-forwarder-client/Password))
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
+
+update:
+  canaries: 10
+  max_in_flight: 10
+  canary_watch_time: 30000-60000
+  update_watch_time: 5000-60000
+  serial: true
+
+variables:
+- name: metric_store_ca
+  options:
+    common_name: metric-store
+    is_ca: true
+  type: certificate
+- name: metric_store_metrics_server
+  type: certificate
+  options:
+    ca: metric_store_ca
+    common_name: metric-store

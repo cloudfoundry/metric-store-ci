@@ -2,9 +2,12 @@
 
 set -exu
 
-source cf-deployment-concourse-tasks/shared-functions
+if [[ -n ${BOSH_ENVIRONMENT:-} ]]; then
+  source cf-deployment-concourse-tasks/shared-functions
+  setup_bosh_env_vars
+fi
 
-setup_bosh_env_vars
+: ${BOSH_ENVIRONMENT:?must provide BOSH_* environment variables or BBL_STATE_DIR}
 
 pushd release-tarball
   bosh upload-release $(find -maxdepth 1 -name "${RELEASE_TARBALL_GLOB}")

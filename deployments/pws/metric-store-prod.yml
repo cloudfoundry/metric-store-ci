@@ -1,0 +1,209 @@
+name: metric-store-prod
+
+features:
+  converge_variables: true
+instance_groups:
+- name: metric-store
+  networks:
+  - name: pws-cf
+  persistent_disk_type: 500GB
+  stemcell: default
+  vm_type: metric-store
+  azs:
+  - z2
+  - z3
+  - z4
+  instances: 6
+  jobs:
+  - name: metric-store
+    consumes:
+      metric-store-blackbox:
+        from: metric-store-blackbox
+        deployment: metric-store-blackbox
+    properties:
+      replication_factor: 2
+      tls:
+        ca_cert: ((metric_store.ca))
+        cert: ((metric_store.certificate))
+        key: ((metric_store.private_key))
+      metric_store_server:
+        tls:
+          ca_cert: ((metric_store_server.ca))
+          cert: ((metric_store_server.certificate))
+          key: ((metric_store_server.private_key))
+      metric_store_internode:
+        tls:
+          ca_cert: ((metric_store_internode.ca))
+          cert: ((metric_store_internode.certificate))
+          key: ((metric_store_internode.private_key))
+      metric_store_metrics_server:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
+      metric_store_metrics_client:
+        tls:
+          ca_cert: ((metric_store_metrics_client.ca))
+          cert: ((metric_store_metrics_client.certificate))
+          key: ((metric_store_metrics_client.private_key))
+    provides:
+      metric-store:
+        as: metric-store-prod
+        shared: true
+    release: metric-store
+  - name: metric-store-nozzle
+    consumes:
+      reverse_log_proxy:
+        deployment: cf-cfapps-io2
+        from: reverse_log_proxy
+    properties:
+      metric_store_client:
+        tls:
+          ca_cert: ((nozzle_to_metric_store_client.ca))
+          cert: ((nozzle_to_metric_store_client.certificate))
+          key: ((nozzle_to_metric_store_client.private_key))
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
+      logs_provider:
+        tls:
+          ca_cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/logs_provider.ca))
+          cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/logs_provider.certificate))
+          key: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/logs_provider.private_key))
+      shard_id: metric-store-prod
+    release: metric-store
+  - name: metric-store-cf-auth-proxy
+    consumes:
+      cloud_controller:
+        deployment: cf-cfapps-io2
+        from: cloud_controller
+    properties:
+      cc:
+        ca_cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_ca.certificate))
+        common_name: metron
+      proxy_ca_cert: "((metric_store_ca.certificate))"
+      proxy_port: 8083
+      external_cert: ((metric_store_ssl.certificate))
+      external_key: ((metric_store_ssl.private_key))
+      uaa:
+        ca_cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/uaa_ca.certificate))
+        client_id: doppler
+        client_secret: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/uaa_clients_doppler_secret))
+        internal_addr: https://uaa.service.cf.internal:8443
+      metric_store_client:
+        tls:
+          cert: ((metric_store.certificate))
+          key: ((metric_store.private_key))
+      metric_store_metrics:
+        tls:
+          ca_cert: ((metric_store_metrics_server.ca))
+          cert: ((metric_store_metrics_server.certificate))
+          key: ((metric_store_metrics_server.private_key))
+    release: metric-store
+  - consumes:
+      nats:
+        deployment: cf-cfapps-io2
+        from: nats
+    name: route_registrar
+    properties:
+      route_registrar:
+        routes:
+        - name: metric-store-prod-reverse-proxy
+          tls_port: 8083
+          server_cert_domain_san: metric-store
+          registration_interval: 20s
+          uris:
+          - metric-store.run.pivotal.io
+          - '*.metric-store.run.pivotal.io'
+    release: routing
+releases:
+- name: metric-store
+  version: latest
+- name: routing
+  version: latest
+stemcells:
+- alias: default
+  os: ubuntu-xenial
+  version: latest
+update:
+  canaries: 10
+  canary_watch_time: 30000-60000
+  max_in_flight: 1
+  serial: true
+  update_watch_time: 5000-60000
+variables:
+- name: metric_store_ca
+  options:
+    common_name: metric-store
+    is_ca: true
+  type: certificate
+- name: metric_scraper_ca
+  options:
+    common_name: metricScraperCA
+    is_ca: true
+  type: certificate
+- name: metric_store
+  options:
+    alternative_names:
+    - localhost
+    - metric-store
+    - metric_store
+    - metricstore
+    ca: metric_store_ca
+    common_name: localhost
+    extended_key_usage:
+    - client_auth
+    - server_auth
+  type: certificate
+- name: metric_store_internode
+  options:
+    alternative_names:
+    - metric-store
+    ca: metric_store_ca
+    common_name: metric-store
+    extended_key_usage:
+    - client_auth
+    - server_auth
+  type: certificate
+- name: metric_store_server
+  options:
+    alternative_names:
+    - metric-store
+    ca: metric_store_ca
+    common_name: metric-store
+    extended_key_usage:
+    - server_auth
+  type: certificate
+- name: nozzle_to_metric_store_client
+  options:
+    alternative_names:
+    - metric-store
+    ca: metric_store_ca
+    common_name: metric-store
+    extended_key_usage:
+    - client_auth
+  type: certificate
+- name: metric_store_ssl
+  type: certificate
+  options:
+    ca: "/vpc-bosh-run-pivotal-io/cf-cfapps-io2/service_cf_internal_ca"
+    common_name: metric-store
+    alternative_names:
+    - metric-store
+- name: metric_store_proxy_tls
+  type: certificate
+  options:
+    ca: metric_store_ca
+    common_name: localhost
+- name: metric_store_metrics_server
+  type: certificate
+  options:
+    ca: metric_scraper_ca
+    common_name: metric-store
+- name: metric_store_metrics_client
+  type: certificate
+  options:
+    ca: metric_scraper_ca
+    common_name: metric-store-client
