@@ -18,7 +18,7 @@ instance_groups:
   - name: metric-store
     consumes:
       metric-store-blackbox:
-        from: metric-store-blackbox
+        from: metric-store-edge-blackbox
         deployment: metric-store-edge-blackbox
     properties:
       replication_factor: 2

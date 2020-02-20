@@ -1,4 +1,4 @@
-name: metric-store-blackbox
+name: metric-store-edge-blackbox
 
 stemcells:
 - alias: default
@@ -14,23 +14,29 @@ releases:
 instance_groups:
 - name: metric-store-blackbox
   azs:
-  - z1
   - z2
   - z3
-  instances: 1
+  instances: 2
   persistent_disk_type: 5GB
   vm_type: minimal
   stemcell: default
   networks:
-  - name: default
+  - name: pws-cf
   jobs:
   - name: metric-store-blackbox
     release: metric-store
     consumes:
-      metric-store: {from: metric-store, deployment: default}
+      metric-store: {from: metric-store-edg, deployment: metric-store-edge}
+      cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
     provides:
-      metric-store-blackbox: {as: metric-store-blackbox, shared: true}
+      metric-store-blackbox: {as: metric-store-edge-blackbox, shared: true}
     properties:
+      source_id: metric-store-edge
+      cf_blackbox:
+        enabled: true
+        metric_store_address: https://metric-store-edge.run.pivotal.io
+        client_id: ((pws-datadog-forwarder-client/Username))
+        client_secret: ((pws-datadog-forwarder-client/Password))
       metric_store_metrics:
         tls:
           ca_cert: ((metric_store_metrics_server.ca))
