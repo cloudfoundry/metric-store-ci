@@ -1,3 +1,5 @@
+name: metric-store-edge
+
 features:
   converge_variables: true
 instance_groups:
@@ -16,7 +18,7 @@ instance_groups:
   - name: metric-store
     consumes:
       metric-store-blackbox:
-        from: metric-store-edge-blackbox
+        from: metric-store-blackbox
         deployment: metric-store-edge-blackbox
     properties:
       replication_factor: 2
@@ -116,7 +118,6 @@ instance_groups:
           - metric-store-edge.run.pivotal.io
           - '*.metric-store-edge.run.pivotal.io'
     release: routing
-name: metric-store-edge
 releases:
 - name: metric-store
   version: latest
