@@ -240,6 +240,8 @@ jobs:
           bosh \
             deploy "metric-store-ci/$MANIFEST_FILE" \
             --deployment "$DEPLOYMENT_NAME" \
+            --var cf-client="((pws-datadog-forwarder-client/Username))" \
+            --var cf-client-secret="((pws-datadog-forwarder-client/Password))" \
             --non-interactive
 
 - name: metric-store-edge-nightly-redeploy

@@ -35,8 +35,8 @@ instance_groups:
       cf_blackbox:
         enabled: true
         metric_store_address: https://metric-store-edge.run.pivotal.io
-        client_id: ((pws-datadog-forwarder-client/Username))
-        client_secret: ((pws-datadog-forwarder-client/Password))
+        client_id: ((cf-client))
+        client_secret: ((cf-client-secret))
       metric_store_metrics:
         tls:
           ca_cert: ((metric_store_metrics_server.ca))
