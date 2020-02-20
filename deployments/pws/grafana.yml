@@ -23,6 +23,7 @@ instance_groups:
           root_url: https://grafana.observe.run.pivotal.io
           ssl_cert: ((grafana_ssl.certificate))
           ssl_key: ((grafana_ssl.private_key))
+          protocol: https
         users:
           auto_assign_org_role: Editor
         auth:
