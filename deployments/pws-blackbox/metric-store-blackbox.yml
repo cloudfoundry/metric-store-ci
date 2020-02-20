@@ -1,5 +1,8 @@
 name: metric-store-edge-blackbox
 
+features:
+  converge_variables: true
+
 stemcells:
 - alias: default
   os: ubuntu-xenial
@@ -54,6 +57,5 @@ variables:
 - name: metric_store_metrics_server
   type: certificate
   options:
-    ca: metric_store_ca
-    ca: "/vpc-bosh-run-pivotal-io/metric-store-edge/metric_store_ca"
+    ca: "/vpc-bosh-run-pivotal-io/metric-store-edge/metric_scraper_ca"
     common_name: metric-store
