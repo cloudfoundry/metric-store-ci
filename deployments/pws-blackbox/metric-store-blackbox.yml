@@ -42,41 +42,6 @@ instance_groups:
           ca_cert: ((metric_store_metrics_server.ca))
           cert: ((metric_store_metrics_server.certificate))
           key: ((metric_store_metrics_server.private_key))
-  - name: prom_scraper
-    consumes:
-      loggregator:
-        deployment: cf-cfapps-io2
-        from: loggregator
-    release: loggregator-agent
-    properties:
-      scrape:
-        tls:
-          ca_cert: ((prom_scraper_scrape_tls.ca))
-          cert: ((prom_scraper_scrape_tls.certificate))
-          key: ((prom_scraper_scrape_tls.private_key))
-      metrics:
-        ca_cert: ((prom_scraper_metrics_tls.ca))
-        cert: ((prom_scraper_metrics_tls.certificate))
-        key: ((prom_scraper_metrics_tls.private_key))
-        server_name: prom_scraper_metrics
-  - name: loggregator_agent
-    consumes:
-      doppler:
-        deployment: cf-cfapps-io2
-        from: doppler
-    release: loggregator-agent
-    properties:
-      loggregator:
-        tls:
-          agent:
-            cert: "((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_tls_agent.certificate))"
-            key: "((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_tls_agent.private_key))"
-          ca_cert: "((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_ca.certificate))"
-      metrics:
-        ca_cert: ((loggregator_agent_metrics_tls.ca))
-        cert: ((loggregator_agent_metrics_tls.certificate))
-        key: ((loggregator_agent_metrics_tls.private_key))
-        server_name: loggregator_agent
 
 update:
   canaries: 10
@@ -96,24 +61,3 @@ variables:
   options:
     ca: metric_store_ca
     common_name: metric-store
-- name: loggregator_agent_metrics_tls
-  type: certificate
-  options:
-    ca: metric_store_ca
-    common_name: loggregator_agent
-    extended_key_usage:
-    - server_auth
-- name: prom_scraper_metrics_tls
-  type: certificate
-  options:
-    ca: metric_store_ca
-    common_name: prom_scraper_metrics
-    extended_key_usage:
-    - server_auth
-- name: prom_scraper_scrape_tls
-  type: certificate
-  options:
-    ca: metric_store_ca
-    common_name: prom_scraper
-    extended_key_usage:
-    - client_auth
