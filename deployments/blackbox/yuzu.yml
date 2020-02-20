@@ -10,8 +10,6 @@ releases:
   version: latest
 - name: bpm
   version: latest
-- name: loggregator-agent
-  version: latest
 
 instance_groups:
 - name: metric-store-blackbox
@@ -46,69 +44,8 @@ instance_groups:
       metric-store-blackbox: {as: metric-store-blackbox, shared: true}
   - name: bpm
     release: bpm
-  - name: loggregator_agent
-    release: loggregator-agent
-    consumes:
-      doppler:
-        deployment: cf
-        from: doppler
-    properties:
-      disable_udp: true
-      loggregator:
-        tls:
-          ca_cert: "((loggregator_tls_agent.ca))"
-          agent:
-            cert: "((loggregator_tls_agent.certificate))"
-            key: "((loggregator_tls_agent.private_key))"
-      metrics:
-        ca_cert: "((/bosh-yuzu/cf/loggregator_agent_metrics_tls.ca))"
-        cert: "((/bosh-yuzu/cf/loggregator_agent_metrics_tls.certificate))"
-        key: "((/bosh-yuzu/cf/loggregator_agent_metrics_tls.private_key))"
-        server_name: loggregator_agent_metrics
-  - name: prom_scraper
-    release: loggregator-agent
-    consumes:
-      loggregator:
-        deployment: cf
-        from: loggregator
-    properties:
-      scrape:
-        tls:
-          ca_cert: "((prom_scraper_scrape_tls.ca))"
-          cert: "((prom_scraper_scrape_tls.certificate))"
-          key: "((prom_scraper_scrape_tls.private_key))"
-      metrics:
-        ca_cert: "((prom_scraper_metrics_tls.ca))"
-        cert: "((prom_scraper_metrics_tls.certificate))"
-        key: "((prom_scraper_metrics_tls.private_key))"
-        server_name: prom_scraper_metrics
 
 variables:
-- name: loggregator_tls_agent
-  type: certificate
-  options:
-    ca: /bosh-yuzu/cf/loggregator_ca
-    common_name: metron
-    extended_key_usage:
-    - client_auth
-    - server_auth
-
-- name: prom_scraper_scrape_tls
-  type: certificate
-  options:
-    ca: /bosh-yuzu/cf/metric_scraper_ca
-    common_name: prom_scraper
-    extended_key_usage:
-    - client_auth
-
-- name: prom_scraper_metrics_tls
-  type: certificate
-  options:
-    ca: /bosh-yuzu/cf/metric_scraper_ca
-    common_name: prom_scraper_metrics
-    extended_key_usage:
-    - server_auth
-
 - name: metric_store_metrics_server
   type: certificate
   options:
