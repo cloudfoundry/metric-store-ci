@@ -13,7 +13,6 @@ export RELEASE_VERSION=$(cat new-tile-version/version)
 
 mv bpm-release/release.tgz releases/bpm-release-$(cat bpm-release/version).tgz
 mv cf-routing-release/release.tgz releases/cf-routing-release-$(cat cf-routing-release/version).tgz
-mv loggregator-agent-release/release.tgz releases/loggregator-agent-release-$(cat loggregator-agent-release/version).tgz
 
 mkdir -p baked-tile
 TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal

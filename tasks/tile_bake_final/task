@@ -9,9 +9,8 @@ mkdir -p releases
 
 echo_green "Copying depedency releases to releases directory"
 cp metric-store-final-bosh-release/release-*.tgz releases
-mv bpm-release/release.tgz releases/bpm-release.tgz
-mv cf-routing-release/release.tgz releases/cf-routing-release.tgz
-mv loggregator-agent-release/release.tgz releases/loggregator-agent-release.tgz
+mv bpm-release/release.tgz releases/bpm-release-$(cat bpm-release/version).tgz
+mv cf-routing-release/release.tgz releases/cf-routing-release-$(cat cf-routing-release/version).tgz
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."

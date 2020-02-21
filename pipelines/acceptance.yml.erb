@@ -236,18 +236,6 @@ resources:
     repository: cloudfoundry-incubator/cf-routing-release
     regexp: .*188.*
 
-- name: loggregator-agent-release
-  type: bosh-io-release
-  source:
-    repository: cloudfoundry/loggregator-agent-release
-
-- name: loggregator-agent-release-3
-  type: bosh-io-release
-  version:
-  source:
-    repository: cloudfoundry/loggregator-agent-release
-    regexp: 3.*
-
 - name: hourly-during-the-workday
   type: time
   source:
@@ -395,16 +383,6 @@ jobs:
           RELEASE_TARBALL_GLOB: "release*"
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
-    - do:
-      - get: loggregator-agent-release
-      - task: upload-loggregator-agent-release
-        file: metric-store-ci/tasks/upload-release-tarball/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          release-tarball: loggregator-agent-release
-        params:
-          BBL_STATE_DIR: ((bbl_state_dir))
-          RELEASE_TARBALL_GLOB: "release*"
     - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
@@ -607,7 +585,6 @@ jobs:
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
-      - get: loggregator-agent-release-3
       attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -615,7 +592,6 @@ jobs:
       input_mapping:
         metric-store-release: metric-store-develop
         metric-store-dev-release: metric-store-dev-release
-        loggregator-agent-release: loggregator-agent-release-3
         tile-version: metric-store-version
         stemcell: gcp-light-stemcell
     - put: dev-tile
@@ -860,8 +836,6 @@ jobs:
         passed: ["🥖 Bake Tile 🍰"]
       - get: cf-routing-release
         passed: ["🥖 Bake Tile 🍰"]
-      - get: loggregator-agent-release-3
-        passed: ["🥖 Bake Tile 🍰"]
       - get: develop
         resource: metric-store-develop
         trigger: true
@@ -925,8 +899,6 @@ jobs:
     - get: bpm-release
       passed: [ promotion-gate ]
     - get: cf-routing-release
-      passed: [ promotion-gate ]
-    - get: loggregator-agent-release-3
       passed: [ promotion-gate ]
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
@@ -1051,8 +1023,6 @@ jobs:
       passed: [ build-final-release ]
     - get: cf-routing-release
       passed: [ build-final-release ]
-    - get: loggregator-agent-release-3
-      passed: [ build-final-release ]
     - get: metric-store-final-release
       passed: [ build-final-release ]
   - task: create-slack-message
@@ -1066,7 +1036,6 @@ jobs:
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       stemcell: gcp-light-stemcell
-      loggregator-agent-release: loggregator-agent-release-3
   - put: final-tile
     params:
       file: baked-tile/*.pivotal
