@@ -2,7 +2,7 @@
 
 set -exu
 
-if [[ -n ${BOSH_ENVIRONMENT:-} ]]; then
+if [[ -z ${BOSH_ENVIRONMENT:-} ]]; then
   source cf-deployment-concourse-tasks/shared-functions
   setup_bosh_env_vars
 fi
