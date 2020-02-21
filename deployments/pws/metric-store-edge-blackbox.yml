@@ -11,8 +11,6 @@ stemcells:
 releases:
 - name: metric-store
   version: latest
-- name: loggregator-agent
-  version: 5.3.6
 
 instance_groups:
 - name: metric-store-blackbox
