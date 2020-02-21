@@ -26,6 +26,7 @@ instance_groups:
   - name: metric-store-blackbox
     release: metric-store
     properties:
+      deployment: metric-store-blackbox
       source_id: metric-store
       cf_blackbox:
         enabled: true

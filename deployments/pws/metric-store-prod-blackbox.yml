@@ -29,6 +29,7 @@ instance_groups:
     provides:
       metric-store-blackbox: {as: metric-store-blackbox, shared: true}
     properties:
+      deployment: metric-store-prod-blackbox
       source_id: metric-store
       cf_blackbox:
         enabled: true
