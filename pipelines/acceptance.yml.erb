@@ -906,7 +906,6 @@ jobs:
       TITLE: Building Final Release
       TEAM: metric-store-log-cache
   - task: create-final-release
-    image: logcache/base
     file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
