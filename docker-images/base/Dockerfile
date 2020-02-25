@@ -50,7 +50,7 @@ RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh g
 RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
 
 RUN go get github.com/onsi/ginkgo/ginkgo
-RUN git config --global user.email "cf-log-cache@pivotal.io" && git config --global user.name "Metric Store CI"
+RUN git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
 
 RUN cd /tmp \
   && wget https://github.com/cloudfoundry/bosh-bootloader/releases/download/v6.6.7/bbl-v6.6.7_linux_x86-64 -O /usr/local/bin/bbl \
