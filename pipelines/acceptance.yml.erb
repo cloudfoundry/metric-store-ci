@@ -1003,7 +1003,7 @@ jobs:
     - task: create-message
       file: metric-store-ci/tasks/alert-message-release-end/task.yml
       input_mapping:
-        version: metric-store-release-version
+        version: release-version-generated
     - <<: *send-alert-message
 
 - name: 🥖 Bake Final Tile 🥖
