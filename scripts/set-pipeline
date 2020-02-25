@@ -339,6 +339,7 @@ function main {
     validate_usage $1
     check_lpass
     find_pipeline $1
+    login_fly
     check_fly
     preprocess_pipeline
     validate_pipeline
