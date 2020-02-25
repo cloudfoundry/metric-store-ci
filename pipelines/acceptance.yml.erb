@@ -980,24 +980,23 @@ jobs:
     - get: metric-store-deployments
     - get: denver-locks
     - get: cf-deployment-concourse-tasks
-  - do:
-    - task: snapshot-acceptance-environment
-      file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
-      input_mapping:
-        bbl-state: denver-locks
-        release-version: metric-store-release-version
-      params:
-        BBL_STATE_DIR: ((bbl_state_dir))
-    - put: metric-store-deployments
-      params:
-        repository: metric-store-deployments-modified
-        tag: metric-store-release-version/version
-        tag_prefix: metric-store-v
+  - task: snapshot-acceptance-environment
+    file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
+    input_mapping:
+      bbl-state: denver-locks
+      release-version: metric-store-pivnet-metadata
+    params:
+      BBL_STATE_DIR: ((bbl_state_dir))
+  - put: metric-store-deployments
+    params:
+      repository: metric-store-deployments-modified
+      tag: release-version-generated/version
+      tag_prefix: v
   - put: metric-store-ci
     params:
       repository: metric-store-ci
-      tag: metric-store-release-version/version
-      tag_prefix: metric-store-v
+      tag: release-version-generated/version
+      tag_prefix: v
       only_tag: true
   on_success:
     do:

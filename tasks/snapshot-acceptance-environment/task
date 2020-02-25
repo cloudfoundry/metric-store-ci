@@ -1,6 +1,10 @@
 #!/bin/bash
 set -exuo pipefail
 
+GO111MODULE=on go install github.com/mikefarah/yq/v3
+
+RELEASE_VERSION=$(yq r release-version/metadata.yml release.version)
+
 source cf-deployment-concourse-tasks/shared-functions
 
 setup_bosh_env_vars
@@ -12,7 +16,11 @@ pushd metric-store-deployments
     git add .
   popd
 
-  git commit --allow-empty -m "Save acceptance manifest for $(cat ../release-version/version)"
+  git commit --allow-empty -m "Save acceptance manifest for ${RELEASE_VERSION}"
 
   cp -r . ../metric-store-deployments-modified
+popd
+
+pushd release-version-generated
+  echo "${RELEASE_VERSION}" > version
 popd

@@ -13,6 +13,7 @@ inputs:
 
 outputs:
 - name: metric-store-deployments-modified
+- name: release-version-generated
 
 params:
   BBL_STATE_DIR:
