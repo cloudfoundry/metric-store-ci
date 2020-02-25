@@ -4,11 +4,11 @@ platform: linux
 inputs:
   - name: metric-store-ci
   - name: pivnet-metadata
-  - name: p-metric-store-release-master
+  - name: metric-store-master
   - name: stemcell
   - name: bpm-release
   - name: cf-routing-release
-  - name: metric-store-final-bosh-release
+  - name: metric-store-final-release
 
 outputs:
   - name: baked-tile

@@ -8,13 +8,13 @@ TIMESTAMP=$(date +%s)
 mkdir -p releases
 
 echo_green "Copying depedency releases to releases directory"
-cp metric-store-final-bosh-release/release-*.tgz releases
+cp metric-store-final-release/release-*.tgz releases
 mv bpm-release/release.tgz releases/bpm-release-$(cat bpm-release/version).tgz
 mv cf-routing-release/release.tgz releases/cf-routing-release-$(cat cf-routing-release/version).tgz
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."
-pushd p-metric-store-release-master/tile
+pushd metric-store-master/tile
   erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
 popd
 
@@ -25,13 +25,13 @@ echo_green "Kiln baking tile"
 
 kiln bake \
     --version "$RELEASE_VERSION" \
-    --metadata p-metric-store-release-master/tile/metadata.yml \
-    --icon p-metric-store-release-master/tile/icon.png \
+    --metadata metric-store-master/tile/metadata.yml \
+    --icon metric-store-master/tile/icon.png \
     --releases-directory releases \
-    --properties-directory p-metric-store-release-master/tile/properties \
-    --jobs-directory p-metric-store-release-master/tile/jobs \
-    --instance-groups-directory p-metric-store-release-master/tile/instance_groups \
-    --bosh-variables-directory p-metric-store-release-master/tile/variables \
+    --properties-directory metric-store-master/tile/properties \
+    --jobs-directory metric-store-master/tile/jobs \
+    --instance-groups-directory metric-store-master/tile/instance_groups \
+    --bosh-variables-directory metric-store-master/tile/variables \
     --output-file ${TILE_FILE}
 
 echo_green "Freshly baked tile 🍞: ${TILE_FILE}"
