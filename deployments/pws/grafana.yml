@@ -20,7 +20,7 @@ instance_groups:
           admin_password: ((grafana-admin-password))
           admin_username: admin
         server:
-          root_url: https://grafana.observe.run.pivotal.io
+          root_url: https://grafana-observe.run.pivotal.io
           ssl_cert: ((grafana_ssl.certificate))
           ssl_key: ((grafana_ssl.private_key))
           protocol: https
@@ -49,9 +49,9 @@ instance_groups:
         - name: grafana-metric-store
           tls_port: 3000
           registration_interval: 20s
-          server_cert_domain_san: grafana
+          server_cert_domain_san: grafana-observe
           uris:
-          - grafana.observe.run.pivotal.io
+          - grafana-observe.run.pivotal.io
 releases:
 - name: routing
   version: latest
@@ -79,6 +79,6 @@ variables:
   type: certificate
   options:
     ca: /vpc-bosh-run-pivotal-io/cf-cfapps-io2/service_cf_internal_ca
-    common_name: grafana
+    common_name: grafana-observe
     extended_key_usage:
       - server_auth
