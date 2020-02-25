@@ -9,6 +9,8 @@ GO111MODULE=on go install github.com/mikefarah/yq/v3
 RELEASE_VERSION=$(yq r release-version/metadata.yml release.version)
 tag_name="v${RELEASE_VERSION}"
 
+git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
+
 echo "${PROJECT_NAME} ${RELEASE_VERSION}" > github-release/name
 echo ${tag_name} > github-release/tag
 echo "TBD" > github-release/body
