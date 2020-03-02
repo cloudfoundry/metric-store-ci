@@ -585,7 +585,6 @@ jobs:
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
-      attempts: 3
     - task: "bake tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_bake/task.yml
@@ -620,7 +619,6 @@ jobs:
         passed: ["🥖 Bake Tile 🍰"]
       - get: gcp-light-stemcell
         passed: ["🥖 Bake Tile 🍰"]
-      attempts: 3
     - task: "install tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task.yml
@@ -647,7 +645,6 @@ jobs:
         passed: ["🥖 Bake Tile 🍰"]
       - get: gcp-light-stemcell
         passed: ["🥖 Bake Tile 🍰"]
-      attempts: 3
     - task: "install tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task.yml
@@ -676,8 +673,8 @@ jobs:
       passed: ["🥖 Bake Tile 🍰"]
     - get: gcp-light-stemcell
       passed: ["🥖 Bake Tile 🍰"]
-    attempts: 3
   - task: "Claim Smith Env"
+    attempts: 3
     tags: [ cf-denver-shared-vsphere ]
     config:
       platform: linux
@@ -698,7 +695,6 @@ jobs:
           echo "Claimed smith environment: ${env}"
           echo ${env} > environment/name
           smith read > environment/metadata
-    attempts: 3
     on_failure:
       task: release-env
       tags: [ cf-denver-shared-vsphere ]
