@@ -54,5 +54,7 @@ EOF
 
 om configure-product --config metric-store-tile-config.yml
 om upload-stemcell --stemcell gcp-light-stemcell/${STEMCELL_FILE} --floating true --shasum ${STEMCELL_SHA}
+
+om apply-changes --product-name "cf"
 om apply-changes --product-name "metric-store"
 
