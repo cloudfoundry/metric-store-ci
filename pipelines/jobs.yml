@@ -115,12 +115,12 @@ jobs:
       trigger: true
     - get: cf-deployment-concourse-tasks-image
   - in_parallel:
-    - task: refresh-marina
+    - task: refresh-lathrop
       tags: [ cf-denver-shared-vsphere ]
       image: cf-deployment-concourse-tasks-image
       file: metric-store-ci/tasks/refresh-env/task.yml
       params:
-        ID: 354
+        ID: 325
     - task: refresh-manila
       tags: [ cf-denver-shared-vsphere ]
       image: cf-deployment-concourse-tasks-image
