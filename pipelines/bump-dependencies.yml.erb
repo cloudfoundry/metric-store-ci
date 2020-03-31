@@ -190,4 +190,4 @@ jobs:
       GITHUB_USER: "metric-store-ci"
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
       GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      EXCEPT: "google.golang.org/grpc"
+      EXCEPT: "google.golang.org/grpc,github.com/influxdata/influxdb"
