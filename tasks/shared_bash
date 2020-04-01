@@ -128,11 +128,11 @@ calculate_version() {
   metric_store_dev_version_semver=$(cat $current_dev_version_dir/version | sed s/-.*//)
   metric_store_release_version_semver=$(grep "=" ${current_metric_store_release_version_file} | cut -d \" -f 2)
 
-  if [[ "${metric_store_dev_version_semver}" != "${metric_store_release_version_semver}" ]]; then
+  if [[ "${metric_store_dev_version_semver}" == "${metric_store_release_version_semver}" ]]; then
+    cp ${current_dev_version_dir}/version ${new_version_dir}/version
+  else
     dev_version="${metric_store_release_version_semver}-${postfix}.0"
     echo ${dev_version} > ${new_version_dir}/version
-  else
-    cp ${current_dev_version_dir}/version ${new_version_dir}/version
   fi
 }
 
