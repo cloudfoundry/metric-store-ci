@@ -692,22 +692,22 @@ jobs:
       - get: concourse-tasks
       - get: metric-store-ci
       - get: metric-store-develop
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["🥖 Bake PKS Tile 🍰"]
       - get: metric-store-dev-release
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["🥖 Bake PKS Tile 🍰"]
       - get: pcf-observability-ci-image
-      - get: metric-store-version
-        passed: ["🥖 Bake PAS Tile 🍰"]
+      - get: pks-metric-store-tile-version
+        passed: ["🥖 Bake PKS Tile 🍰"]
       - get: dev-tile
         trigger: true
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["🥖 Bake PKS Tile 🍰"]
       - get: gcp-light-stemcell
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["🥖 Bake PKS Tile 🍰"]
     - task: "install tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task.yml
       input_mapping:
-        tile-version: metric-store-version
+        tile-version: pks-metric-store-tile-version
         baked-tile: dev-tile
       params:
         TOOLSMITHS_ENV_JSON: ((ms-pks-acceptance.json/Notes))
