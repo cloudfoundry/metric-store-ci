@@ -12,6 +12,7 @@ calculate_version metric-store-release/src/internal/version/version.go tile-vers
 export RELEASE_VERSION=$(cat new-tile-version/version)
 
 for release in ${RELEASES[@]}; do
+  echo "Adding release: ${release}"
   mv ${release}/release.tgz releases/${release}-"$(cat ${release}/version)".tgz
 done
 
