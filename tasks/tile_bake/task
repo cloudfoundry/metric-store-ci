@@ -25,13 +25,13 @@ popd
 
 kiln bake \
     --version "$RELEASE_VERSION" \
-    --metadata metric-store-release/tile/metadata.yml \
-    --icon metric-store-release/tile/icon.png \
+    --metadata metric-store-release/${TILE_DIR}/metadata.yml \
+    --icon metric-store-release/${TILE_DIR}/icon.png \
     --releases-directory releases \
-    --properties-directory metric-store-release/tile/properties \
-    --jobs-directory metric-store-release/tile/jobs \
-    --instance-groups-directory metric-store-release/tile/instance_groups \
-    --bosh-variables-directory metric-store-release/tile/variables \
+    --properties-directory metric-store-release/${TILE_DIR}/properties \
+    --jobs-directory metric-store-release/${TILE_DIR}/jobs \
+    --instance-groups-directory metric-store-release/${TILE_DIR}/instance_groups \
+    --bosh-variables-directory metric-store-release/${TILE_DIR}/variables \
     --output-file ${TILE_FILE}
 
 echo "Freshly baked tile 🍞: ${TILE_FILE}"
