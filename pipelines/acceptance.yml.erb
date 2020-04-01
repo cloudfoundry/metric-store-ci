@@ -596,15 +596,12 @@ jobs:
       - get: cf-routing-release
     - task: "bake tile"
       image: pcf-observability-ci-image
-      file: metric-store-ci/tasks/tile_bake/task.yml
+      file: metric-store-ci/tasks/pas_tile_bake/task.yml
       input_mapping:
         metric-store-release: metric-store-develop
         metric-store-dev-release: metric-store-dev-release
         tile-version: metric-store-version
         stemcell: gcp-light-stemcell
-      params:
-        TILE_NAME: app-metric-store
-        TILE_DIR: tile
     - put: dev-tile
       params:
         file: baked-tile/*.pivotal
@@ -632,15 +629,12 @@ jobs:
         - get: bpm-release
     - task: "bake tile"
       image: pcf-observability-ci-image
-      file: metric-store-ci/tasks/tile_bake/task.yml
+      file: metric-store-ci/tasks/pks_tile_bake/task.yml
       input_mapping:
         metric-store-release: metric-store-develop
         metric-store-dev-release: metric-store-dev-release
         tile-version: pks-metric-store-tile-version
         stemcell: gcp-light-stemcell
-      params:
-        TILE_NAME: pks-metric-store
-        TILE_DIR: pks-tile
     - put: dev-tile
       params:
         file: baked-tile/*.pivotal

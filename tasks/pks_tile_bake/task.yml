@@ -1,0 +1,23 @@
+---
+platform: linux
+
+inputs:
+  - name: metric-store-ci
+  - name: tile-version
+  - name: metric-store-dev-release
+  - name: metric-store-release
+  - name: stemcell
+  - name: bpm-release
+
+outputs:
+  - name: baked-tile
+  - name: new-tile-version
+  - name: bpm-release
+
+params:
+  RELEASES: "cf-routing-release"
+  TILE_NAME: pks-metric-store
+  TILE_DIR: pks-tile
+
+run:
+  path: metric-store-ci/tasks/bake_tile

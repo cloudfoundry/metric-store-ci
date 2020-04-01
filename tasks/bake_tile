@@ -11,8 +11,9 @@ set -f
 calculate_version metric-store-release/src/internal/version/version.go tile-version new-tile-version "build"
 export RELEASE_VERSION=$(cat new-tile-version/version)
 
-mv bpm-release/release.tgz releases/bpm-release-$(cat bpm-release/version).tgz
-mv cf-routing-release/release.tgz releases/cf-routing-release-$(cat cf-routing-release/version).tgz
+for release in "${RELEASES[@]}"; do
+  mv ${release}/release.tgz releases/${release}-"$(cat ${release}/version)".tgz
+done
 
 mkdir -p baked-tile
 TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal
