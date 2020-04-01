@@ -593,6 +593,8 @@ jobs:
         metric-store-dev-release: metric-store-dev-release
         tile-version: metric-store-version
         stemcell: gcp-light-stemcell
+      params:
+        TILE_NAME: app-metric-store
     - put: dev-tile
       params:
         file: baked-tile/*.pivotal

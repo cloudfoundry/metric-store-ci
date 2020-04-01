@@ -16,8 +16,5 @@ outputs:
   - name: bpm-release
   - name: cf-routing-release
 
-params:
-  TILE_NAME: app-metric-store
-
 run:
   path: metric-store-ci/tasks/tile_bake/task
