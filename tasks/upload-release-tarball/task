@@ -11,7 +11,7 @@ fi
 
 pushd release-tarball
   file="$(find -maxdepth 1 -name ${RELEASE_TARBALL_GLOB})"
-  if [[ -z "${file}"" ]]; then
+  if [[ -z "${file}" ]]; then
     echo Unable to find tarball in ${PWD} with glob ${RELEASE_TARBALL_GLOB}
     exit 1
   fi
