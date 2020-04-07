@@ -17,11 +17,18 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.24.0
 
+- name: cf-deployment-concourse-tasks
+  type: git
+  source:
+    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
+    branch: v10.14.0 # bump to latest
+
 - name: metric-store-release
   type: github-release
   source:
     user: cloudfoundry
     repository: metric-store-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
 
 - name: metric-store-ci
   type: git
@@ -48,6 +55,7 @@ jobs:
       text: ":yellow_heart: Started :metric: Metric Store deployment to :squirrel: PWS Prod"
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
+    - get: cf-deployment-concourse-tasks
     - get: metric-store-release
       trigger: true
     - get: metric-store-ci
@@ -55,12 +63,14 @@ jobs:
     file: metric-store-ci/tasks/upload-release-tarball/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      bosh-release-tarball: metric-store-release
+      release-tarball: metric-store-release
     params:
       BOSH_CA_CERT: ((bosh-ca-cert.certificate))
       BOSH_CLIENT: ((bosh-admin-client.username))
       BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
       BOSH_ENVIRONMENT: bosh.run.pivotal.io
+      BBL_STATE_DIR: ((bbl_state_dir))
+      RELEASE_TARBALL_GLOB: "release*tgz"
   - task: deploy
     image: cf-deployment-concourse-tasks-image
     config:
@@ -70,7 +80,7 @@ jobs:
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
         BOSH_ENVIRONMENT: bosh.run.pivotal.io
-        BOSH_DEPLOYMENT: metric-store
+        BOSH_DEPLOYMENT: metric-store-prod
       run:
         path: bash
         args:
@@ -132,7 +142,7 @@ jobs:
       - name: metric-store-release
       - name: metric-store-ci
       params:
-        DEPLOYMENT_NAME: metric-store-blackbox
+        DEPLOYMENT_NAME: metric-store-prod-blackbox
         MANIFEST_FILE: deployments/pws/metric-store-prod-blackbox.yml
         BOSH_CLIENT: ((bosh-admin-client.username))
         BOSH_CLIENT_SECRET: ((bosh-admin-client.password))
