@@ -11,16 +11,7 @@ fi
 : ${BOSH_ENVIRONMENT:?must provide BOSH_* environment variables or BBL_STATE_DIR}
 
 pushd bosh-release-dir
-  if [[ -n ${JSON_KEY:-} ]]; then
-    cat << EOF > config/private.yml
----
-blobstore:
-  options:
-    credentials_source: static
-    json_key: |
-      $(echo ${JSON_KEY})
-EOF
-  fi
+  configure-blobstore
 
   if [ "${RECORD_SHAS:-false}" == "true" ]; then
     git rev-parse HEAD > css_sha

@@ -8,16 +8,7 @@ calculate_version bosh-dev-release-dir/src/internal/version/version.go bosh-dev-
 dev_version=$(cat bosh-new-dev-release-version/version | sed -r 's/-/+/')
 
 pushd bosh-dev-release-dir
-  if [[ -n ${JSON_KEY:-} ]]; then
-    cat << EOF > config/private.yml
----
-blobstore:
-  options:
-    credentials_source: static
-    json_key: |
-      $(echo ${JSON_KEY})
-EOF
-  fi
+  configure-blobstore
 
   if [ $DEPLOY_REPO_VERSION_BUMP = true ]; then
     write_version ${dev_version} src/internal/version

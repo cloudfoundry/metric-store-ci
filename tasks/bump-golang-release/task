@@ -18,14 +18,7 @@ popd
 pushd repo
   git checkout -b bump-golang-release-${release_tag}
 
-  cat << EOF > config/private.yml
----
-blobstore:
-  options:
-    credentials_source: static
-    json_key: |
-      $(echo ${JSON_KEY})
-EOF
+  configure-blobstore
 
   bosh vendor-package golang-1.13-linux ../golang-release-repo
   git add packages/ .final_builds/packages/

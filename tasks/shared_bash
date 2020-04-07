@@ -136,6 +136,19 @@ calculate_version() {
   fi
 }
 
+configure-blobstore() {
+  if [[ -n ${JSON_KEY:-} ]]; then
+    cat << EOF > config/private.yml
+---
+blobstore:
+  options:
+    credentials_source: static
+    json_key: |
+      $(echo ${JSON_KEY})
+EOF
+  fi
+}
+
 extract_version() {
   local current_version_file=${1}
   local extracted_version_dir=${2}
