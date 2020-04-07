@@ -10,8 +10,8 @@ fi
 : ${BOSH_ENVIRONMENT:?must provide BOSH_* environment variables or BBL_STATE_DIR}
 
 pushd release-tarball
-  file="$(find -maxdepth 1 -name \"${RELEASE_TARBALL_GLOB}\")"
-  if [[ -z ${file} ]]; then
+  file="$(find -maxdepth 1 -name ${RELEASE_TARBALL_GLOB})"
+  if [[ -z "${file}"" ]]; then
     echo Unable to find tarball in ${PWD} with glob ${RELEASE_TARBALL_GLOB}
     exit 1
   fi
