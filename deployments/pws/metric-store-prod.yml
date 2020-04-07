@@ -16,11 +16,11 @@ instance_groups:
   instances: 6
   jobs:
   - name: metric-store
-    consumes:
-      metric-store-blackbox:
-        from: metric-store-blackbox
-        deployment: metric-store-blackbox
-        optional: true
+#    consumes:
+#      metric-store-blackbox:
+#        from: metric-store-blackbox
+#        deployment: metric-store-prod-blackbox
+#        optional: true
     properties:
       replication_factor: 2
       tls:
