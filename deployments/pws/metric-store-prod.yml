@@ -20,6 +20,7 @@ instance_groups:
       metric-store-blackbox:
         from: metric-store-blackbox
         deployment: metric-store-blackbox
+        optional: true
     properties:
       replication_factor: 2
       tls:
