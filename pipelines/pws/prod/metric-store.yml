@@ -60,10 +60,10 @@ jobs:
       trigger: true
     - get: metric-store-ci
   - task: upload-metric-store-release
-    file: metric-store-ci/tasks/upload-release-tarball/task.yml
+    file: metric-store-ci/tasks/upload-release-from-resource/task.yml
     image: cf-deployment-concourse-tasks-image
     input_mapping:
-      release-tarball: metric-store-release
+      release-dir: metric-store-release
     params:
       BOSH_CA_CERT: ((bosh-ca-cert.certificate))
       BOSH_CLIENT: ((bosh-admin-client.username))
@@ -125,7 +125,7 @@ jobs:
     - get: metric-store-ci
   - in_parallel:
     - task: upload-metric-store-release
-      file: metric-store-ci/tasks/upload-release-tarball/task.yml
+      file: metric-store-ci/tasks/upload-release-from-resource/task.yml
       image: cf-deployment-concourse-tasks-image
       input_mapping:
         bosh-release-tarball: metric-store-release

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+### TODO - rename task to tag and upload release or something
+
 set -exu
 
 if [[ -n ${BBL_STATE_DIR:-} ]]; then

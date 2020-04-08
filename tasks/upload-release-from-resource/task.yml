@@ -4,11 +4,11 @@ inputs:
 - name: metric-store-ci
 - name: bbl-state
   optional: true
-- name: release-tarball
+- name: release-dir
 - name: cf-deployment-concourse-tasks
 
 run:
-  path: metric-store-ci/tasks/upload-release-tarball/task
+  path: metric-store-ci/tasks/upload-release-from-resource/task
 
 params:
   # - Optional

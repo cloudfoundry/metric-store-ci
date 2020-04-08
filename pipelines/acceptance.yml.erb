@@ -385,20 +385,19 @@ jobs:
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
-        file: metric-store-ci/tasks/upload-release-tarball/task.yml
+        file: metric-store-ci/tasks/upload-release-from-resource/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          release-tarball: grafana-boshrelease
-          RELEASE_TARBALL_GLOB: "release*"
+          release-dir: grafana-boshrelease
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
     - do:
       - get: metric-registrar-release
       - task: upload-metric-registrar-release
-        file: metric-store-ci/tasks/upload-release-tarball/task.yml
+        file: metric-store-ci/tasks/upload-release-from-resource/task.yml
         image: cf-deployment-concourse-tasks-image
         input_mapping:
-          release-tarball: metric-registrar-release
+          release-dir: metric-registrar-release
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
           RELEASE_TARBALL_GLOB: "release-*"
