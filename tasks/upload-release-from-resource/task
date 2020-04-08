@@ -10,15 +10,15 @@ fi
 : ${BOSH_ENVIRONMENT:?must provide BOSH_* environment variables or BBL_STATE_DIR}
 
 pushd release-dir
-  if [[ -z "${RELEASE_TARBALL_GLOB}" ]]; then
+  if [[ "${RELEASE_TARBALL_GLOB}" == "" ]]; then
+    echo "Uploading from repo (no tarball)"
+    tarball=""
+  else
     tarball="$(find -maxdepth 1 -name ${RELEASE_TARBALL_GLOB})"
-    if [[ -z "${tarball}" ]]; then
+    if [[ "${tarball}" == "" ]]; then
       echo Unable to find tarball in ${PWD} with glob ${RELEASE_TARBALL_GLOB}
       exit 1
     fi
-  else
-    echo "Uploading from repo (no tarball)"
-    tarball=""
   fi
 
   bosh upload-release ${tarball}
