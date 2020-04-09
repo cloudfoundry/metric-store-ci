@@ -24,7 +24,7 @@ instance_groups:
   - name: metric-store-blackbox
     release: metric-store
     consumes:
-      metric-store: {from: metric-store, deployment: metric-store}
+      metric-store: {from: metric-store-prod, deployment: metric-store}
       cloud_controller: {from: cloud_controller, deployment: cf-cfapps-io2}
     provides:
       metric-store-blackbox: {as: metric-store-blackbox, shared: true}
