@@ -55,11 +55,6 @@ resources:
     username: ((docker-hub-ci.yml/Notes/docker-hub-username))
     password: ((docker-hub-ci.yml/Notes/docker-hub-password))
 
-- name: daily
-  type: time
-  source:
-    interval: 24h
-
 - name: slack-alert
   type: slack-notification
   source:
@@ -111,7 +106,7 @@ jobs:
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: daily
+    - get: after-standup
       trigger: true
     - get: cf-deployment-concourse-tasks-image
   - in_parallel:
