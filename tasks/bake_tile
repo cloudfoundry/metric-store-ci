@@ -21,7 +21,7 @@ TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."
-pushd metric-store-release/tile
+pushd metric-store-release/${TILE_DIR}
   erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
 popd
 
