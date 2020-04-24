@@ -1,0 +1,40 @@
+#!/bin/bash -euf
+echo "running tile build"
+
+. ./metric-store-ci/tasks/shared_bash
+
+mkdir -p releases
+set +f
+mv metric-store-dev-release/*.tgz releases
+set -f
+
+calculate_version metric-store-release/src/internal/version/version.go tile-version new-tile-version "build"
+export RELEASE_VERSION=$(cat new-tile-version/version)
+
+for release in ${RELEASES[@]}; do
+  echo "Adding release: ${release}"
+  mv ${release}/release.tgz releases/${release}-"$(cat ${release}/version)".tgz
+done
+
+mkdir -p baked-tile
+TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal
+
+STEMCELL_VERSION=$(cat stemcell/version)
+echo "Using stemcell ${STEMCELL_VERSION} ..."
+pushd metric-store-release/${TILE_DIR}
+  erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
+popd
+
+kiln bake \
+    --forms-directory=metric-store-release/${TILE_DIR}/forms \
+    --version "$RELEASE_VERSION" \
+    --metadata metric-store-release/${TILE_DIR}/metadata.yml \
+    --icon metric-store-release/${TILE_DIR}/icon.png \
+    --releases-directory releases \
+    --properties-directory metric-store-release/${TILE_DIR}/properties \
+    --jobs-directory metric-store-release/${TILE_DIR}/jobs \
+    --instance-groups-directory metric-store-release/${TILE_DIR}/instance_groups \
+    --bosh-variables-directory metric-store-release/${TILE_DIR}/variables \
+    --output-file ${TILE_FILE}
+
+echo "Freshly baked tile 🍞: ${TILE_FILE}"
