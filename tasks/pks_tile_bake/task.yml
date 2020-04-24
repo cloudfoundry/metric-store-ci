@@ -20,4 +20,4 @@ params:
   TILE_DIR: pks-tile
 
 run:
-  path: metric-store-ci/tasks/bake_tile
+  path: metric-store-ci/tasks/pks_tile_bake/task

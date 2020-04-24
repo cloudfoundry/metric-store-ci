@@ -627,22 +627,6 @@ jobs:
         - get: pcf-observability-ci-image
         - get: gcp-light-stemcell
         - get: bpm-release
-    - task: "property shim"
-      image: pcf-observability-ci-image
-      config:
-        platform: linux
-        inputs:
-        - name: metric-store-develop
-        outputs:
-        - name: metric-store-develop
-        run:
-          path: bash
-          args:
-            - -c
-            - |
-              echo "We'll inevitably need properties for this tile"
-              echo "This holds the place for them until we fill them"
-              mkdir metric-store-develop/pks-tile/properties
     - task: "bake tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/pks_tile_bake/task.yml
