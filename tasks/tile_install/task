@@ -31,14 +31,8 @@ if [[ ${FOUNDATION_TYPE} = "PAS" ]]; then
   zone_1=$(jq -r .azs[0] < env.json)
   zone_2=$(jq -r .azs[1] < env.json)
   zone_3=$(jq -r .azs[2] < env.json)
-else
-  subnet=manila-management-subnet
-  zone_1=us-central1-f
-  zone_2=us-central1-f
-  zone_3=us-central1-f
-fi
 
-cat > metric-store-tile-config.yml <<EOF
+  cat > metric-store-tile-config.yml <<EOF
 ---
 product-name: metric-store
 network-properties:
@@ -51,10 +45,17 @@ network-properties:
   singleton_availability_zone:
     name: ${zone_1}
 EOF
+else
+  cp metric-store-ci/config/pks-config.yml metric-store-tile-config.yml
+  om certificate-authorities -f json | jq -r '.[0].cert_pem' | sed 's/^/      /' >> metric-store-tile-config.yml
+fi
 
 om configure-product --config metric-store-tile-config.yml
 om upload-stemcell --stemcell gcp-light-stemcell/${STEMCELL_FILE} --floating true --shasum ${STEMCELL_SHA}
 
-om apply-changes --product-name "cf"
+if [[ ${FOUNDATION_TYPE} = "PAS" ]]; then
+  om apply-changes --product-name "cf"
+fi
+
 om apply-changes --product-name "metric-store"
 
