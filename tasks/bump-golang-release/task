@@ -20,7 +20,7 @@ pushd repo
 
   configure-blobstore
 
-  bosh vendor-package golang-1.13-linux ../golang-release-repo
+  bosh vendor-package "golang-${GOLANG_MINOR_VERSION}-linux" ../golang-release-repo
   git add packages/ .final_builds/packages/
 
   if [ $(git diff --staged | wc -l) -eq 0 ]; then
@@ -35,7 +35,7 @@ pushd repo
   touch sha
   tarball=`mktemp`
   bosh create-release --tarball=${tarball} --force
-  go_version=$(tar xz packages/golang-1.13-linux.tgz -O 2>/dev/null < ${tarball} \
+  go_version=$(tar xz packages/"golang-${GOLANG_MINOR_VERSION}-linux.tgz" -O 2>/dev/null < ${tarball} \
     | tar tz --wildcards './go*' 2>/dev/null \
     | grep -ohE "go[0-9]\.[0-9]{1,2}\.[0-9]{1,2}")
 
