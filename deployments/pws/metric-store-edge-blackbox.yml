@@ -37,8 +37,8 @@ instance_groups:
       cf_blackbox:
         enabled: true
         metric_store_address: https://metric-store-edge.run.pivotal.io
-        client_id: ((cf-client))
-        client_secret: ((cf-client-secret))
+        client_id: ((/vpc-bosh-run-pivotal-io/metric-store-edge-blackbox/metric-store-edge-forwarder-client.username))
+        client_secret: ((/vpc-bosh-run-pivotal-io/metric-store-edge-blackbox/metric-store-edge-forwarder-client.password))
       metric_store_metrics:
         tls:
           ca_cert: ((metric_store_metrics_server.ca))
