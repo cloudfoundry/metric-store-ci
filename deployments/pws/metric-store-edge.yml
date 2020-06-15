@@ -50,6 +50,8 @@ instance_groups:
       metric-store:
         as: metric-store-edge
         shared: true
+        aliases:
+        - domain: metric-store.service.internal
     release: metric-store
   - name: metric-store-nozzle
     consumes:
