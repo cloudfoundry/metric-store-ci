@@ -433,7 +433,6 @@ jobs:
           cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
           cp metric-store-ci/ops-files/test-clients.yml ops-files
-          erb metric-store-ci/ops-files/msats.yml.erb > ops-files/msats.yml
           cp metric-store-ci/ops-files/metrics-certs-in-cf.yml ops-files
 
           cat > ops-files/add-blackbox-client.yml <<EOF
@@ -467,7 +466,6 @@ jobs:
         alertmanager-metric-store.yml
         grafana-in-cf.yml
         metric-registrar-in-cf.yml
-        msats.yml
         metrics-certs-in-cf.yml
         add-blackbox-client.yml
   - task: cleanup
@@ -826,44 +824,6 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_failure
 
-- name: smoke-tests
-  serial: true
-  plan:
-  - in_parallel:
-    - get: metric-store-ci
-    - get: cf-deployment-concourse-tasks-image
-    - get: denver-locks
-    - get: cf-deployment-concourse-tasks
-    - get: metric-store-release
-      resource: metric-store-develop
-      trigger: true
-      passed: ["cf-deploy"]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Metric Store Smoke Tests
-      TEAM: metric-store-log-cache
-  - task: run-msats
-    file: metric-store-ci/tasks/run-errand/task.yml
-    image: cf-deployment-concourse-tasks-image
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      DEPLOYMENT_NAME: cf
-      ERRAND: metric-store-smoke-tests
-      INSTANCE: metric-store/0
-      KEEP_ALIVE: true
-    input_mapping:
-      bbl-state: denver-locks
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
-
 - name: promotion-gate
   serial: true
   plan:
@@ -878,7 +838,6 @@ jobs:
         resource: metric-store-develop
         trigger: true
         passed:
-          - smoke-tests
           - cats
           <% envs_we_care_about.each do |name, _| %>
           - "Install on PCF <%= name %>"
