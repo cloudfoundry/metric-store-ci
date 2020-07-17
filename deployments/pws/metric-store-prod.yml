@@ -20,7 +20,6 @@ instance_groups:
       metric-store-blackbox:
         from: metric-store-blackbox
         deployment: metric-store-prod-blackbox
-        optional: true
     properties:
       replication_factor: 2
       tls:
@@ -51,6 +50,8 @@ instance_groups:
       metric-store:
         as: metric-store-prod
         shared: true
+        aliases:
+        - domain: metric-store.service.internal
     release: metric-store
   - name: metric-store-nozzle
     consumes:
