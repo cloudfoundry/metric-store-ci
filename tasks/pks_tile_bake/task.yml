@@ -15,7 +15,7 @@ outputs:
   - name: bpm-release
 
 params:
-  RELEASES: "bpm-release"
+  RELEASES: "bosh-dns-aliases-release bpm-release"
   TILE_NAME: pks-metric-store
   TILE_DIR: pks-tile
 
