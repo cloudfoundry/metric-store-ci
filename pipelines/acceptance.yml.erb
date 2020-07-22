@@ -240,6 +240,11 @@ resources:
   source:
     repository: cloudfoundry/bpm-release
 
+- name: bosh-dns-aliases-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bosh-dns-aliases-release
+
 - name: cf-routing-release
   type: bosh-io-release
   source:
@@ -591,6 +596,7 @@ jobs:
       - get: pcf-observability-ci-image
       - get: gcp-light-stemcell
       - get: bpm-release
+      - get: bosh-dns-aliases-release
       - get: cf-routing-release
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -625,6 +631,7 @@ jobs:
         - get: pcf-observability-ci-image
         - get: gcp-light-stemcell
         - get: bpm-release
+        - get: bosh-dns-aliases-release
     - task: "bake tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/pks_tile_bake/task.yml
@@ -832,6 +839,8 @@ jobs:
         passed: ["🥖 Bake PAS Tile 🍰"]
       - get: bpm-release
         passed: ["🥖 Bake PAS Tile 🍰"]
+      - get: bosh-dns-aliases-release
+        passed: ["🥖 Bake PAS Tile 🍰"]
       - get: cf-routing-release
         passed: ["🥖 Bake PAS Tile 🍰"]
       - get: develop
@@ -894,6 +903,8 @@ jobs:
     - get: gcp-light-stemcell
       passed: [ promotion-gate ]
     - get: bpm-release
+      passed: [ promotion-gate ]
+    - get: bosh-dns-aliases-release
       passed: [ promotion-gate ]
     - get: cf-routing-release
       passed: [ promotion-gate ]
@@ -1015,6 +1026,8 @@ jobs:
     - get: gcp-light-stemcell
       passed: [ build-final-release ]
     - get: bpm-release
+      passed: [ build-final-release ]
+    - get: bosh-dns-aliases-release
       passed: [ build-final-release ]
     - get: cf-routing-release
       passed: [ build-final-release ]
