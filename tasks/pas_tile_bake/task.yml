@@ -7,12 +7,14 @@ inputs:
   - name: metric-store-dev-release
   - name: metric-store-release
   - name: stemcell
+  - name: bosh-dns-aliases-release
   - name: bpm-release
   - name: cf-routing-release
 
 outputs:
   - name: baked-tile
   - name: new-tile-version
+  - name: bosh-dns-aliases-release
   - name: bpm-release
   - name: cf-routing-release
 

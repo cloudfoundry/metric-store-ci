@@ -8,10 +8,12 @@ inputs:
   - name: metric-store-release
   - name: stemcell
   - name: bpm-release
+  - name: bosh-dns-aliases-release
 
 outputs:
   - name: baked-tile
   - name: new-tile-version
+  - name: bosh-dns-aliases-release
   - name: bpm-release
 
 params:
