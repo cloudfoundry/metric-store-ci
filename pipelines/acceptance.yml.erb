@@ -697,9 +697,6 @@ jobs:
       baked-tile: dev-tile
     image: pcf-observability-ci-image
     file: metric-store-ci/tasks/tile_install/task.yml
-    input_mapping:
-      tile-version: metric-store-version
-      baked-tile: dev-tile
     on_success:
       task: release-env
       tags: [ cf-denver-shared-vsphere ]
