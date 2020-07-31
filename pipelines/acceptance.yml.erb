@@ -190,15 +190,6 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     initial_version: 0.2.0-build.24
 
-- name: pks-metric-store-tile-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: metric-store-ci-notifications
-    key: pks-ms-tile-build-version
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    initial_version: 1.4.0-build.0
-
 - name: dev-tile
   type: gcs-resource
   source:
@@ -615,40 +606,6 @@ jobs:
     params:
       file: new-tile-version/version
 
-- name: "🥖 Bake PKS Tile 🍰"
-  plan:
-    - in_parallel:
-        - get: concourse-tasks
-        - get: metric-store-ci
-        - get: metric-store-develop
-          passed: ["create-dev-release"]
-        - get: metric-store-dev-release
-          trigger: true
-          passed: ["create-dev-release"]
-        - get: pks-metric-store-tile-version
-          params:
-            pre: build
-        - get: pcf-observability-ci-image
-        - get: gcp-light-stemcell
-        - get: bpm-release
-        - get: bosh-dns-aliases-release
-    - task: "bake tile"
-      image: pcf-observability-ci-image
-      file: metric-store-ci/tasks/pks_tile_bake/task.yml
-      input_mapping:
-        metric-store-release: metric-store-develop
-        metric-store-dev-release: metric-store-dev-release
-        tile-version: pks-metric-store-tile-version
-        stemcell: gcp-light-stemcell
-    - put: dev-tile
-      params:
-        file: baked-tile/*.pivotal
-        content_type: application/octet-stream
-  ensure:
-    put: pks-metric-store-tile-version
-    params:
-      file: new-tile-version/version
-
 - name: "🚽 Install Tile on PAS acceptance env 🍾"
   plan:
     - in_parallel:
@@ -674,33 +631,6 @@ jobs:
         baked-tile: dev-tile
       params:
         TOOLSMITHS_ENV_JSON: ((ms-pas-acceptance.json/Notes))
-
-- name: "🚽 Install Tile on PKS 🍾"
-  plan:
-    - in_parallel:
-      - get: concourse-tasks
-      - get: metric-store-ci
-      - get: metric-store-develop
-        passed: ["🥖 Bake PKS Tile 🍰"]
-      - get: metric-store-dev-release
-        passed: ["🥖 Bake PKS Tile 🍰"]
-      - get: pcf-observability-ci-image
-      - get: pks-metric-store-tile-version
-        passed: ["🥖 Bake PKS Tile 🍰"]
-      - get: dev-tile
-        trigger: true
-        passed: ["🥖 Bake PKS Tile 🍰"]
-      - get: gcp-light-stemcell
-        passed: ["🥖 Bake PKS Tile 🍰"]
-    - task: "install tile"
-      image: pcf-observability-ci-image
-      file: metric-store-ci/tasks/tile_install/task.yml
-      input_mapping:
-        tile-version: pks-metric-store-tile-version
-        baked-tile: dev-tile
-      params:
-        TOOLSMITHS_ENV_JSON: ((ms-pks-acceptance.json/Notes))
-        FOUNDATION_TYPE: PKS
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
 - name: "Install on PCF <%= env_version %>"
