@@ -9,6 +9,7 @@ inputs:
   - name: final-tile
   - name: metric-store-pivnet-metadata
   - name: metric-store-osl
+  - name: metric-store-ci
 
 outputs:
   - name: final-tile
