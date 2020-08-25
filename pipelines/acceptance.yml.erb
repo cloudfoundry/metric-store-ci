@@ -1019,14 +1019,6 @@ jobs:
   - get: metric-store-osl
   - task: "Inject OSL to Tile"
     file: metric-store-ci/tasks/tile_bake_final/task.yml
-    config:
-      platform: linux
-      inputs:
-      - name: final-tile
-      - name: metric-store-pivnet-metadata
-      - name: metric-store-osl
-      outputs:
-      - name: final-tile
   - put: metric-store-pivnet
     params:
       file_glob: final-tile/*.pivotal

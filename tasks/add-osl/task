@@ -17,3 +17,6 @@ echo "Versions Match, appending OSL"
 zip $TILE_FILENAME $OSL_FILENAME > /dev/null
 
 echo "OSL appended"
+
+echo "Temporarily always fail"
+exit 1
