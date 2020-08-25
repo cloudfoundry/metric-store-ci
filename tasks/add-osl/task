@@ -1,0 +1,19 @@
+#!/bin/bash
+set -euo pipefail
+
+export TILE_FILENAME=$(ls final-tile/*metric-store*.pivotal)
+export OSL_FILENAME=$(ls metric-store-osl/*license*)
+
+export TILE_VERSION=$(echo $TILE_FILENAME | sed -E 's/.*metric-store-([[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+)-[[:digit:]]+.pivotal/\1/g')
+echo "$TILE_VERSION tile found"
+
+echo "Searching for matching license"
+if ! grep -F $TILE_VERSION $OSL_FILENAME | grep -s -i 'Metric Store' > /dev/null; then
+  echo "Tile Version does not match OSL file"
+  exit 1
+fi
+
+echo "Versions Match, appending OSL"
+zip $TILE_FILENAME $OSL_FILENAME > /dev/null
+
+echo "OSL appended"

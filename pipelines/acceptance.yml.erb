@@ -116,6 +116,13 @@ resources:
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     regexp: metric-store-dev-releases/release-(.*).tgz
 
+- name: metric-store-osl
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: osl/(.*).txt
+
 - name: metric-store-final-release
   type: gcs-resource
   source:
@@ -994,6 +1001,7 @@ jobs:
         channel: ((slack-ci.yml/Notes/slack_alert_channel))
         attachments_file: metadata/alert_message_success
 
+
 - name: 🚀 Push to Pivnet 🚀
   plan:
   - get: metric-store-ci
@@ -1008,6 +1016,17 @@ jobs:
   - get: metric-store-pivnet-metadata
     passed:
     - "🥖 Bake Final Tile 🥖"
+  - get: metric-store-osl
+  - task: "Inject OSL to Tile"
+    file: metric-store-ci/tasks/tile_bake_final/task.yml
+    config:
+      platform: linux
+      inputs:
+      - name: final-tile
+      - name: metric-store-pivnet-metadata
+      - name: metric-store-osl
+      outputs:
+      - name: final-tile
   - put: metric-store-pivnet
     params:
       file_glob: final-tile/*.pivotal
