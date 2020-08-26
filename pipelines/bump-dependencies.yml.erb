@@ -1,7 +1,5 @@
 <%
-  GOLANG_VERSION    = '1.13.1'
-
-  GOLANG_MINOR_VERSION = GOLANG_VERSION.split(".").take(2).join(".")
+  GO_VERSION = '1.14'
 %>
 
 resource_types:
@@ -85,7 +83,7 @@ jobs:
       - name: updated-metric-store-ci
       - name: log-cache-base-build
       params:
-        GO_VERSION: <%= GOLANG_MINOR_VERSION %>
+        GO_VERSION: <%= GO_VERSION %>
       run:
         path: bash
         args:
@@ -141,6 +139,7 @@ jobs:
       GITHUB_NAME: "Metric Store CI"
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
       GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
+      GOLANG_PACKAGE_VERSION: <%= GO_VERSION %>
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
   on_failure:
     do:
