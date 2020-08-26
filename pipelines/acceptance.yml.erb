@@ -1017,8 +1017,8 @@ jobs:
     passed:
     - "🥖 Bake Final Tile 🥖"
   - get: metric-store-osl
-  - task: "Inject OSL to Tile"
-    file: metric-store-ci/tasks/tile_bake_final/task.yml
+  - task: "inject OSL to tile"
+    file: metric-store-ci/tasks/add-osl/task.yml
   - put: metric-store-pivnet
     params:
       file_glob: final-tile/*.pivotal
