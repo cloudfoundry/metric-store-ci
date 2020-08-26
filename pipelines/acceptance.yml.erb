@@ -143,13 +143,6 @@ resources:
   source:
     uri: https://github.com/loggregator/bumper
 
-- name: metric-registrar-release
-  type: github-release
-  source:
-    user: pivotal-cf
-    repository: metric-registrar-release
-    access_token: ((github-key-ci.yml/Notes/github-access-token))
-
 - name: grafana-boshrelease
   type: git
   source:
@@ -395,16 +388,6 @@ jobs:
           release-dir: grafana-boshrelease
         params:
           BBL_STATE_DIR: ((bbl_state_dir))
-    - do:
-      - get: metric-registrar-release
-      - task: upload-metric-registrar-release
-        file: metric-store-ci/tasks/upload-release-from-resource/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          release-dir: metric-registrar-release
-        params:
-          BBL_STATE_DIR: ((bbl_state_dir))
-          RELEASE_TARBALL_GLOB: "release-*"
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
@@ -432,7 +415,6 @@ jobs:
           cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
           cp metric-store-ci/ops-files/grafana-in-cf.yml ops-files
           cp metric-store-ci/ops-files/alertmanager-metric-store.yml ops-files
-          cp metric-store-ci/ops-files/metric-registrar-in-cf.yml ops-files
           cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
           cp metric-store-ci/ops-files/bosh-speed.yml ops-files
           cp metric-store-ci/ops-files/test-clients.yml ops-files
@@ -468,7 +450,6 @@ jobs:
         metric-store-in-cf.yml
         alertmanager-metric-store.yml
         grafana-in-cf.yml
-        metric-registrar-in-cf.yml
         metrics-certs-in-cf.yml
         add-blackbox-client.yml
   - task: cleanup
