@@ -74,6 +74,6 @@ RUN cd /tmp \
   && tar xzvf credhub*.tgz ./credhub \
   && cp ./credhub /usr/local/bin/
 
-RUN GO111MODULE=on go install github.com/mikefarah/yq/v3
+RUN GO111MODULE=on go get github.com/mikefarah/yq/v3
 
 RUN wget -O- https://k14s.io/install.sh | bash
