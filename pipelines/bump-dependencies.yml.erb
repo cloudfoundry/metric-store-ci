@@ -171,22 +171,3 @@ jobs:
         attachments_file: modified-metadata/alert_message_success
     - put: notification-bump-golang-version
       params: { bump: minor }
-
-- name: bump-metric-store-dependencies
-  serial: true
-  plan:
-  - get: weekly-on-sunday
-    trigger: true
-  - in_parallel:
-    - get: metric-store-ci
-    - get: metric-store-release-develop
-  - task: bump-dependencies
-    file: metric-store-ci/tasks/bump-dependencies/task.yml
-    input_mapping:
-      repo: metric-store-release-develop
-    params:
-      GITHUB_REPO: "cloudfoundry/metric-store-release"
-      GITHUB_USER: "metric-store-ci"
-      GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
-      GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      EXCEPT: "google.golang.org/grpc,github.com/influxdata/influxdb"
