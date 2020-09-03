@@ -139,7 +139,7 @@ jobs:
       GITHUB_NAME: "Metric Store CI"
       GITHUB_PRIVATE_KEY: ((github-key-ci.yml/Notes/ms_github_private_key))
       GITHUB_AUTH_TOKEN: ((github-key-ci.yml/Notes/metric-store-access-token))
-      GOLANG_PACKAGE_VERSION: <%= GO_VERSION %>
+      GOLANG_PACKAGE_VERSION: 1
       JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
   on_failure:
     do:
