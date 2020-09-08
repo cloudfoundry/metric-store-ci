@@ -559,7 +559,7 @@ jobs:
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive
 
-- name: "🥖 Bake PAS Tile 🍰"
+- name: "Bake PAS Tile"
   plan:
     - in_parallel:
       - get: concourse-tasks
@@ -594,23 +594,23 @@ jobs:
     params:
       file: new-tile-version/version
 
-- name: "🚽 Install Tile on PAS acceptance env 🍾"
+- name: "Install Tile on PAS acceptance env"
   plan:
     - in_parallel:
       - get: concourse-tasks
       - get: metric-store-ci
       - get: metric-store-develop
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: metric-store-dev-release
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: pcf-observability-ci-image
       - get: metric-store-version
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: dev-tile
         trigger: true
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: gcp-light-stemcell
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
     - task: "install tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task.yml
@@ -627,17 +627,17 @@ jobs:
     - get: concourse-tasks
     - get: metric-store-ci
     - get: metric-store-develop
-      passed: ["🥖 Bake PAS Tile 🍰"]
+      passed: ["Bake PAS Tile"]
     - get: metric-store-dev-release
-      passed: ["🥖 Bake PAS Tile 🍰"]
+      passed: ["Bake PAS Tile"]
     - get: pcf-observability-ci-image
     - get: metric-store-version
-      passed: ["🥖 Bake PAS Tile 🍰"]
+      passed: ["Bake PAS Tile"]
     - get: dev-tile
       trigger: true
-      passed: ["🥖 Bake PAS Tile 🍰"]
+      passed: ["Bake PAS Tile"]
     - get: gcp-light-stemcell
-      passed: ["🥖 Bake PAS Tile 🍰"]
+      passed: ["Bake PAS Tile"]
   - task: "Claim Smith Env"
     attempts: 3
     tags: [ cf-denver-shared-vsphere ]
@@ -751,13 +751,13 @@ jobs:
   plan:
     - in_parallel:
       - get: gcp-light-stemcell
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: bpm-release
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: bosh-dns-aliases-release
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: cf-routing-release
-        passed: ["🥖 Bake PAS Tile 🍰"]
+        passed: ["Bake PAS Tile"]
       - get: develop
         resource: metric-store-develop
         trigger: true
@@ -929,7 +929,7 @@ jobs:
         version: release-version-generated
     - <<: *send-alert-message
 
-- name: 🥖 Bake Final Tile 🥖
+- name: Bake Final Tile
   plan:
   - in_parallel:
     - get: metric-store-ci
@@ -983,7 +983,7 @@ jobs:
         attachments_file: metadata/alert_message_success
 
 
-- name: 🚀 Push to Pivnet 🚀
+- name: Push to Pivnet
   plan:
   - get: metric-store-ci
   - task: create-slack-message
@@ -993,10 +993,10 @@ jobs:
       TEAM: metric-store-log-cache
   - get: final-tile
     passed:
-    - "🥖 Bake Final Tile 🥖"
+    - "Bake Final Tile"
   - get: metric-store-pivnet-metadata
     passed:
-    - "🥖 Bake Final Tile 🥖"
+    - "Bake Final Tile"
   - get: metric-store-osl
   - task: "inject OSL to tile"
     file: metric-store-ci/tasks/add-osl/task.yml
