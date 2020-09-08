@@ -57,4 +57,14 @@ curl -X POST \
   -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
   -H "Content-Type: application/json" \
   --data-binary @new_pull_request.json \
-  https://api.github.com/repos/${GITHUB_REPO}/pulls
+  https://api.github.com/repos/${GITHUB_REPO}/pulls >github-pulls-response.json 2>github-pulls-error
+
+ISSUE_URL=$(jq .issue_url github-pulls-response.json)
+
+jq '.labels | map(.name) | . + ["auto-merge"] | {labels: .}' github-pulls-response.json >labels.json
+
+curl -X PATCH
+   -H "Authorization: token ${GITHUB_AUTH_TOKEN}" \
+   -H "Content-Type: application/json" \
+   --data-binary @labels.json \
+   ${ISSUE_URL} | jq '.issue_url')
