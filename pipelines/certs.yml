@@ -56,7 +56,7 @@ jobs:
 
 - name: install-certs
   plan:
-  - aggregate:
+  - in_parallel:
     - get: metric-store-ci
     - get: certs
       trigger: true
