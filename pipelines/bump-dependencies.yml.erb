@@ -45,14 +45,6 @@ resources:
     tag_filter: v*
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
 
-- name: weekly-on-sunday
-  type: time
-  source:
-    location: America/Denver
-    start: 5:00 PM
-    stop: 6:00 PM
-    days: [Sunday]
-
 - name: slack-alert
   type: slack-notification
   source:
