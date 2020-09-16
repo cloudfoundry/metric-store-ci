@@ -132,8 +132,10 @@
       ca: loggregator_ca
       common_name: metric-store
       extended_key_usage:
-        - client_auth
-        - server_auth
+      - client_auth
+      - server_auth
+      alternative_names:
+      - metric-store
     type: certificate
 
 - type: replace
@@ -151,8 +153,8 @@
     name: metric_store
     options:
       alternative_names:
-        - metric-store
-        - localhost
+      - metric-store
+      - localhost
       ca: metric_store_ca
       common_name: metric-store
       extended_key_usage:
@@ -194,6 +196,7 @@
       alternative_names:
       - metric-store.((system_domain))
       - '*.metric-store.((system_domain))'
+      - metric-store
       ca: service_cf_internal_ca
       common_name: metric-store
     type: certificate
@@ -220,6 +223,8 @@
     options:
       ca: metric_store_ca
       common_name: localhost
+      alternative_names:
+      - localhost
 
 - type: replace
   path: /variables/name=metric_store_metrics_server?
@@ -229,6 +234,8 @@
     options:
       ca: metric_scraper_ca
       common_name: metric-store
+      alternative_names:
+      - metric-store
 
 - type: replace
   path: /variables/name=metric_store_metrics_client?
@@ -238,3 +245,5 @@
     options:
       ca: metric_scraper_ca
       common_name: metric-store-client
+      alternative_names:
+      - metric-store-client

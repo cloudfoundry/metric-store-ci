@@ -58,3 +58,5 @@ variables:
   options:
     ca: "/vpc-bosh-run-pivotal-io/metric-store-edge/metric_scraper_ca"
     common_name: metric-store
+    alternative_names:
+    - metric-store

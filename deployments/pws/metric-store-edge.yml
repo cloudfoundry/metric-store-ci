@@ -199,13 +199,19 @@ variables:
   options:
     ca: metric_store_ca
     common_name: localhost
+    alternative_names:
+    - localhost
 - name: metric_store_metrics_server
   type: certificate
   options:
     ca: metric_scraper_ca
     common_name: metric-store
+    alternative_names:
+    - metric-store
 - name: metric_store_metrics_client
   type: certificate
   options:
     ca: metric_scraper_ca
     common_name: metric-store-client
+    alternative_names:
+    - metric-store-client

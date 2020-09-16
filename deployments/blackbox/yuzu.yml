@@ -52,6 +52,8 @@ variables:
   options:
     ca: /bosh-yuzu/cf/metric_scraper_ca
     common_name: metric-store
+    alternative_names:
+    - metric-store
 
 update:
   canaries: 10

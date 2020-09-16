@@ -74,6 +74,8 @@
       common_name: forwarder_agent
       extended_key_usage:
       - server_auth
+      alternative_names:
+      - forwarder_agent
 
 - type: replace
   path: /variables/name=loggr_metric_scraper_metrics_tls?
@@ -85,6 +87,8 @@
       common_name: loggr_metric_scraper
       extended_key_usage:
       - server_auth
+      alternative_names:
+      - loggr_metric_scraper
 
 - type: replace
   path: /variables/name=loggr_udp_forwarder_tls?
@@ -96,3 +100,5 @@
       common_name: loggr_udp_forwarder
       extended_key_usage:
       - server_auth
+      alternative_names:
+      - loggr_udp_forwarder

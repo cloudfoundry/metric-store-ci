@@ -60,3 +60,5 @@ variables:
   options:
     ca: metric_store_ca
     common_name: metric-store
+    alternative_names:
+    - metric-store
