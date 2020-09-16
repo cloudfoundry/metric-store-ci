@@ -51,12 +51,6 @@ resources:
     branch: master
     private_key: ((github-key-ci.yml/Notes/github_key))
 
-- name: cf-acceptance-tests
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/cf-acceptance-tests
-    branch: master
-
 - name: metric-store-ci
   type: git
   source:
@@ -707,45 +701,6 @@ jobs:
         TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
 <% end %>
 
-- name: cats
-  serial_groups: [cf-deploy]
-  plan:
-  - in_parallel:
-    - get: denver-locks
-    - get: metric-store-develop
-      trigger: true
-      passed: [cf-deploy]
-    - get: metric-store-ci
-    - get: cf-acceptance-tests
-      trigger: true
-    - get: cf-deployment-concourse-tasks
-    - get: cf-deployment-concourse-tasks-image
-    - get: bbl-state
-      resource: denver-locks
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: CATS
-      TEAM: metric-store-log-cache
-  - task: integration-config
-    file: metric-store-ci/tasks/create-integration-config/task.yml
-    image: cf-deployment-concourse-tasks-image
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      SYSTEM_DOMAIN: ((sys_domain))
-  - task: cats
-    attempts: 10
-    file: cf-deployment-concourse-tasks/run-cats/task.yml
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
-        attachments_file: metadata/alert_message_failure
-
 - name: promotion-gate
   serial: true
   plan:
@@ -762,7 +717,6 @@ jobs:
         resource: metric-store-develop
         trigger: true
         passed:
-          - cats
           <% envs_we_care_about.each do |name, _| %>
           - "Install on PCF <%= name %>"
           <% end %>
