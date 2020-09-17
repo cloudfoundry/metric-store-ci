@@ -4,8 +4,6 @@
 
 set -ex
 
-GO111MODULE=on go install github.com/mikefarah/yq/v3
-
 RELEASE_VERSION=$(yq r release-version/metadata.yml release.version)
 tag_name="v${RELEASE_VERSION}"
 
