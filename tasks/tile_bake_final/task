@@ -7,10 +7,13 @@ TIMESTAMP=$(date +%s)
 
 mkdir -p releases
 
-echo_green "Copying depedency releases to releases directory"
+echo_green "Copying dependency releases to releases directory"
 cp metric-store-final-release/release.tgz releases/metric-store-release-${RELEASE_VERSION}.tgz
-mv bpm-release/release.tgz releases/bpm-release-$(cat bpm-release/version).tgz
-mv cf-routing-release/release.tgz releases/cf-routing-release-$(cat cf-routing-release/version).tgz
+
+for release in cf-routing-release bosh-dns-aliases-release bpm-release; do
+  echo "Adding release: ${release}"
+  mv ${release}/release.tgz releases/${release}-"$(cat ${release}/version)".tgz
+done
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."
