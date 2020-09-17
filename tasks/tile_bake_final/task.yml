@@ -7,6 +7,7 @@ inputs:
   - name: metric-store-master
   - name: stemcell
   - name: bpm-release
+  - name: bosh-dns-aliases-release
   - name: cf-routing-release
   - name: metric-store-final-release
 
