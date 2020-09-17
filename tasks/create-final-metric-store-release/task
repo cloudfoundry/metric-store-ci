@@ -4,8 +4,6 @@
 
 . ./metric-store-ci/tasks/shared_bash
 
-GO111MODULE=on go install github.com/mikefarah/yq/v3
-
 RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
 TIMESTAMP=$(date +%s)
 
