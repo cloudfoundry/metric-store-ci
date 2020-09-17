@@ -1,8 +1,6 @@
 #!/bin/bash
 set -exuo pipefail
 
-GO111MODULE=on go install github.com/mikefarah/yq/v3
-
 RELEASE_VERSION=$(yq r release-version/metadata.yml release.version)
 
 source cf-deployment-concourse-tasks/shared-functions
