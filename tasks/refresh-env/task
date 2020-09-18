@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -exu
-curl -v "https://environments.toolsmiths.cf-app.com/custom_gcp_environments/${ID}/renew"
+set -eu
+curl -sL "https://environments.toolsmiths.cf-app.com/custom_gcp_environments/${ID}/renew" > output.txt
 
-exit $?
+jq -r .message output.txt || (cat output.txt; exit 1)
