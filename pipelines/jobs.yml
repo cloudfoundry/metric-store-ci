@@ -3,15 +3,6 @@ groups:
   jobs:
   - refresh-environments
   - build-docker-images
-  - action-items
-
-resource_types:
-  - name: slack-notification
-    type: docker-image
-    source:
-      repository: cfcommunity/slack-notification-resource
-      tag: latest
-
 
 resources:
 - name: metric-store-develop
@@ -54,17 +45,6 @@ resources:
     repository: logcache/metric-store-tile
     username: ((docker-hub-ci.yml/Notes/docker-hub-username))
     password: ((docker-hub-ci.yml/Notes/docker-hub-password))
-
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
-
-- name: concourse-tasks
-  type: git
-  source:
-    uri: https://github.com/pivotal-cf/concourse-tasks
-    branch: master
 
 - name: after-standup
   type: time
@@ -116,24 +96,3 @@ jobs:
       file: metric-store-ci/tasks/refresh-env/task.yml
       params:
         ID: 575
-
-- name: action-items
-  plan:
-  - in_parallel:
-    - get: concourse-tasks
-    - get: after-standup
-      trigger: true
-
-  - task: create-action-item-reminder
-    file: concourse-tasks/postfacto/slack-action-items/task.yml
-    params:
-      POSTFACTO_RETRO_URL: ((postfacto.yml/Notes/retro_url))
-      POSTFACTO_API_URL: ((postfacto.yml/Notes/api_url))
-      POSTFACTO_PASSWORD: ((postfacto.yml/Notes/password))
-
-  - put: slack-alert
-    params:
-      attachments_file: alert/attachments
-      username: postfacto
-      icon_emoji: ":ballot_box_with_check:"
-
