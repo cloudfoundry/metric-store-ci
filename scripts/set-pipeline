@@ -2,6 +2,7 @@
 
 set -e
 
+RUNWAY=0
 BOLD='\033[1m'
 CLEAR='\033[0m'
 
@@ -182,8 +183,13 @@ function find_pipeline {
         TARGET="${TARGET:-pws}"
         TEAM="${TEAM:-pcf-observability}"
     else
-        TARGET="${TARGET:-cf-denver}"
-        TEAM="${TEAM:-metric-store-log-cache}"
+        if [[ ${RUNWAY} -eq 0 ]]; then
+            TARGET="${TARGET:-cf-denver}"
+            TEAM="${TEAM:-metric-store-log-cache}"
+        else
+            TARGET="${TARGET:-runway-ci}"
+            TEAM="${TEAM:-tanzu-observe-stores}"
+        fi
     fi
 
     pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')
@@ -352,5 +358,21 @@ function main {
 
     success "DONE!"
 }
+
+while getopts "r" option; do
+    case ${option} in
+        r )
+            warning "using Runway CI pipeline"
+            RUNWAY=1
+            ;;
+        \? )
+            error "You have to use: [-r]"
+            ;;
+        : )
+            error "Invalid option: $OPTARG requires an argument" 1>&2
+            ;;
+    esac
+done
+shift $(expr $OPTIND - 1 )
 
 main $1
