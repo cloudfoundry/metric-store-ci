@@ -159,11 +159,6 @@ resources:
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
-
-- name: slack-high-visibility-alert
-  type: slack-notification
-  source:
     url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
 
 - name: notification-cf-deploy-version
@@ -253,7 +248,7 @@ shared:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text_file: messages/success.txt
 
 jobs:
@@ -305,7 +300,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
 
 - name: create-dev-release
@@ -356,7 +351,7 @@ jobs:
   - task: set-credhub-vars
     file: metric-store-ci/tasks/add-credhub-vars/task.yml
     params:
-      WEBHOOK_URL: ((slack-ci.yml/Notes/slack_alert_webhook_url))
+      WEBHOOK_URL: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
       BBL_STATE_DIR: ((bbl_state_dir))
       SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
@@ -466,20 +461,12 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
     - task: enable-disable-alert-failure
       file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
       input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
       params: { alert_multiple: 5, ignore_first: true }
-    - put: slack-high-visibility-alert
-      params:
-        silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_failure
   on_success:
     do:
     - task: enable-disable-alert-success
@@ -490,7 +477,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text_file: modified-metadata/alert_toggle
         attachments_file: modified-metadata/alert_message_success
     - put: notification-cf-deploy-version
@@ -808,7 +795,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
@@ -817,7 +804,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_success
 
 - name: publish-github-release
@@ -924,7 +911,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
@@ -933,7 +920,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_success
 
 
@@ -966,7 +953,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
@@ -975,5 +962,5 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_success

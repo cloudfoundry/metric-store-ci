@@ -48,7 +48,7 @@ resources:
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack-ci.yml/Notes/slack_alert_webhook_url))
+    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
 
 - name: notification-bump-golang-version
   type: semver
@@ -143,7 +143,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text_file: modified-metadata/alert_toggle
         attachments_file: modified-metadata/alert_message_failure
     - put: notification-bump-golang-version
@@ -158,7 +158,7 @@ jobs:
         silent: true
         username: ((slack-ci.yml/Notes/slack_alert_username))
         icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_alert_channel))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text_file: modified-metadata/alert_toggle
         attachments_file: modified-metadata/alert_message_success
     - put: notification-bump-golang-version
