@@ -119,6 +119,10 @@ instance_groups:
           uris:
           - metric-store-edge.run.pivotal.io
           - '*.metric-store-edge.run.pivotal.io'
+          health_check:
+            name: metric-store-health
+            script_path: /var/vcap/jobs/metric-store/bin/health-check.sh
+            timeout: 2s
     release: routing
 releases:
 - name: metric-store
