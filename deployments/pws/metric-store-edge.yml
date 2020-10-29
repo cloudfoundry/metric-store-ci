@@ -21,7 +21,7 @@ instance_groups:
         from: metric-store-edge-blackbox
         deployment: metric-store-edge-blackbox
     properties:
-      replication_factor: 6
+      replication_factor: 4
       tls:
         ca_cert: ((metric_store.ca))
         cert: ((metric_store.certificate))
