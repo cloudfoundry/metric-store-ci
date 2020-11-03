@@ -33,6 +33,7 @@ kiln bake \
     --releases-directory releases \
     --properties-directory metric-store-master/tile/properties \
     --jobs-directory metric-store-master/tile/jobs \
+    --forms-directory metric-store-master/tile/forms \
     --instance-groups-directory metric-store-master/tile/instance_groups \
     --bosh-variables-directory metric-store-master/tile/variables \
     --output-file ${TILE_FILE}
