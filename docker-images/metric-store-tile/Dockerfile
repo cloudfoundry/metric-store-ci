@@ -44,8 +44,8 @@ RUN cd /tmp \
   && unzip *.zip \
   && cp ./protoc /usr/local/bin/
 
-RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh github.com/cloudfoundry/bosh-cli
-RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
+# RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh github.com/cloudfoundry/bosh-cli
+# RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
 
 RUN go get github.com/onsi/ginkgo/ginkgo
 RUN git config --global user.email "cf-log-cache@pivotal.io" && git config --global user.name "Metric Store CI"
@@ -63,9 +63,6 @@ RUN cd /tmp \
   && tar xzvf google-cloud-sdk.tar.gz -C /usr/local/share \
   && /usr/local/share/google-cloud-sdk/install.sh \
   && ln -s /usr/local/share/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
-
-RUN wget -O /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
-  && chmod +x /usr/local/bin/kubectl
 
 RUN cd /tmp \
   && wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/1.7.5/credhub-linux-1.7.5.tgz \

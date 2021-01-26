@@ -66,14 +66,9 @@ RUN cd /tmp \
   && /usr/local/share/google-cloud-sdk/install.sh \
   && ln -s /usr/local/share/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
 
-RUN wget -O /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl \
-  && chmod +x /usr/local/bin/kubectl
-
 RUN cd /tmp \
   && wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/2.6.2/credhub-linux-2.6.2.tgz \
   && tar xzvf credhub*.tgz ./credhub \
   && cp ./credhub /usr/local/bin/
 
 RUN GO111MODULE=on go get github.com/mikefarah/yq/v3
-
-RUN wget -O- https://k14s.io/install.sh | bash
