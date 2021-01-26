@@ -621,7 +621,7 @@ jobs:
       passed: ["Bake PAS Tile"]
   - task: "Claim Smith Env"
     attempts: 3
-    tags: [ cf-denver-shared-vsphere ]
+    tags: [ vsphere-nimbus ]
     config:
       platform: linux
       image_resource:
@@ -643,7 +643,7 @@ jobs:
           smith read > environment/metadata
     on_failure:
       task: release-env
-      tags: [ cf-denver-shared-vsphere ]
+      tags: [ vsphere-nimbus ]
       config:
         platform: linux
         image_resource:
@@ -660,7 +660,7 @@ jobs:
     params:
       TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
   - task: "Upload and Install"
-    tags: [ cf-denver-shared-vsphere ]
+    tags: [ vsphere-nimbus ]
     input_mapping:
       tile-version: metric-store-version
       baked-tile: dev-tile
@@ -668,7 +668,7 @@ jobs:
     file: metric-store-ci/tasks/tile_install/task.yml
     on_success:
       task: release-env
-      tags: [ cf-denver-shared-vsphere ]
+      tags: [ vsphere-nimbus ]
       config:
         platform: linux
         image_resource:
