@@ -35,7 +35,6 @@ kiln bake \
     --jobs-directory metric-store-master/tile/jobs \
     --forms-directory metric-store-master/tile/forms \
     --instance-groups-directory metric-store-master/tile/instance_groups \
-    --bosh-variables-directory metric-store-master/tile/variables \
     --output-file ${TILE_FILE}
 
 echo_green "Freshly baked tile 🍞: ${TILE_FILE}"
