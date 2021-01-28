@@ -25,6 +25,11 @@ pushd metric-store-release/tile
   erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
 popd
 
+FORMS_DIRECTORY=""
+if [ -d metric-store-release/tile/forms ]; then
+  FORMS_DIRECTORY="--forms-directory metric-store-release/tile/forms"
+fi
+
 kiln bake \
     --version "$RELEASE_VERSION" \
     --metadata metric-store-release/tile/metadata.yml \
@@ -32,7 +37,7 @@ kiln bake \
     --releases-directory releases \
     --properties-directory metric-store-release/tile/properties \
     --jobs-directory metric-store-release/tile/jobs \
-    --forms-directory metric-store-release/tile/forms \
+    ${FORMS_DIRECTORY} \
     --instance-groups-directory metric-store-release/tile/instance_groups \
     --output-file ${TILE_FILE}
 
