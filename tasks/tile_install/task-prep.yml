@@ -1,0 +1,19 @@
+---
+platform: linux
+
+inputs:
+  - name: baked-tile
+  - name: gcp-light-stemcell
+  - name: tile-version
+  - name: metric-store-ci
+  - name: environment
+    optional: true
+
+outputs:
+  - name: environment
+
+PARAMS:
+  TOOLSMITHS_ENV_JSON: ""
+
+run:
+  path: metric-store-ci/tasks/tile_install/task-prep

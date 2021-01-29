@@ -1,0 +1,16 @@
+---
+platform: linux
+
+inputs:
+  - name: metric-store-ci
+  - name: environment
+    optional: true
+
+outputs:
+  - name: environment
+
+PARAMS:
+  TOOLSMITHS_ENV_JSON: ""
+
+run:
+  path: metric-store-ci/tasks/tile_install/task-apply-ms
