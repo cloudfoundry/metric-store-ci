@@ -1,0 +1,41 @@
+#!/bin/bash -euf
+
+# vi:syntax=sh
+
+. ./metric-store-ci/tasks/shared_bash
+
+RELEASE_VERSION=$(yq r pivnet-metadata/metadata.yml release.version)
+TIMESTAMP=$(date +%s)
+
+git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
+
+pushd metric-store-backport
+  echo_green "Adding SHA to metric-store-backport"
+  git rev-parse HEAD > sha
+  echo "SHA: $(cat sha)"
+
+  echo_green "BOSH creating metric-store-backport ${RELEASE_VERSION}"
+
+  # commit version bump
+  write_version ${RELEASE_VERSION} src/internal/version
+  git add .
+  git commit -m "Bump version to ${RELEASE_VERSION}"
+
+  # create release
+  configure-blobstore
+
+  bosh -n create-release --sha2 --final \
+    --tarball ../metric-store-backport-release/release-${RELEASE_VERSION}.tgz \
+    --version "${RELEASE_VERSION}"
+
+  # commit release creation changes
+  echo_green "Committing backport release and git tag on branch"
+  git add .
+  git commit -m "Create ${RELEASE_VERSION} release"
+
+  tag_name="v${RELEASE_VERSION}"
+  backport_release_sha=$(git rev-parse HEAD)
+  git tag "${tag_name}" ${backport_release_sha}
+
+  cp -r . ../metric-store-backport-modified
+popd

@@ -1,0 +1,585 @@
+<% back_port_versions_we_care_about = { "1.4.x": "v1.4.5" } %>
+<% envs_we_care_about = { "2.7": "us_2_7", "2.8": "us_2_8", "2.9": "us_2_9", "2.10": "us_2_10" } %>
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
+
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: frodenas/gcs-resource
+    tag: v0.5.1
+
+- name: pivnet
+  type: docker-image
+  source:
+    repository: pivotalcf/pivnet-resource
+    tag: latest-final
+
+resources:
+- name: cf-deployment-concourse-tasks-image
+  type: docker-image
+  source:
+    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    tag: latest
+
+- name: metric-store-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-ci
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    branch: master
+
+- name: pcf-observability-ci-image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-denver/pcf-observability-ci
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-tile-image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+<% back_port_versions_we_care_about.each do |version_name, latest_version_branch| %>
+- name: metric-store-<%= version_name %>
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-release
+    branch: <%= latest_version_branch %>
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    ignore_paths:
+    - .final_builds
+    - releases
+    disable_ci_skip: false
+    clean_tags: true
+
+- name: metric-store-dev-release-<%= version_name %>-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: metric-store-ci-notifications
+    key: metric-store-dev-release-<%= version_name %>-version
+    initial_version: 0.0.0
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: metric-store-dev-release-<%= version_name %>
+  type: gcs-resource
+  source:
+    bucket: metric-store-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: metric-store-dev-releases/release-(.*).tgz
+
+- name: metric-store-<%= version_name %>-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: metric-store-ci-versions
+    key: metric-store-release-acceptance-tile-<%= version_name %>
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    initial_version: 0.0.0
+
+- name: dev-tile-<%= version_name %>
+  type: gcs-resource
+  source:
+    bucket: metric-store-ci-notifications
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: temp-baked-tiles-<%= version_name %>/(.*).pivotal
+    initial_version: 0.0.0
+
+- name: metric-store-pivnet-metadata-<%= version_name %>
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    versioned_file: backport-<%= version_name %>/pivnet/metadata.yml
+
+- name: metric-store-backport-release-<%= version_name %>
+  type: gcs-resource
+  source:
+    bucket: oss-metric-store-releases
+    versioned_file: backport-<%= version_name %>/release.tgz
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+
+- name: backport-tile-<%= version_name %>
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: backport-<%= version_name %>/tiles/(.*).pivotal
+
+- name: metric-store-osl-<%= version_name %>
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    regexp: backport-<%= version_name %>/osl/(.*).txt
+<% end %>
+
+- name: metric-store-github-release
+  type: github-release
+  source:
+    user: cloudfoundry
+    repository: metric-store-release
+    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    drafts: true
+
+- name: concourse-tasks
+  type: git
+  source:
+    uri: https://github.com/pivotal-cf/concourse-tasks
+    branch: master
+
+- name: golang-release
+  type: git
+  source:
+    uri: git@github.com:bosh-packages/golang-release
+    branch: master
+    tag_filter: v*
+    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+
+- name: gcp-light-stemcell
+  type: bosh-io-stemcell
+  source:
+    name: bosh-google-kvm-ubuntu-xenial-go_agent
+    version_family: latest
+    tarball: true
+    preserve_filename: true
+
+- name: metric-store-pivnet
+  type: pivnet
+  source:
+    api_token: ((release-credentials.yml/Notes/pivnet-token-metric-store))
+    product_slug: p-metric-store
+
+- name: bpm-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bpm-release
+
+- name: bosh-dns-aliases-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry/bosh-dns-aliases-release
+
+- name: cf-routing-release
+  type: bosh-io-release
+  source:
+    repository: cloudfoundry-incubator/cf-routing-release
+    regexp: .*188.*
+
+shared:
+  - &send-alert-message
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        text_file: messages/success.txt
+
+jobs:
+<% back_port_versions_we_care_about.each do |version_name, latest_version_branch| %>
+- name: unit-tests-<%= version_name %>
+  serial: true
+  plan:
+  - in_parallel:
+    - get: cf-deployment-concourse-tasks-image
+    - get: metric-store-ci
+    - get: metric-store-<%= version_name %>
+      trigger: true
+  - task: create-slack-message
+    file: metric-store-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Metric Store <%= version_name %> Unit Tests
+      TEAM: metric-store-log-cache
+  - task: run-tests
+    attempts: 3
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: logcache/base
+      inputs:
+        - name: metric-store-<%= version_name %>
+      run:
+        path: bash
+        args:
+          - -c
+          - |
+            #!/bin/bash
+            set -ex
+            pushd metric-store-<%= version_name %>
+              scripts/test unit
+            popd
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_failure
+
+- name: create-dev-release-<%= version_name %>
+  serial: true
+  plan:
+    - in_parallel:
+      - get: metric-store-ci
+      - get: metric-store-<%= version_name %>
+        trigger: true
+        passed: ["unit-tests-<%= version_name %>"]
+      - get: metric-store-dev-release-<%= version_name %>-version
+        params: { pre: dev }
+      - get: cf-deployment-concourse-tasks-image
+      - get: golang-release
+    - task: create-dev-release
+      file: metric-store-ci/tasks/create-dev-release/task.yml
+      image: cf-deployment-concourse-tasks-image
+      input_mapping:
+        bosh-dev-release-dir: metric-store-<%= version_name %>
+        bosh-dev-release-version: metric-store-dev-release-<%= version_name %>-version
+      params:
+        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+    - put: metric-store-dev-release-<%= version_name %>
+      params:
+        file: metric-store-dev-release/release-*.tgz
+        content_type: application/octet-stream
+    - put: metric-store-dev-release-<%= version_name %>-version
+      params: { file: bosh-new-dev-release-version/version }
+
+- name: "Bake PAS Tile <%= version_name %>"
+  plan:
+    - in_parallel:
+      - get: concourse-tasks
+      - get: metric-store-ci
+      - get: metric-store-<%= version_name %>
+        passed: ["create-dev-release-<%= version_name %>"]
+      - get: metric-store-dev-release-<%= version_name %>
+        trigger: true
+        passed: ["create-dev-release-<%= version_name %>"]
+      - get: metric-store-<%= version_name %>-version
+        params:
+          pre: port
+      - get: pcf-observability-ci-image
+      - get: gcp-light-stemcell
+      - get: bpm-release
+      - get: bosh-dns-aliases-release
+      - get: cf-routing-release
+    - task: "bake tile"
+      image: pcf-observability-ci-image
+      file: metric-store-ci/tasks/pas_tile_bake/task.yml
+      input_mapping:
+        metric-store-release: metric-store-<%= version_name %>
+        metric-store-dev-release: metric-store-dev-release-<%= version_name %>
+        tile-version: metric-store-<%= version_name %>-version
+        stemcell: gcp-light-stemcell
+    - put: dev-tile-<%= version_name %>
+      params:
+        file: baked-tile/*.pivotal
+        content_type: application/octet-stream
+  ensure:
+    put: metric-store-<%= version_name %>-version
+    params:
+      file: new-tile-version/version
+
+<% envs_we_care_about.each do |env_version, pool_name| %>
+- name: "Install <%= version_name %> on PCF <%= env_version %>"
+  plan:
+  - in_parallel:
+    - get: concourse-tasks
+    - get: metric-store-ci
+    - get: metric-store-<%= version_name %>
+      passed: ["Bake PAS Tile <%= version_name %>"]
+    - get: metric-store-dev-release-<%= version_name %>
+      passed: ["Bake PAS Tile <%= version_name %>"]
+    - get: pcf-observability-ci-image
+    - get: metric-store-tile-image
+    - get: metric-store-<%= version_name %>-version
+      passed: ["Bake PAS Tile <%= version_name %>"]
+    - get: dev-tile-<%= version_name %>
+      trigger: true
+      passed: ["Bake PAS Tile <%= version_name %>"]
+    - get: gcp-light-stemcell
+      passed: ["Bake PAS Tile <%= version_name %>"]
+  - task: "Claim Smith Env"
+    attempts: 3
+    tags: [ vsphere-nimbus ]
+    image: metric-store-tile-image
+    config:
+      platform: linux
+      outputs:
+      - name: environment
+      run:
+        path: sh
+        args:
+        - "-c"
+        - |
+          set -eu
+          # exports smith environment name to `env`
+          $(smith claim -p <%= pool_name %> -n "cf-metric-store CI" | tail -1)
+          echo "Claimed smith environment: ${env}"
+          echo ${env} > environment/name
+          smith read > environment/metadata
+    on_failure:
+      task: release-env
+      tags: [ vsphere-nimbus ]
+      image: metric-store-tile-image
+      config:
+        platform: linux
+        run:
+          path: sh
+          args:
+          - "-c"
+          - |
+            set -e
+            sleep 10
+    params:
+      TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+  - task: "Upload and Config"
+    input_mapping:
+      tile-version: metric-store-<%= version_name %>-version
+      baked-tile: dev-tile-<%= version_name %>
+    image: pcf-observability-ci-image
+    file: metric-store-ci/tasks/tile_install/task-prep.yml
+  - task: "Apply Changes CF"
+    attempts: 3
+    image: pcf-observability-ci-image
+    file: metric-store-ci/tasks/tile_install/task-apply-cf.yml
+  - task: "Apply Changes Metric Store"
+    attempts: 3
+    image: pcf-observability-ci-image
+    file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
+    on_success:
+      task: release-env
+      tags: [ vsphere-nimbus ]
+      image: metric-store-tile-image
+      config:
+        platform: linux
+        inputs:
+        - name: environment
+        run:
+          path: sh
+          args:
+          - "-c"
+          - |
+            set -e
+            smith unclaim -e $(cat environment/name)
+      params:
+        TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+<% end %>
+
+- name: "Promotion Gate <%= version_name %>"
+  serial: true
+  plan:
+    - in_parallel:
+      - get: gcp-light-stemcell
+        passed: ["Bake PAS Tile <%= version_name %>"]
+      - get: bpm-release
+        passed: ["Bake PAS Tile <%= version_name %>"]
+      - get: bosh-dns-aliases-release
+        passed: ["Bake PAS Tile <%= version_name %>"]
+      - get: cf-routing-release
+        passed: ["Bake PAS Tile <%= version_name %>"]
+      - get: develop
+        resource: metric-store-<%= version_name %>
+        trigger: true
+        passed:
+          <% envs_we_care_about.each do |name, _| %>
+          - "Install <%= version_name %> on PCF <%= name %>"
+          <% end %>
+
+- name: "Build <%= version_name %> backport release"
+  plan:
+  - in_parallel:
+    - get: metric-store-ci
+    - get: pcf-observability-ci-image
+    - get: metric-store-pivnet-metadata-<%= version_name %>
+    - get: metric-store-<%= version_name %>
+      passed: [ "Promotion Gate <%= version_name %>" ]
+    - get: gcp-light-stemcell
+      passed: [ "Promotion Gate <%= version_name %>" ]
+    - get: bpm-release
+      passed: [ "Promotion Gate <%= version_name %>" ]
+    - get: bosh-dns-aliases-release
+      passed: [ "Promotion Gate <%= version_name %>" ]
+    - get: cf-routing-release
+      passed: [ "Promotion Gate <%= version_name %>" ]
+  - task: create-slack-message
+    file: metric-store-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Building <%= version_name %> Backport Release
+      TEAM: metric-store-log-cache
+  - task: create-final-release
+    file: metric-store-ci/tasks/create-backport-metric-store-release/task.yml
+    input_mapping:
+      pivnet-metadata: metric-store-pivnet-metadata-<%= version_name %>
+      metric-store-backport: metric-store-<%= version_name %>
+    params:
+      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+  - put: metric-store-<%= version_name %>
+    params:
+      repository: metric-store-backport-modified
+      rebase: false
+  - put: metric-store-backport-release-<%= version_name %>
+    params:
+      file: metric-store-backport-release/release-*.tgz
+      content_type: application/octet-stream
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_success
+
+- name: "Publish <%= version_name %> Github Backport Release"
+  serial: true
+  disable_manual_trigger: true
+  plan:
+  - in_parallel:
+    - get: metric-store-pivnet-metadata-<%= version_name %>
+      trigger: true
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: metric-store-backport-release-<%= version_name %>
+    - get: metric-store-ci
+  - task: github-publish-release-metadata
+    file: metric-store-ci/tasks/publish-github-release/task.yml
+    input_mapping:
+      release-version: metric-store-pivnet-metadata-<%= version_name %>
+      release-tarball: metric-store-backport-release-<%= version_name %>
+    params:
+      PROJECT_NAME: Metric Store
+  - put: metric-store-github-release
+    params:
+      name: github-release/name
+      tag: github-release/tag
+      body: github-release/body
+      globs:
+      - github-release/*.tgz
+
+- name: "Bake <%= version_name %> Backport Tile"
+  plan:
+  - in_parallel:
+    - get: metric-store-ci
+    - get: pcf-observability-ci-image
+    - get: metric-store-pivnet-metadata-<%= version_name %>
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: metric-store-<%= version_name %>
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: gcp-light-stemcell
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: bpm-release
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: bosh-dns-aliases-release
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: cf-routing-release
+      passed: [ "Build <%= version_name %> backport release" ]
+    - get: metric-store-backport-release-<%= version_name %>
+      passed: [ "Build <%= version_name %> backport release" ]
+  - task: create-slack-message
+    file: metric-store-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: "Releasing Backport <%= version_name %> Tile"
+      TEAM: metric-store-log-cache
+  - task: bake-backport-tile
+    file: metric-store-ci/tasks/tile_bake_final/task.yml
+    image: pcf-observability-ci-image
+    input_mapping:
+      pivnet-metadata: metric-store-pivnet-metadata-<%= version_name %>
+      stemcell: gcp-light-stemcell
+      metric-store-final-release: metric-store-backport-release-<%= version_name %>
+      metric-store-master: metric-store-<%= version_name %>
+  - put: backport-tile-<%= version_name %>
+    params:
+      file: baked-tile/*.pivotal
+      content_type: application/octet-stream
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_success
+
+- name: Push <%= version_name %> Backport to Pivnet
+  plan:
+  - get: metric-store-ci
+  - task: create-slack-message
+    file: metric-store-ci/tasks/alert-message-create/task.yml
+    params:
+      TITLE: Uploading Final <%= version_name %> Tile to PivNet
+      TEAM: metric-store-log-cache
+  - get: backport-tile-<%= version_name %>
+    passed:
+    - "Bake <%= version_name %> Backport Tile"
+  - get: metric-store-pivnet-metadata-<%= version_name %>
+    passed:
+    - "Bake <%= version_name %> Backport Tile"
+  - get: metric-store-osl-<%= version_name %>
+  - task: "inject OSL to tile"
+    file: metric-store-ci/tasks/add-osl/task.yml
+    input_mapping:
+      metric-store-osl: metric-store-osl-<%= version_name %>
+      metric-store-pivnet-metadata: metric-store-pivnet-metadata-<%= version_name %>
+      final-tile: backport-tile-<%= version_name %>
+  - put: metric-store-pivnet
+    params:
+      file_glob: final-tile/*.pivotal
+      metadata_file: metric-store-pivnet-metadata-<%= version_name %>/metadata.yml
+      override: false # do not re-upload already uploaded version
+  on_failure:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_failure
+  on_success:
+    do:
+    - put: slack-alert
+      params:
+        silent: true
+        username: ((slack-ci.yml/Notes/slack_alert_username))
+        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
+        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
+        attachments_file: metadata/alert_message_success
+<% end %>
