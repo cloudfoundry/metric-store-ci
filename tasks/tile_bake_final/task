@@ -26,6 +26,11 @@ TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}-${TIMESTAMP}.pivotal
 
 echo_green "Kiln baking tile"
 
+FORMS_DIRECTORY=""
+if [ -d metric-store-master/tile/forms ]; then
+  FORMS_DIRECTORY="--forms-directory metric-store-master/tile/forms"
+fi
+
 kiln bake \
     --version "$RELEASE_VERSION" \
     --metadata metric-store-master/tile/metadata.yml \
@@ -33,7 +38,7 @@ kiln bake \
     --releases-directory releases \
     --properties-directory metric-store-master/tile/properties \
     --jobs-directory metric-store-master/tile/jobs \
-    --forms-directory metric-store-master/tile/forms \
+    ${FORMS_DIRECTORY} \
     --instance-groups-directory metric-store-master/tile/instance_groups \
     --output-file ${TILE_FILE}
 
