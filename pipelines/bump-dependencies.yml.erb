@@ -16,12 +16,12 @@ resources:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
 
-- name: log-cache-base-image
+- name: metric-store-base-image
   type: docker-image
   source:
-    repository: logcache/base
-    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
-    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+    repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: metric-store-ci
   type: git
@@ -65,7 +65,7 @@ jobs:
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
-  - task: bump-logcache-base-golang
+  - task: bump-metric-store-base-golang
     image: cf-deployment-concourse-tasks-image
     config:
       platform: linux
@@ -73,7 +73,7 @@ jobs:
       - name: metric-store-ci
       outputs:
       - name: updated-metric-store-ci
-      - name: log-cache-base-build
+      - name: metric-store-base-build
       params:
         GO_VERSION: <%= GO_VERSION %>
       run:
@@ -87,18 +87,18 @@ jobs:
               git add docker-images/base/Dockerfile
 
               git config --global user.email 'cf-log-cache@pivotal.io>'
-              git config --global user.name 'Log Cache CI'
+              git config --global user.name 'Metric Store CI'
               git commit -m "Bump golang version in base Dockerfile"
             popd
 
             cp -r metric-store-ci/. updated-metric-store-ci/.
 
-            cp -r metric-store-ci/docker-images/base/. log-cache-base-build/.
-            echo "go${GO_VERSION}" > log-cache-base-build/tag
-  - put: log-cache-base-image
+            cp -r metric-store-ci/docker-images/base/. metric-store-base-build/.
+            echo "go${GO_VERSION}" > metric-store-base-build/tag
+  - put: metric-store-base-image
     params:
-      build: log-cache-base-build
-      tag: log-cache-base-build/tag
+      build: metric-store-base-build
+      tag: metric-store-base-build/tag
       tag_as_latest: true
   - put: metric-store-ci
     params:

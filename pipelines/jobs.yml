@@ -39,12 +39,12 @@ resources:
     paths:
     - docker-images
 
-- name: tile-image
+- name: metric-store-tile-image
   type: docker-image
   source:
-    repository: logcache/metric-store-tile
-    username: ((docker-hub-ci.yml/Notes/docker-hub-username))
-    password: ((docker-hub-ci.yml/Notes/docker-hub-password))
+    repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: after-standup
   type: time
@@ -74,7 +74,7 @@ jobs:
     params:
       CONTEXT_PATH: docker-images/metric-store-tile
       BASE_PACKAGE: ..
-  - put: tile-image
+  - put: metric-store-tile-image
     params:
       build: build-metric-store-tile-image/build
       tag: build-metric-store-tile-image/tag

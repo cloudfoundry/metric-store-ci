@@ -65,6 +65,13 @@ resources:
     username: _json_key
     password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
+- name: metric-store-tile-image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+
 - name: metric-store-develop
   type: git
   source:
@@ -612,6 +619,7 @@ jobs:
     - get: metric-store-dev-release
       passed: ["Bake PAS Tile"]
     - get: pcf-observability-ci-image
+    - get: metric-store-tile-image
     - get: metric-store-version
       passed: ["Bake PAS Tile"]
     - get: dev-tile
@@ -622,12 +630,9 @@ jobs:
   - task: "Claim Smith Env"
     attempts: 3
     tags: [ vsphere-nimbus ]
+    image: metric-store-tile-image
     config:
       platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: logcache/metric-store-tile
       outputs:
       - name: environment
       run:
@@ -644,12 +649,9 @@ jobs:
     on_failure:
       task: release-env
       tags: [ vsphere-nimbus ]
+      image: metric-store-tile-image
       config:
         platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: logcache/base
         run:
           path: sh
           args:
@@ -676,12 +678,9 @@ jobs:
     on_success:
       task: release-env
       tags: [ vsphere-nimbus ]
+      image: metric-store-tile-image
       config:
         platform: linux
-        image_resource:
-          type: docker-image
-          source:
-            repository: logcache/metric-store-tile
         inputs:
         - name: environment
         run:
