@@ -1,0 +1,18 @@
+#!/bin/bash -eux
+echo "Running apply changes cf"
+
+. ./metric-store-ci/tasks/shared_bash
+
+if [ -f environment/metadata ]; then
+  cp environment/metadata env.json
+else
+  echo ${TOOLSMITHS_ENV_JSON} > env.json
+fi
+export OM_TARGET=$(jq -r .ops_manager.url < env.json)
+export OM_USERNAME=$(jq -r .ops_manager.username < env.json)
+export OM_PASSWORD=$(jq -r .ops_manager.password < env.json)
+export OM_SKIP_SSL_VALIDATION=true
+
+if [[ ${FOUNDATION_TYPE} = "PAS" ]]; then
+  om apply-changes --product-name "cf" --request-timeout=18000 --reattach
+fi

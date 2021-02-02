@@ -1,5 +1,5 @@
 #!/bin/bash -eux
-echo "Running tile install"
+echo "Running tile upload and config"
 
 . ./metric-store-ci/tasks/shared_bash
 
@@ -17,14 +17,13 @@ export OM_SKIP_SSL_VALIDATION=true
 export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
 export RELEASE_VERSION=$(cat tile-version/version)
 export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 5)
-export STEMCELL_SHA=$(shasum gcp-light-stemcell/stemcell.tgz | cut -d ' ' -f 1)
+export STEMCELL_SHA=$(shasum -a 256 gcp-light-stemcell/stemcell.tgz | cut -d ' ' -f 1)
 
 mv gcp-light-stemcell/stemcell.tgz gcp-light-stemcell/${STEMCELL_FILE}
 
 om delete-unused-products
 om upload-product --product ${TILE_FILE}
 om stage-product --product-name "metric-store" --product-version ${RELEASE_VERSION}
-
 
 subnet=$(jq -r .ert_subnet < env.json)
 zone_1=$(jq -r .azs[0] < env.json)
@@ -47,10 +46,3 @@ EOF
 
 om configure-product --config metric-store-tile-config.yml
 om upload-stemcell --stemcell gcp-light-stemcell/${STEMCELL_FILE} --floating true --shasum ${STEMCELL_SHA}
-
-if [[ ${FOUNDATION_TYPE} = "PAS" ]]; then
-  om apply-changes --product-name "cf"
-fi
-
-om apply-changes --product-name "metric-store"
-

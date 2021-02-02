@@ -2,9 +2,6 @@
 platform: linux
 
 inputs:
-  - name: baked-tile
-  - name: gcp-light-stemcell
-  - name: tile-version
   - name: metric-store-ci
   - name: environment
     optional: true
@@ -17,4 +14,4 @@ PARAMS:
   FOUNDATION_TYPE: PAS
 
 run:
-  path: metric-store-ci/tasks/tile_install/task
+  path: metric-store-ci/tasks/tile_install/task-apply-cf

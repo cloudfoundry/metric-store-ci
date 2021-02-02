@@ -659,13 +659,20 @@ jobs:
             sleep 10
     params:
       TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
-  - task: "Upload and Install"
-    tags: [ vsphere-nimbus ]
+  - task: "Upload and Config"
     input_mapping:
       tile-version: metric-store-version
       baked-tile: dev-tile
     image: pcf-observability-ci-image
-    file: metric-store-ci/tasks/tile_install/task.yml
+    file: metric-store-ci/tasks/tile_install/task-prep.yml
+  - task: "Apply Changes CF"
+    attempts: 3
+    image: pcf-observability-ci-image
+    file: metric-store-ci/tasks/tile_install/task-apply-cf.yml
+  - task: "Apply Changes Metric Store"
+    attempts: 3
+    image: pcf-observability-ci-image
+    file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
     on_success:
       task: release-env
       tags: [ vsphere-nimbus ]
