@@ -85,7 +85,7 @@ instance_groups:
       cc:
         ca_cert: ((/vpc-bosh-run-pivotal-io/cf-cfapps-io2/loggregator_ca.certificate))
         common_name: metron
-      proxy_ca_cert: "((metric_store_ca.certificate))"
+      proxy_ca_cert: "((metric_store.ca))"
       proxy_port: 8083
       external_cert: ((metric_store_ssl.certificate))
       external_key: ((metric_store_ssl.private_key))
