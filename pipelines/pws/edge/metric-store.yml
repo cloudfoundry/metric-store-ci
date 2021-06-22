@@ -122,9 +122,6 @@ jobs:
   - put: slack-alert
     params:
       silent: true
-      username: ((slack-ci.yml/Notes/slack_alert_username))
-      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-      channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
       text: ":yellow_heart: Started :metric: Metric Store deployment to :knife: PWS Edge"
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
@@ -172,18 +169,12 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":green_heart: Finished :metric: Metric Store deployment to :knife: PWS Edge"
   on_failure:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":broken_heart: Failed to deploy :metric: Metric Store: to :knife: PWS Edge
           Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
 
@@ -245,9 +236,6 @@ jobs:
   - put: slack-alert
     params:
       silent: true
-      username: ((slack-ci.yml/Notes/slack_alert_username))
-      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-      channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
       text: ":monkey: Starting nightly :metric: Metric Store Edge redeployment"
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
@@ -278,18 +266,12 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":green_heart: Finished nightly :metric: Metric Store Edge redeployment"
   on_failure:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":broken_heart: Failed nightly :metric: Metric Store Edge redeployment
           Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
 
@@ -299,9 +281,6 @@ jobs:
   - put: slack-alert
     params:
       silent: true
-      username: ((slack-ci.yml/Notes/slack_alert_username))
-      icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-      channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
       text: ":monkey: Killing a :metric: Metric Store Edge vm"
   - in_parallel:
     - get: cf-deployment-concourse-tasks-image
@@ -349,18 +328,12 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":green_heart: Finished killing and restarting a :metric: Metric Store Edge vm"
   on_failure:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":broken_heart: Failed to kill a :metric: Metric Store Edge vm
           Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
 

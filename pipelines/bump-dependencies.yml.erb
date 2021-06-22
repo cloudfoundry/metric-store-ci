@@ -141,9 +141,6 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text_file: modified-metadata/alert_toggle
         attachments_file: modified-metadata/alert_message_failure
     - put: notification-bump-golang-version
@@ -156,9 +153,6 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text_file: modified-metadata/alert_toggle
         attachments_file: modified-metadata/alert_message_success
     - put: notification-bump-golang-version
