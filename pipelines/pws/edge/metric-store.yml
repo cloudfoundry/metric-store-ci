@@ -272,7 +272,6 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         text: ":broken_heart: Failed nightly :metric: Metric Store Edge redeployment
           Details here: https://concourse.run.pivotal.io/teams/pcf-observability/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME"
 
