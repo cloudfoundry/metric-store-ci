@@ -773,18 +773,12 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_success
 
 - name: publish-github-release
@@ -889,18 +883,12 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_success
 
 
@@ -931,16 +919,10 @@ jobs:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_failure
   on_success:
     do:
     - put: slack-alert
       params:
         silent: true
-        username: ((slack-ci.yml/Notes/slack_alert_username))
-        icon_url: ((slack-ci.yml/Notes/slack_alert_icon_url))
-        channel: ((slack-ci.yml/Notes/slack_high_visibility_alert_channel))
         attachments_file: metadata/alert_message_success
