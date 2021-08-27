@@ -231,6 +231,7 @@ resources:
   type: bosh-io-release
   source:
     repository: cloudfoundry/bosh-dns-aliases-release
+    regexp: 0\.0\.3
 
 - name: cf-routing-release
   type: bosh-io-release
@@ -591,7 +592,6 @@ jobs:
       passed: ["Bake PAS Tile"]
   - task: "Claim Smith Env"
     attempts: 3
-    tags: [ vsphere-nimbus ]
     image: metric-store-tile-image
     config:
       platform: linux
@@ -610,7 +610,6 @@ jobs:
           smith read > environment/metadata
     on_failure:
       task: release-env
-      tags: [ vsphere-nimbus ]
       image: metric-store-tile-image
       config:
         platform: linux
@@ -639,7 +638,6 @@ jobs:
     file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
     on_success:
       task: release-env
-      tags: [ vsphere-nimbus ]
       image: metric-store-tile-image
       config:
         platform: linux
