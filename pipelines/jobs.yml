@@ -3,6 +3,16 @@ groups:
   jobs:
   - refresh-environments
   - build-docker-images
+- name: dependencies
+  jobs:
+  - go-dependencies
+
+resource_types:
+- name: slack-notification
+  type: docker-image
+  source:
+    repository: cfcommunity/slack-notification-resource
+    tag: latest
 
 resources:
 - name: metric-store-develop
@@ -55,6 +65,11 @@ resources:
     start: 9:06 AM
     stop: 5:00 PM
 
+- name: slack-alert
+  type: slack-notification
+  source:
+    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+
 jobs:
 - name: build-docker-images
   serial: true
@@ -95,3 +110,21 @@ jobs:
       file: metric-store-ci/tasks/refresh-env/task.yml
       params:
         ID: 575
+
+- name: go-dependencies
+  serial: true
+  plan:
+    - in_parallel:
+        - get: metric-store-develop
+        - get: metric-store-ci
+        - get: cf-deployment-concourse-tasks-image
+    - task: outdated
+      timeout: 15m
+      image: cf-deployment-concourse-tasks-image
+      file: metric-store-ci/tasks/go-dependencies-check/task.yml
+  on_success:
+    do:
+      - put: slack-alert
+        params:
+          silent: true
+          text: ":warning: New Metric Store go dependency updates are found"

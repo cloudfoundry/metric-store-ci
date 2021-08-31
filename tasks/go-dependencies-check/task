@@ -1,0 +1,12 @@
+#!/bin/bash -euf
+
+go get -u github.com/psampaz/go-mod-outdated
+
+pushd ${PWD}/metric-store-develop
+  go list -u -m -json -mod=readonly  all | go-mod-outdated -update -direct
+
+  if [ $? -ne 0 ]
+  then
+    exit 0
+  fi
+popd
