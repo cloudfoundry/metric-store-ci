@@ -2,12 +2,8 @@
 platform: linux
 
 inputs:
-  - get: metric-store-ci
-  - get: metric-store-develop
+- name: metric-store-develop
+- name: metric-store-ci
 
 run:
-  path: bash
-  args:
-    - -ce
-    - |
-      echo 1234
+  path: metric-store-ci/tasks/go-dependencies-check/task
