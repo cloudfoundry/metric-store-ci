@@ -10,8 +10,4 @@ run:
   args:
     - -ce
     - |
-      go get -u github.com/psampaz/go-mod-outdated
-
-      pushd ${PWD}/metric-store-develop
-         go list -u -m -json -mod=readonly  all | go-mod-outdated -update -direct
-      popd
+      echo 1234
