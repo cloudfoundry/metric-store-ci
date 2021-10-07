@@ -1,5 +1,5 @@
-<% back_port_versions_we_care_about = { "1.4.x": "v1.4.5" } %>
-<% envs_we_care_about = { "2.7": "us_2_7", "2.8": "us_2_8", "2.9": "us_2_9", "2.10": "us_2_10", "2.11": "us_2_11_lts2" } %>
+<% back_port_versions_we_care_about = { "1-4-x": "v1.4.5" } %>
+<% envs_we_care_about = { "2-7": "us_2_7", "2-8": "us_2_8", "2-9": "us_2_9", "2-10": "us_2_10", "2-11": "us_2_11_lts2" } %>
 resource_types:
 - name: slack-notification
   type: docker-image
@@ -256,7 +256,7 @@ jobs:
     - put: metric-store-dev-release-<%= version_name %>-version
       params: { file: bosh-new-dev-release-version/version }
 
-- name: "Bake PAS Tile <%= version_name %>"
+- name: "Bake-PAS-Tile-<%= version_name %>"
   plan:
     - in_parallel:
       - get: concourse-tasks
@@ -292,24 +292,24 @@ jobs:
       file: new-tile-version/version
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
-- name: "Install <%= version_name %> on PCF <%= env_version %>"
+- name: "Install-<%= version_name %>-on-PCF-<%= env_version %>"
   plan:
   - in_parallel:
     - get: concourse-tasks
     - get: metric-store-ci
     - get: metric-store-<%= version_name %>
-      passed: ["Bake PAS Tile <%= version_name %>"]
+      passed: ["Bake-PAS-Tile-<%= version_name %>"]
     - get: metric-store-dev-release-<%= version_name %>
-      passed: ["Bake PAS Tile <%= version_name %>"]
+      passed: ["Bake-PAS-Tile-<%= version_name %>"]
     - get: pcf-observability-ci-image
     - get: metric-store-tile-image
     - get: metric-store-<%= version_name %>-version
-      passed: ["Bake PAS Tile <%= version_name %>"]
+      passed: ["Bake-PAS-Tile-<%= version_name %>"]
     - get: dev-tile-<%= version_name %>
       trigger: true
-      passed: ["Bake PAS Tile <%= version_name %>"]
+      passed: ["Bake-PAS-Tile-<%= version_name %>"]
     - get: gcp-light-stemcell
-      passed: ["Bake PAS Tile <%= version_name %>"]
+      passed: ["Bake-PAS-Tile-<%= version_name %>"]
   - task: "Claim Smith Env"
     attempts: 3
     tags: [ vsphere-nimbus ]
@@ -377,42 +377,42 @@ jobs:
         TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
 <% end %>
 
-- name: "Promotion Gate <%= version_name %>"
+- name: "Promotion-Gate-<%= version_name %>"
   serial: true
   plan:
     - in_parallel:
       - get: gcp-light-stemcell
-        passed: ["Bake PAS Tile <%= version_name %>"]
+        passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: bpm-release
-        passed: ["Bake PAS Tile <%= version_name %>"]
+        passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: bosh-dns-aliases-release
-        passed: ["Bake PAS Tile <%= version_name %>"]
+        passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: cf-routing-release
-        passed: ["Bake PAS Tile <%= version_name %>"]
+        passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: develop
         resource: metric-store-<%= version_name %>
         trigger: true
         passed:
           <% envs_we_care_about.each do |name, _| %>
-          - "Install <%= version_name %> on PCF <%= name %>"
+          - "Install-<%= version_name %>-on-PCF-<%= name %>"
           <% end %>
 
-- name: "Build <%= version_name %> backport release"
+- name: "Build-<%= version_name %>-backport-release"
   plan:
   - in_parallel:
     - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: metric-store-pivnet-metadata-<%= version_name %>
     - get: metric-store-<%= version_name %>
-      passed: [ "Promotion Gate <%= version_name %>" ]
+      passed: [ "Promotion-Gate-<%= version_name %>" ]
     - get: gcp-light-stemcell
-      passed: [ "Promotion Gate <%= version_name %>" ]
+      passed: [ "Promotion-Gate-<%= version_name %>" ]
     - get: bpm-release
-      passed: [ "Promotion Gate <%= version_name %>" ]
+      passed: [ "Promotion-Gate-<%= version_name %>" ]
     - get: bosh-dns-aliases-release
-      passed: [ "Promotion Gate <%= version_name %>" ]
+      passed: [ "Promotion-Gate-<%= version_name %>" ]
     - get: cf-routing-release
-      passed: [ "Promotion Gate <%= version_name %>" ]
+      passed: [ "Promotion-Gate-<%= version_name %>" ]
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
@@ -446,14 +446,14 @@ jobs:
         silent: true
         attachments_file: metadata/alert_message_success
 
-- name: "Publish <%= version_name %> Github Backport Release"
+- name: "Publish-<%= version_name %>-Github-Backport-Release"
   serial: true
   disable_manual_trigger: true
   plan:
   - in_parallel:
     - get: metric-store-pivnet-metadata-<%= version_name %>
       trigger: true
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: metric-store-backport-release-<%= version_name %>
     - get: metric-store-ci
   - task: github-publish-release-metadata
@@ -471,25 +471,25 @@ jobs:
       globs:
       - github-release/*.tgz
 
-- name: "Bake <%= version_name %> Backport Tile"
+- name: "Bake-<%= version_name %>-Backport-Tile"
   plan:
   - in_parallel:
     - get: metric-store-ci
     - get: pcf-observability-ci-image
     - get: metric-store-pivnet-metadata-<%= version_name %>
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: metric-store-<%= version_name %>
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: gcp-light-stemcell
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: bpm-release
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: bosh-dns-aliases-release
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: cf-routing-release
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: metric-store-backport-release-<%= version_name %>
-      passed: [ "Build <%= version_name %> backport release" ]
+      passed: [ "Build-<%= version_name %>-backport-release" ]
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
@@ -520,7 +520,7 @@ jobs:
         silent: true
         attachments_file: metadata/alert_message_success
 
-- name: Push <%= version_name %> Backport to Pivnet
+- name: Push-<%= version_name %>-Backport-to-Pivnet
   plan:
   - get: metric-store-ci
   - task: create-slack-message
@@ -530,10 +530,10 @@ jobs:
       TEAM: metric-store-log-cache
   - get: backport-tile-<%= version_name %>
     passed:
-    - "Bake <%= version_name %> Backport Tile"
+    - "Bake-<%= version_name %>-Backport-Tile"
   - get: metric-store-pivnet-metadata-<%= version_name %>
     passed:
-    - "Bake <%= version_name %> Backport Tile"
+    - "Bake-<%= version_name %>-Backport-Tile"
   - get: metric-store-osl-<%= version_name %>
   - task: "inject OSL to tile"
     file: metric-store-ci/tasks/add-osl/task.yml

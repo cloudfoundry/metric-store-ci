@@ -1,4 +1,4 @@
-<% envs_we_care_about = { "2.7": "us_2_7", "2.8": "us_2_8", "2.9": "us_2_9", "2.10": "us_2_10", "2.11": "us_2_11_lts2" } %>
+<% envs_we_care_about = { "2-7": "us_2_7", "2-8": "us_2_8", "2-9": "us_2_9", "2-10": "us_2_10", "2-11": "us_2_11_lts2" } %>
 resource_types:
 - name: slack-notification
   type: docker-image
@@ -536,7 +536,7 @@ jobs:
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive
 
-- name: "Bake PAS Tile"
+- name: "Bake-PAS-Tile"
   plan:
     - in_parallel:
       - get: concourse-tasks
@@ -572,24 +572,24 @@ jobs:
       file: new-tile-version/version
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
-- name: "Install on PCF <%= env_version %>"
+- name: "Install-on-PCF-<%= env_version %>"
   plan:
   - in_parallel:
     - get: concourse-tasks
     - get: metric-store-ci
     - get: metric-store-develop
-      passed: ["Bake PAS Tile"]
+      passed: ["Bake-PAS-Tile"]
     - get: metric-store-dev-release
-      passed: ["Bake PAS Tile"]
+      passed: ["Bake-PAS-Tile"]
     - get: pcf-observability-ci-image
     - get: metric-store-tile-image
     - get: metric-store-version
-      passed: ["Bake PAS Tile"]
+      passed: ["Bake-PAS-Tile"]
     - get: dev-tile
       trigger: true
-      passed: ["Bake PAS Tile"]
+      passed: ["Bake-PAS-Tile"]
     - get: gcp-light-stemcell
-      passed: ["Bake PAS Tile"]
+      passed: ["Bake-PAS-Tile"]
   - task: "Claim Smith Env"
     attempts: 3
     image: metric-store-tile-image
@@ -659,19 +659,19 @@ jobs:
   plan:
     - in_parallel:
       - get: gcp-light-stemcell
-        passed: ["Bake PAS Tile"]
+        passed: ["Bake-PAS-Tile"]
       - get: bpm-release
-        passed: ["Bake PAS Tile"]
+        passed: ["Bake-PAS-Tile"]
       - get: bosh-dns-aliases-release
-        passed: ["Bake PAS Tile"]
+        passed: ["Bake-PAS-Tile"]
       - get: cf-routing-release
-        passed: ["Bake PAS Tile"]
+        passed: ["Bake-PAS-Tile"]
       - get: develop
         resource: metric-store-develop
         trigger: true
         passed:
           <% envs_we_care_about.each do |name, _| %>
-          - "Install on PCF <%= name %>"
+          - "Install-on-PCF-<%= name %>"
           <% end %>
 
 - name: promote-to-release-elect
@@ -830,7 +830,7 @@ jobs:
         version: release-version-generated
     - <<: *send-alert-message
 
-- name: Bake Final Tile
+- name: Bake-Final-Tile
   plan:
   - in_parallel:
     - get: metric-store-ci
@@ -878,7 +878,7 @@ jobs:
         attachments_file: metadata/alert_message_success
 
 
-- name: Push to Pivnet
+- name: Push-to-Pivnet
   plan:
   - get: metric-store-ci
   - task: create-slack-message
@@ -888,10 +888,10 @@ jobs:
       TEAM: metric-store-log-cache
   - get: final-tile
     passed:
-    - "Bake Final Tile"
+    - "Bake-Final-Tile"
   - get: metric-store-pivnet-metadata
     passed:
-    - "Bake Final Tile"
+    - "Bake-Final-Tile"
   - get: metric-store-osl
   - task: "inject OSL to tile"
     file: metric-store-ci/tasks/add-osl/task.yml
