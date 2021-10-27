@@ -168,11 +168,6 @@ resources:
   source:
     repository: cloudfoundry/bpm-release
 
-- name: bosh-dns-aliases-release
-  type: bosh-io-release
-  source:
-    repository: cloudfoundry/bosh-dns-aliases-release
-
 - name: cf-routing-release
   type: bosh-io-release
   source:
@@ -272,7 +267,6 @@ jobs:
       - get: pcf-observability-ci-image
       - get: gcp-light-stemcell
       - get: bpm-release
-      - get: bosh-dns-aliases-release
       - get: cf-routing-release
     - task: "bake tile"
       image: pcf-observability-ci-image
@@ -385,8 +379,6 @@ jobs:
         passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: bpm-release
         passed: ["Bake-PAS-Tile-<%= version_name %>"]
-      - get: bosh-dns-aliases-release
-        passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: cf-routing-release
         passed: ["Bake-PAS-Tile-<%= version_name %>"]
       - get: develop
@@ -408,8 +400,6 @@ jobs:
     - get: gcp-light-stemcell
       passed: [ "Promotion-Gate-<%= version_name %>" ]
     - get: bpm-release
-      passed: [ "Promotion-Gate-<%= version_name %>" ]
-    - get: bosh-dns-aliases-release
       passed: [ "Promotion-Gate-<%= version_name %>" ]
     - get: cf-routing-release
       passed: [ "Promotion-Gate-<%= version_name %>" ]
@@ -483,8 +473,6 @@ jobs:
     - get: gcp-light-stemcell
       passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: bpm-release
-      passed: [ "Build-<%= version_name %>-backport-release" ]
-    - get: bosh-dns-aliases-release
       passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: cf-routing-release
       passed: [ "Build-<%= version_name %>-backport-release" ]
