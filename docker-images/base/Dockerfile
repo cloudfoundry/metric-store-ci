@@ -30,9 +30,10 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
   && cd chruby-0.3.9/ \
   && sudo make install
 
-#RUN go mod init
-#RUN go mod tidy
+RUN go mod init example.com/metric-store-ci
+RUN go mod tidy
 RUN GO111MODULE=auto
+
 RUN wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz \
   && tar -xzvf ruby-install-0.7.0.tar.gz \
   && cd ruby-install-0.7.0/ \
