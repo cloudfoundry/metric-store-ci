@@ -30,6 +30,9 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
   && cd chruby-0.3.9/ \
   && sudo make install
 
+WORKDIR /usr/src/app
+COPY go.mod \
+  go.sum /usr/src/app/
 RUN go mod init example.com/metric-store-ci
 #RUN go mod tidy
 RUN echo $GOPATH
