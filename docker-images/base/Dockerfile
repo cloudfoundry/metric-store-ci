@@ -33,7 +33,8 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
 RUN mkdir src/app
 WORKDIR /src/app
 COPY go.mod \
-  go.sum /usr/src/app/
+  go.sum /src/app/
+
 RUN go mod init example.com/metric-store-ci
 #RUN go mod tidy
 RUN echo $GOPATH
