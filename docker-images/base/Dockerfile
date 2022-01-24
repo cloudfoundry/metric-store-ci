@@ -30,7 +30,7 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
   && cd chruby-0.3.9/ \
   && sudo make install
 
-RUN mkdir src/app
+RUN mkdir /src/app
 WORKDIR /src/app
 COPY go.mod \
   go.sum /src/app/
