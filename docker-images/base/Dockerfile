@@ -1,5 +1,4 @@
-#FROM golang:1.15
-FROM golang:1.16
+FROM golang:1.15
 
 RUN go version
 
@@ -15,8 +14,6 @@ RUN apt-get update; apt-get install --yes \
   software-properties-common \
   unzip \
   vim
-
-
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
 RUN add-apt-repository \
   "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable"
@@ -29,16 +26,6 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
   && tar -xzvf chruby-0.3.9.tar.gz \
   && cd chruby-0.3.9/ \
   && sudo make install
-
-RUN mkdir src/app
-WORKDIR src/app
-COPY go.mod \
-  go.sum src/app/
-
-RUN go mod init example.com/metric-store-ci
-#RUN go mod tidy
-RUN echo $GOPATH
-RUN GO111MODULE=auto
 
 RUN wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz \
   && tar -xzvf ruby-install-0.7.0.tar.gz \
@@ -83,4 +70,4 @@ RUN cd /tmp \
   && tar xzvf credhub*.tgz ./credhub \
   && cp ./credhub /usr/local/bin/
 
-#RUN GO111MODULE=on go get github.com/mikefarah/yq/v3
+RUN GO111MODULE=on go get github.com/mikefarah/yq/v3
