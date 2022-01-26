@@ -1,4 +1,4 @@
-FROM golang:1.15
+FROM golang:latest
 
 RUN go version
 
@@ -46,6 +46,8 @@ RUN cd /tmp \
   && unzip *.zip \
   && cp ./protoc /usr/local/bin/
 
+ENV GO111MODULE=auto
+
 RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh github.com/cloudfoundry/bosh-cli
 RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
 
@@ -70,5 +72,3 @@ RUN cd /tmp \
   && wget https://github.com/cloudfoundry-incubator/credhub-cli/releases/download/2.6.2/credhub-linux-2.6.2.tgz \
   && tar xzvf credhub*.tgz ./credhub \
   && cp ./credhub /usr/local/bin/
-
-RUN GO111MODULE=on go get github.com/mikefarah/yq/v3
