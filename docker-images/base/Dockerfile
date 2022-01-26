@@ -63,7 +63,7 @@ RUN cd /tmp \
     && unzip terraform.zip -d /usr/local/bin
 
 RUN cd /tmp \
-  && wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-200.0.0-linux-x86_64.tar.gz -O google-cloud-sdk.tar.gz \
+  && wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-370.0.0-linux-x86_64.tar.gz -O google-cloud-sdk.tar.gz \
   && tar xzvf google-cloud-sdk.tar.gz -C /usr/local/share \
   && /usr/local/share/google-cloud-sdk/install.sh \
   && ln -s /usr/local/share/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud
