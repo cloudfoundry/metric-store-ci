@@ -19,7 +19,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
-    branch: develop
+    branch: metric-store-release-cf-routing-release-update
     private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
     ignore_paths:
     - .final_builds
