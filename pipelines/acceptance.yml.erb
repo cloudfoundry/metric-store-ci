@@ -72,6 +72,13 @@ resources:
     username: _json_key
     password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
+- name: metric-store-base-image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+
 - name: metric-store-develop
   type: git
   source:
@@ -231,7 +238,7 @@ resources:
   type: bosh-io-release
   source:
     repository: cloudfoundry/routing-release
-    regexp: .*229.*
+    regexp: .*232.*
 
 - name: hourly-during-the-workday
   type: time
@@ -263,8 +270,8 @@ jobs:
   serial: true
   plan:
   - in_parallel:
-    - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
+    - get: metric-store-base-image
     - get: metric-store-develop
       trigger: true
   - task: create-slack-message
@@ -274,12 +281,9 @@ jobs:
       TEAM: metric-store-log-cache
   - task: run-tests
     attempts: 3
+    image: metric-store-base-image
     config:
       platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: logcache/base
       inputs:
         - name: metric-store-develop
       run:
@@ -723,17 +727,7 @@ jobs:
   - put: metric-store-release-elect
     params:
       repository: develop
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Promote To Release Elect
-      TEAM: metric-store-log-cache
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
+
 
 - name: promote-to-master
   serial: true
