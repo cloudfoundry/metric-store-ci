@@ -38,9 +38,6 @@ pushd metric-store-master
   final_release_abbrev=$(git rev-parse --abbrev-ref HEAD)
   final_release_sha=$(git rev-parse HEAD)
 
-  # @TODO NEED TO DELETE
-  git tag -d v1.5.5
-
   git tag "${tag_name}" ${final_release_sha}
 
   cp -r . ../metric-store-master-modified
