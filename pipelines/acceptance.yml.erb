@@ -76,6 +76,7 @@ resources:
   type: docker-image
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
+    tag: go1.17.8
     username: _json_key
     password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -143,7 +144,7 @@ resources:
   source:
     user: cloudfoundry
     repository: metric-store-release
-    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    access_token: ((log-store-ci.yml/Notes/github-access-token))
     drafts: true
 
 - name: bumper-tool
