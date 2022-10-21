@@ -12,17 +12,12 @@ resource_types:
     tag: latest-final
 
 resources:
-- name: cf-deployment
-  type: git
+- name: metric-store-tile-image
+  type: docker-image
   source:
-    uri: https://github.com/cloudfoundry/cf-deployment
-    branch: main
-
-- name: cf-deployment-concourse-tasks
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
-    branch: v10.14.0 # bump to latest
+    repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
+    username: _json_key
+    password: ((release-credentials.yml/Notes/gcp-service-account-key))
 
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
@@ -69,7 +64,7 @@ resources:
   source:
     driver: gcs
     bucket: metric-store-ci-notifications
-    key: metric-store-dev-release-version
+    key: test/metric-store-dev-release-version
     initial_version: 0.0.0
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
 
@@ -78,22 +73,8 @@ resources:
   source:
     bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    regexp: metric-store-dev-releases/release-(.*).tgz
+    regexp: test/metric-store-dev-releases/release-(.*).tgz
 
-- name: metric-store-final-release
-  type: gcs-resource
-  source:
-    bucket: oss-metric-store-releases
-    versioned_file: release.tgz
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-
-- name: metric-store-github-release
-  type: github-release
-  source:
-    user: cloudfoundry
-    repository: metric-store-release
-    access_token: ((log-store-ci.yml/Notes/github-access-token))
-    drafts: true
 
 - name: concourse-tasks
   type: git
@@ -114,7 +95,7 @@ resources:
   source:
     driver: gcs
     bucket: metric-store-ci-versions
-    key: metric-store-release-acceptance-tile
+    key: test/metric-store-release-acceptance-tile
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
     initial_version: 0.2.0-build.24
 
@@ -123,22 +104,8 @@ resources:
   source:
     bucket: metric-store-ci-notifications
     json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    regexp: temp-baked-tiles/(.*).pivotal
+    regexp: test/temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
-
-- name: final-tile
-  type: gcs-resource
-  source:
-    bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    regexp: tiles/(.*).pivotal
-
-- name: metric-store-pivnet-metadata
-  type: gcs-resource
-  source:
-    bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
-    versioned_file: pivnet/metadata.yml
 
 - name: gcp-light-stemcell
   type: bosh-io-stemcell
@@ -147,12 +114,6 @@ resources:
     version_family: latest
     tarball: true
     preserve_filename: true
-
-- name: metric-store-pivnet
-  type: pivnet
-  source:
-    api_token: ((release-credentials.yml/Notes/pivnet-token-metric-store))
-    product_slug: p-metric-store
 
 - name: bpm-release
   type: bosh-io-release
@@ -164,15 +125,6 @@ resources:
   source:
     repository: cloudfoundry/routing-release
     regexp: .*232.*
-
-- name: hourly-during-the-workday
-  type: time
-  source:
-    location: America/Denver
-    interval: 1h
-    start: 7:00 AM
-    stop: 7:00 PM
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
 
 jobs:
 - name: unit-tests
@@ -260,3 +212,90 @@ jobs:
     put: metric-store-version
     params:
       file: new-tile-version/version
+
+
+<% envs_we_care_about = { "us_3_0": "us_3_0" } %>
+
+<% envs_we_care_about.each do |env_version, pool_name| %>
+- name: "Install-on-PCF-<%= env_version %>"
+  plan:
+    - in_parallel:
+        - get: concourse-tasks
+        - get: metric-store-ci
+        - get: metric-store-develop
+          passed: ["Bake-PAS-Tile"]
+        - get: metric-store-dev-release
+          passed: ["Bake-PAS-Tile"]
+        - get: pcf-observability-ci-image
+        - get: metric-store-tile-image
+        - get: metric-store-version
+          passed: ["Bake-PAS-Tile"]
+        - get: dev-tile
+          trigger: true
+          passed: ["Bake-PAS-Tile"]
+        - get: gcp-light-stemcell
+          passed: ["Bake-PAS-Tile"]
+    - task: "Claim Smith Env"
+      attempts: 3
+      image: metric-store-tile-image
+      config:
+        platform: linux
+        outputs:
+          - name: environment
+        run:
+          path: sh
+          args:
+            - "-c"
+            - |
+              set -eu
+              # exports smith environment name to `env`
+              $(smith claim -p <%= pool_name %> -n "cf-metric-store CI" | tail -1)
+              echo "Claimed smith environment: ${env}"
+              echo ${env} > environment/name
+              smith read > environment/metadata
+      on_failure:
+        task: release-env
+        image: metric-store-tile-image
+        config:
+          platform: linux
+          run:
+            path: sh
+            args:
+              - "-c"
+              - |
+                set -e
+                sleep 10
+      params:
+        TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+    - task: "Upload and Config"
+      input_mapping:
+        tile-version: metric-store-version
+        baked-tile: dev-tile
+      image: pcf-observability-ci-image
+      file: metric-store-ci/tasks/tile_install/task-prep.yml
+    - task: "Apply Changes CF"
+      attempts: 3
+      image: pcf-observability-ci-image
+      file: metric-store-ci/tasks/tile_install/task-apply-cf.yml
+    - task: "Apply Changes Metric Store"
+      attempts: 3
+      image: pcf-observability-ci-image
+      file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
+      on_success:
+        task: release-env
+        image: metric-store-tile-image
+        config:
+          platform: linux
+          inputs:
+            - name: environment
+          run:
+            path: sh
+            args:
+              - "-c"
+              - |
+                set -e
+                smith unclaim -e $(cat environment/name)
+        params:
+          TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+
+<% end %>
