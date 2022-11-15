@@ -1,6 +1,5 @@
 <% envs_we_care_about = {
-  "2-7": "us_2_7",
-  "2-10": "us_2_10",
+  "2-7": "us_2_7_lts",
   "2-11": "us_2_11_lts2",
   "2-12": "us_2_12",
   "2-13": "us_2_13",
@@ -226,7 +225,7 @@ resources:
 - name: gcp-light-stemcell
   type: bosh-io-stemcell
   source:
-    name: bosh-google-kvm-ubuntu-xenial-go_agent
+    name: bosh-google-kvm-ubuntu-jammy-go_agent
     version_family: latest
     tarball: true
     preserve_filename: true
