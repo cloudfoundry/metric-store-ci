@@ -31,8 +31,8 @@ instance_groups:
       cf_blackbox:
         enabled: true
         metric_store_address: https://metric-store.((sys_domain))
-        client_id: ((pws-datadog-forwarder-client/Username))
-        client_secret: ((pws-datadog-forwarder-client/Password))
+        client_id: ((pws-datadog-forwarder-client.username))
+        client_secret: ((pws-datadog-forwarder-client.password))
       metric_store_metrics:
         tls:
           ca_cert: ((metric_store_metrics_server.ca))

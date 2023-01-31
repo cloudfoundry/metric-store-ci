@@ -48,20 +48,14 @@ resources:
   source:
     uri: git@github.com:pivotal-cf/denver-locks.git
     branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((denver_locks_deploy_key))
 
-- name: metric-store-deployments
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/metric-store-deployments
-    branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
 
 - name: metric-store-ci
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((metric_store_ci_deploy_key))
     branch: master
 
 - name: pcf-observability-ci-image
@@ -69,14 +63,14 @@ resources:
   source:
     repository: gcr.io/cf-denver/pcf-observability-ci
     username: _json_key
-    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+    password: ((gcp_service_account_key))
 
 - name: metric-store-tile-image
   type: docker-image
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
     username: _json_key
-    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+    password: ((gcp_service_account_key))
 
 - name: metric-store-base-image
   type: docker-image
@@ -84,14 +78,14 @@ resources:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
     tag: go1.17.8
     username: _json_key
-    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+    password: ((gcp_service_account_key))
 
 - name: metric-store-develop
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -103,7 +97,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: release-elect
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     clean_tags: true
 
 - name: metric-store-master
@@ -111,7 +105,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     disable_ci_skip: true
     clean_tags: true
 
@@ -122,20 +116,20 @@ resources:
     bucket: metric-store-ci-notifications
     key: metric-store-dev-release-version
     initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
 
 - name: metric-store-dev-release
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: metric-store-dev-releases/release-(.*).tgz
 
 - name: metric-store-osl
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: osl/(.*).txt
 
 - name: metric-store-final-release
@@ -143,14 +137,14 @@ resources:
   source:
     bucket: oss-metric-store-releases
     versioned_file: release.tgz
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
 
 - name: metric-store-github-release
   type: github-release
   source:
     user: cloudfoundry
     repository: metric-store-release
-    access_token: ((log-store-ci.yml/Notes/github-access-token))
+    access_token: ((svcboteos_github_access_token))
     drafts: true
 
 - name: bumper-tool
@@ -175,12 +169,12 @@ resources:
     uri: git@github.com:bosh-packages/golang-release
     branch: master
     tag_filter: v*
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
 
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+    url: ((slack_high_visibility_alert_webhook_url))
 
 - name: notification-cf-deploy-version
   type: semver
@@ -189,7 +183,7 @@ resources:
     bucket: metric-store-ci-notifications
     key: log-cache-slack-cf-deploy-version
     initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
 
 - name: metric-store-version
   type: semver
@@ -197,14 +191,14 @@ resources:
     driver: gcs
     bucket: metric-store-ci-versions
     key: metric-store-release-acceptance-tile
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     initial_version: 0.2.0-build.24
 
 - name: dev-tile
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
 
@@ -212,14 +206,14 @@ resources:
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: tiles/(.*).pivotal
 
 - name: metric-store-pivnet-metadata
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     versioned_file: pivnet/metadata.yml
 
 - name: gcp-light-stemcell
@@ -233,7 +227,7 @@ resources:
 - name: metric-store-pivnet
   type: pivnet
   source:
-    api_token: ((release-credentials.yml/Notes/pivnet-token-metric-store))
+    api_token: ((pivnet_token))
     product_slug: p-metric-store
 
 - name: bpm-release
@@ -334,7 +328,7 @@ jobs:
         bosh-dev-release-dir: metric-store-develop
         bosh-dev-release-version: metric-store-dev-release-version
       params:
-        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+        JSON_KEY: ((gcp_service_account_key))
     - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
@@ -367,9 +361,10 @@ jobs:
       TITLE: Metric Store CF Deploy
       TEAM: metric-store-log-cache
   - task: set-credhub-vars
+    image: cf-deployment-concourse-tasks-image
     file: metric-store-ci/tasks/add-credhub-vars/task.yml
     params:
-      WEBHOOK_URL: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+      WEBHOOK_URL: ((slack_high_visibility_alert_webhook_url))
       BBL_STATE_DIR: ((bbl_state_dir))
       SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
@@ -434,7 +429,7 @@ jobs:
                 authorities: logs.admin
                 authorized-grant-types: client_credentials
                 scope: logs.admin
-                secret: ((yuzu-datadog-forwarder-client/Password))
+                secret: "((yuzu_datadog_forwarder_password))"
           EOF
 
   - task: upload-stemcell
@@ -464,6 +459,7 @@ jobs:
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
   - task: create-test-space
+    image: cf-deployment-concourse-tasks-image
     file: metric-store-ci/tasks/create-org-and-space/task.yml
     params:
       BBL_STATE_DIR: ((bbl_state_dir))
@@ -479,12 +475,14 @@ jobs:
         silent: true
         attachments_file: metadata/alert_message_failure
     - task: enable-disable-alert-failure
+      image: cf-deployment-concourse-tasks-image
       file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
       input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
       params: { alert_multiple: 5, ignore_first: true }
   on_success:
     do:
     - task: enable-disable-alert-success
+      image: metric-store-base-image
       file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
       input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
     - put: slack-alert
@@ -523,7 +521,7 @@ jobs:
         BBL_STATE_DIR: ((bbl_state_dir))
         # TODO: change me
         DEPLOYMENT_NAME: metric-store-blackbox
-        #DATADOG_API_KEY: ((datadog-api-key-pws.yml/Notes/datadog_api_key))
+        #DATADOG_API_KEY: ((datadog_api_key))
       run:
         path: bash
         args:
@@ -542,8 +540,8 @@ jobs:
               value:
                 enabled: true
                 metric_store_address: https://metric-store.((sys_domain))
-                client_id: ((pws-datadog-forwarder-client/Username))
-                client_secret: ((pws-datadog-forwarder-client/Password))
+                client_id: "((pws_datadog_forwarder_client.username))"
+                client_secret: "((pws_datadog_forwarder_client.password))"
           EOF
 
           bosh \
@@ -652,7 +650,7 @@ jobs:
             set -e
             sleep 10
     params:
-      TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+      TOOLSMITHS_API_TOKEN: ((smith_token))
   - task: "Upload and Config"
     input_mapping:
       tile-version: metric-store-version
@@ -682,7 +680,7 @@ jobs:
             set -e
             smith unclaim -e $(cat environment/name)
       params:
-        TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+        TOOLSMITHS_API_TOKEN: ((smith_token))
   on_failure:
     do:
     - put: slack-alert
@@ -735,7 +733,6 @@ jobs:
     params:
       repository: develop
 
-
 - name: promote-to-master
   serial: true
   plan:
@@ -746,6 +743,7 @@ jobs:
       passed: ["promote-to-release-elect"]
       trigger: true
     - get: metric-store-master
+    - get: metric-store-base-image
     - get: bumper-tool
     - get: metric-store-ci
   - task: create-slack-message
@@ -754,6 +752,7 @@ jobs:
       TITLE: Promote To Master
       TEAM: metric-store-log-cache
   - task: bumper
+    image: metric-store-base-image
     file: metric-store-ci/tasks/bumper/task.yml
     input_mapping:
       source: metric-store-release-elect
@@ -761,7 +760,7 @@ jobs:
     params:
       SOURCE_BRANCH: release-elect
       DEST_BRANCH: master
-      TRACKER_API_TOKEN: ((tracker-key-ci.yml/Notes/tracker_api_token))
+      TRACKER_API_TOKEN: ((tracker_token))
   - put: metric-store-master
     params:
       repository: merged-dest
@@ -794,11 +793,12 @@ jobs:
       TEAM: metric-store-log-cache
   - task: create-final-release
     file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
+    image: pcf-observability-ci-image
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       metric-store-develop: metric-store-develop
     params:
-      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+      JSON_KEY: ((gcp_service_account_key))
   - put: metric-store-develop
     params:
       repository: metric-store-develop-modified
@@ -834,8 +834,10 @@ jobs:
       passed: [build-final-release]
     - get: metric-store-final-release
     - get: metric-store-ci
+    - get: pcf-observability-ci-image
   - task: github-publish-release-metadata
     file: metric-store-ci/tasks/publish-github-release/task.yml
+    image: pcf-observability-ci-image
     input_mapping:
       release-version: metric-store-pivnet-metadata
       release-tarball: metric-store-final-release
@@ -849,43 +851,6 @@ jobs:
       globs:
       - github-release/*.tgz
 
-- name: tag-dependencies
-  serial: true
-  disable_manual_trigger: true
-  plan:
-  - in_parallel:
-    - get: metric-store-pivnet-metadata
-      trigger: true
-      passed: [publish-github-release]
-    - get: metric-store-ci
-    - get: metric-store-deployments
-    - get: denver-locks
-    - get: cf-deployment-concourse-tasks
-  - task: snapshot-acceptance-environment
-    file: metric-store-ci/tasks/snapshot-acceptance-environment/task.yml
-    input_mapping:
-      bbl-state: denver-locks
-      release-version: metric-store-pivnet-metadata
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-  - put: metric-store-deployments
-    params:
-      repository: metric-store-deployments-modified
-      tag: release-version-generated/version
-      tag_prefix: v
-  - put: metric-store-ci
-    params:
-      repository: metric-store-ci
-      tag: release-version-generated/version
-      tag_prefix: v
-      only_tag: true
-  on_success:
-    do:
-    - task: create-message
-      file: metric-store-ci/tasks/alert-message-release-end/task.yml
-      input_mapping:
-        version: release-version-generated
-    - <<: *send-alert-message
 
 - name: Bake-Final-Tile
   plan:
@@ -932,10 +897,10 @@ jobs:
         silent: true
         attachments_file: metadata/alert_message_success
 
-
 - name: Push-to-Pivnet
   plan:
   - get: metric-store-ci
+  - get: metric-store-base-image
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
@@ -949,6 +914,7 @@ jobs:
     - "Bake-Final-Tile"
   - get: metric-store-osl
   - task: "inject OSL to tile"
+    image: metric-store-base-image
     file: metric-store-ci/tasks/add-osl/task.yml
   - put: metric-store-pivnet
     params:

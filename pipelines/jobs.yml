@@ -20,7 +20,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -32,7 +32,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
-    private_key: ((github-key-ci.yml/Notes/github_key))
+    private_key: ((svcboteos_github_private_key))
 
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
@@ -45,7 +45,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     paths:
     - docker-images
 
@@ -54,21 +54,21 @@ resources:
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
     username: _json_key
-    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+    password: ((gcp_service_account_key))
 
 - name: after-standup
   type: time
   source:
     interval: 23h
     location: America/Denver
-    days: [Monday, Tuesday, Wednesday, Thursday, Friday]
-    start: 9:06 AM
-    stop: 5:00 PM
+    days: [Monday, Thursday]
+    start: 3:06 AM
+    stop: 10:00 PM
 
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+    url: ((slack_high_visibility_alert_webhook_url))
 
 jobs:
 - name: build-docker-images
@@ -76,10 +76,12 @@ jobs:
   public: true
   plan:
   - get: metric-store-ci
+  - get: cf-deployment-concourse-tasks-image
   - get: metric-store-develop
   - get: docker-images
     trigger: true
   - task: build-metric-store-tile-image
+    image: cf-deployment-concourse-tasks-image
     file: metric-store-ci/tasks/build-go-docker-image/task.yml
     input_mapping:
       context-repo: docker-images
@@ -109,7 +111,7 @@ jobs:
       image: cf-deployment-concourse-tasks-image
       file: metric-store-ci/tasks/refresh-env/task.yml
       params:
-        ID: 575
+        ID: 524
 
 - name: go-dependencies
   serial: true
