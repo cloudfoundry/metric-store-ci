@@ -21,7 +21,6 @@ pushd bosh-dev-release-dir
   mkdir -p src/github.com/cloudfoundry/metric-store-release/src/{pkg,internal,cmd}
   cp -r vendor/* src/
 
-
   cp -r src/pkg src/github.com/cloudfoundry/metric-store-release/src
   cp -r src/internal src/github.com/cloudfoundry/metric-store-release/src
   cp -r src/cmd src/github.com/cloudfoundry/metric-store-release/src

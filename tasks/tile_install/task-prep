@@ -13,7 +13,6 @@ export OM_USERNAME=$(jq -r .ops_manager.username < env.json)
 export OM_PASSWORD=$(jq -r .ops_manager.password < env.json)
 export OM_SKIP_SSL_VALIDATION=true
 
-
 export TILE_FILE=$(echo "$(set -- baked-tile/*.pivotal; echo "$1")")
 export RELEASE_VERSION=$(cat tile-version/version)
 export STEMCELL_FILE=$(cat gcp-light-stemcell/url | cut -d / -f 6)

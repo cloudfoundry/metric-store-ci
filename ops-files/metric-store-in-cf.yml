@@ -6,7 +6,6 @@
     name: metric-store
     version: latest
 
-
 - type: replace
   path: /instance_groups/name=metric-store?
   value:

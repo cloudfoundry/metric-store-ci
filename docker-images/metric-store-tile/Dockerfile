@@ -8,6 +8,7 @@ RUN apt-get update; apt-get install --yes \
     rsync \
     unzip \
     psmisc \
+    python \
     vim
 
 RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz \
@@ -20,10 +21,8 @@ RUN wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install
   && cd ruby-install-0.7.0/ \
   && sudo make install
 
-RUN wget -q -O - https://raw.githubusercontent.com/starkandwayne/homebrew-cf/master/public.key | apt-key add - \
-  && echo "deb http://apt.starkandwayne.com stable main" | tee /etc/apt/sources.list.d/starkandwayne.list \
-  && apt-get update \
-  && apt-get install om
+RUN curl -Lo /usr/local/bin/om https://github.com/pivotal-cf/om/releases/download/7.9.0/om-linux-amd64-7.8.2 \
+    && chmod +x /usr/local/bin/om
 
 # cf-log-cache team in google cloud:
 RUN wget -q https://storage.googleapis.com/smith-cli/smith-v2.1.0_linux_amd64.tar.gz \
@@ -47,7 +46,7 @@ RUN cd /tmp \
 # RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh github.com/cloudfoundry/bosh-cli
 # RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
 
-RUN go get github.com/onsi/ginkgo/ginkgo
+RUN go install github.com/onsi/ginkgo/ginkgo@latest
 RUN git config --global user.email "cf-log-cache@pivotal.io" && git config --global user.name "Metric Store CI"
 
 RUN cd /tmp \

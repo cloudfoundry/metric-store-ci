@@ -6,6 +6,9 @@ RUNWAY=0
 BOLD='\033[1m'
 CLEAR='\033[0m'
 
+current_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd )"
+project_dir=$(cd "${current_dir}"/.. && pwd)
+
 function warning {
   YELLOW='\033[0;33m'
   local message=${1}
@@ -84,34 +87,16 @@ function list {
     done
 }
 
-function check_lpass {
-    step "Checking LastPass"
-    local output
-    local status
-
-    set +e
-    output=$(lpass status --color=never)
-    status=$?
-    set -e
-
-    if [ $status -eq 0 ]; then
-        step_ok "${output}"
-    else
-        step_error "${output}"
-        fail "please login to LastPass and try again"
-    fi
-}
-
 function find_pipeline {
     step "Finding pipeline"
     local query=${1}
-    local pipeline_dir='pipelines/'
+    local pipeline_dir="${project_dir}/pipelines/"
     local top_level_pipelines=()
     local other_pipelines=()
     local matching_pipelines=()
     local normalized_pipeline
 
-    pushd ${pipeline_dir} > /dev/null
+    pushd "${pipeline_dir}" > /dev/null
         while IFS=  read -r -d $'\n'; do
             normalized_pipeline=`echo ${REPLY} | cut -c 3-`
             top_level_pipelines+=("$normalized_pipeline")
@@ -306,11 +291,13 @@ function preprocess_pipeline {
 }
 
 function reconfigure_pipeline {
-    reconfigure-pipeline \
-      --target ${TARGET} \
-      --pipeline ${pipeline_name} \
-      --config ${config_path} \
-      --load-vars-from config/env-config.yml
+    fly \
+      --target "${TARGET}" set-pipeline \
+      --pipeline "${pipeline_name}" \
+      --var env_name="yuzu" \
+      --var sys_domain="yuzu.cf-denver.com" \
+      --var bbl_state_dir="acceptance-bosh/claimed/yuzu" \
+      --config "${config_path}"
 }
 
 function fly_pipeline {
@@ -343,7 +330,6 @@ function cleanup {
 
 function main {
     validate_usage $1
-    check_lpass
     find_pipeline $1
     login_fly
     check_fly

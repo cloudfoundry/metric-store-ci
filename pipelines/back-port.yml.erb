@@ -30,7 +30,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     branch: master
 
 - name: pcf-observability-ci-image
@@ -38,14 +38,14 @@ resources:
   source:
     repository: gcr.io/cf-denver/pcf-observability-ci
     username: _json_key
-    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+    password: ((gcp_service_account_key))
 
 - name: metric-store-tile-image
   type: docker-image
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
     username: _json_key
-    password: ((release-credentials.yml/Notes/gcp-service-account-key))
+    password: ((gcp_service_account_key))
 
 <% back_port_versions_we_care_about.each do |version_name, latest_version_branch| %>
 - name: metric-store-<%= version_name %>
@@ -53,7 +53,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: <%= latest_version_branch %>
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -67,13 +67,13 @@ resources:
     bucket: metric-store-ci-notifications
     key: metric-store-dev-release-<%= version_name %>-version
     initial_version: 0.0.0
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
 
 - name: metric-store-dev-release-<%= version_name %>
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: metric-store-dev-releases/release-(.*).tgz
 
 - name: metric-store-<%= version_name %>-version
@@ -82,14 +82,14 @@ resources:
     driver: gcs
     bucket: metric-store-ci-versions
     key: metric-store-release-acceptance-tile-<%= version_name %>
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     initial_version: 0.0.0
 
 - name: dev-tile-<%= version_name %>
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: temp-baked-tiles-<%= version_name %>/(.*).pivotal
     initial_version: 0.0.0
 
@@ -97,7 +97,7 @@ resources:
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     versioned_file: backport-<%= version_name %>/pivnet/metadata.yml
 
 - name: metric-store-backport-release-<%= version_name %>
@@ -105,20 +105,20 @@ resources:
   source:
     bucket: oss-metric-store-releases
     versioned_file: backport-<%= version_name %>/release.tgz
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
 
 - name: backport-tile-<%= version_name %>
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: backport-<%= version_name %>/tiles/(.*).pivotal
 
 - name: metric-store-osl-<%= version_name %>
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((release-credentials.yml/Notes/gcp-service-account-key))
+    json_key: ((gcp_service_account_key))
     regexp: backport-<%= version_name %>/osl/(.*).txt
 <% end %>
 
@@ -127,7 +127,7 @@ resources:
   source:
     user: cloudfoundry
     repository: metric-store-release
-    access_token: ((github-key-ci.yml/Notes/github-access-token))
+    access_token: ((svcboteos_github_access_token))
     drafts: true
 
 - name: concourse-tasks
@@ -142,12 +142,12 @@ resources:
     uri: git@github.com:bosh-packages/golang-release
     branch: master
     tag_filter: v*
-    private_key: ((github-key-ci.yml/Notes/ms_github_private_key))
+    private_key: ((svcboteos_github_private_key))
 
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack-ci.yml/Notes/slack_high_visibility_alert_webhook_url))
+    url: ((slack_high_visibility_alert_webhook_url))
 
 - name: gcp-light-stemcell
   type: bosh-io-stemcell
@@ -160,7 +160,7 @@ resources:
 - name: metric-store-pivnet
   type: pivnet
   source:
-    api_token: ((release-credentials.yml/Notes/pivnet-token-metric-store))
+    api_token: ((pivnet_token))
     product_slug: p-metric-store
 
 - name: bpm-release
@@ -243,7 +243,7 @@ jobs:
         bosh-dev-release-dir: metric-store-<%= version_name %>
         bosh-dev-release-version: metric-store-dev-release-<%= version_name %>-version
       params:
-        JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+        JSON_KEY: ((gcp_service_account_key))
     - put: metric-store-dev-release-<%= version_name %>
       params:
         file: metric-store-dev-release/release-*.tgz
@@ -337,7 +337,7 @@ jobs:
             set -e
             sleep 10
     params:
-      TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+      TOOLSMITHS_API_TOKEN: ((smith_token))
   - task: "Upload and Config"
     input_mapping:
       tile-version: metric-store-<%= version_name %>-version
@@ -368,7 +368,7 @@ jobs:
             set -e
             smith unclaim -e $(cat environment/name)
       params:
-        TOOLSMITHS_API_TOKEN: ((smith-token-cf-denver/Notes))
+        TOOLSMITHS_API_TOKEN: ((smith_token))
 <% end %>
 
 - name: "Promotion-Gate-<%= version_name %>"
@@ -409,12 +409,13 @@ jobs:
       TITLE: Building <%= version_name %> Backport Release
       TEAM: metric-store-log-cache
   - task: create-final-release
+    image: pcf-observability-ci-image
     file: metric-store-ci/tasks/create-backport-metric-store-release/task.yml
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata-<%= version_name %>
       metric-store-backport: metric-store-<%= version_name %>
     params:
-      JSON_KEY: ((release-credentials.yml/Notes/gcp-service-account-key))
+      JSON_KEY: ((gcp_service_account_key))
   - put: metric-store-<%= version_name %>
     params:
       repository: metric-store-backport-modified
@@ -446,7 +447,9 @@ jobs:
       passed: [ "Build-<%= version_name %>-backport-release" ]
     - get: metric-store-backport-release-<%= version_name %>
     - get: metric-store-ci
+    - get: pcf-observability-ci-image
   - task: github-publish-release-metadata
+    image: pcf-observability-ci-image
     file: metric-store-ci/tasks/publish-github-release/task.yml
     input_mapping:
       release-version: metric-store-pivnet-metadata-<%= version_name %>
@@ -511,6 +514,7 @@ jobs:
 - name: Push-<%= version_name %>-Backport-to-Pivnet
   plan:
   - get: metric-store-ci
+  - get: metric-store-base-image
   - task: create-slack-message
     file: metric-store-ci/tasks/alert-message-create/task.yml
     params:
@@ -524,6 +528,7 @@ jobs:
     - "Bake-<%= version_name %>-Backport-Tile"
   - get: metric-store-osl-<%= version_name %>
   - task: "inject OSL to tile"
+    image: metric-store-base-image
     file: metric-store-ci/tasks/add-osl/task.yml
     input_mapping:
       metric-store-osl: metric-store-osl-<%= version_name %>

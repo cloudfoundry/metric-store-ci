@@ -1,7 +1,4 @@
-image_resource:
-  type: docker-image
-  source:
-    repository: logcache/base
+
 platform: linux
 
 inputs:
