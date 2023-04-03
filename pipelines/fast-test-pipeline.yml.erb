@@ -158,7 +158,6 @@ jobs:
       - get: metric-store-ci
       - get: metric-store-develop
         trigger: true
-        passed: ["unit-tests"]
       - get: metric-store-dev-release-version
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
@@ -213,10 +212,6 @@ jobs:
       file: new-tile-version/version
 
 <% envs_we_care_about = {
-  "2-7": "us_2_7_lts",
-  "2-11": "us_2_11_lts2",
-  "2-12": "us_2_12",
-  "2-13": "us_2_13",
   "us_3_0": "us_3_0"
 } %>
 <% envs_we_care_about.each do |env_version, pool_name| %>
@@ -281,24 +276,7 @@ jobs:
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task-apply-cf.yml
     - task: "Apply Changes Metric Store"
-      attempts: 3
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
-      on_success:
-        task: release-env
-        image: metric-store-tile-image
-        config:
-          platform: linux
-          inputs:
-            - name: environment
-          run:
-            path: sh
-            args:
-              - "-c"
-              - |
-                set -e
-                smith unclaim -e $(cat environment/name)
-        params:
-          TOOLSMITHS_API_TOKEN: ((smith_token))
 
 <% end %>
