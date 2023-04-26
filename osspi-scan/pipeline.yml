@@ -1,0 +1,88 @@
+---
+resource_types:
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
+    
+resources:
+- name: tile
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((gcp_service_account_key))
+    regexp: tiles/(.*).pivotal
+
+- name: scan-result
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((gcp_service_account_key))
+    regexp: osspi-scans/osspi-scan.zip"
+
+- name: image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-denver/pcf-observability-ci
+    username: _json_key
+    password: ((gcp_service_account_key))
+
+jobs:
+- name: tile-scan
+  serial: true
+  plan:
+  - in_parallel:
+    - get: image
+    - get: tile
+      trigger: true
+  - do:
+    - task: osspi-scan-tile
+      image: image
+      config:
+        platform: linux
+        inputs:
+          - name: tile
+        outputs:
+          - name: scan
+        run:
+          path: /bin/bash
+          args:
+            - -c
+            - |
+              set -eu
+              bash -c "$(curl -fsSL https://build-artifactory.eng.vmware.com/osspicli-local/beta/osspicli/install.sh)"
+              
+              for tile in ./tile/*.pivotal; do
+                filename=$(basename "$tile" )
+                ~/.osspicli/osspi/osspi scan binary --upload-file $tile --report osspi-scan-$filename
+              done
+              
+              export SCAN_DIR=$PWD/scan
+              
+              for scan in ./osspi-scan-*.json; do
+                filename=$(basename "$scan")
+              
+                cat $filename | jq '.packages[] | select(.bd_metadata.vulnerabilities != [])' >vulnerabilities.json
+                cat vulnerabilities.json | jq '. += { max_cvss3_basescore: [.bd_metadata.vulnerabilities[].cvss3_basescore] | max }' >scores.json
+                cat scores.json | jq '. += { tile: .bd_metadata.paths[0], release: .bd_metadata.paths[1], package: .bd_metadata.paths[2], details: .bd_metadata.paths[3:] | join("->") }' >packages.json
+                cat packages.json | jq -r '{ tile,  release,  package,  details,  name,  version, url,  max_cvss3_basescore}' | jq -s >osspi-cves-$filename
+                cat packages.json | jq -r '[.tile,.release,.package,.details,.name,.version,.url,.max_cvss3_basescore] | @csv' >osspi-cves-$filename.csv
+              
+                cp $filename $SCAN_DIR
+                cp osspi-cves-$filename $SCAN_DIR
+                cp osspi-cves-$filename.csv $SCAN_DIR
+              
+                echo "Begin CVEs found in $filename"
+                cat osspi-cves-$filename | jq ' .[] | select(.max_cvss3_basescore > 6.9)' | jq -s > high_cves-$filename
+                cat high_cves-$filename | jq 'group_by (.release)[] | {release: .[0].release, count: length}'
+                echo "End CVEs found in $filename"
+              
+              done
+              
+              pushd "$SCAN_DIR"
+                zip osspi-scan.zip *
+              popd
+      on_success:
+        put: scan-result
+        params:
+          file: "scan/osspi-scan.zip"
