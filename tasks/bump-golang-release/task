@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
-set -eoux pipefail
+set -eou pipefail
 
 . ./metric-store-ci/tasks/shared_bash
 
 git config --global user.email "${GITHUB_EMAIL}" && git config --global user.name "${GITHUB_NAME}"
-set +x
 if ! [[ -z "${GITHUB_PRIVATE_KEY}" ]]; then
   setup_github_ssh "${GITHUB_PRIVATE_KEY}"
 fi
-set -x
 
 pushd golang-release-repo
   release_tag=$(git tag --points-at HEAD | sort | tail -n 1)
@@ -20,7 +18,9 @@ pushd repo
 
   configure-blobstore
 
+  set -x
   bosh vendor-package "golang-${GOLANG_PACKAGE_VERSION}-linux" ../golang-release-repo
+  set +x
   git add packages/ .final_builds/packages/
 
   if [ $(git diff --staged | wc -l) -eq 0 ]; then
