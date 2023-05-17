@@ -1,0 +1,72 @@
+resource_types:
+  - name: gitlab
+    type: registry-image
+    source:
+      repository: devtools-docker.artifactory.eng.vmware.com/vmware/runway/resourcetypes/gitlab-resource
+      tag: 1.0.0
+  - name: gcs-resource
+    type: docker-image
+    source:
+      repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
+  - name: slack-notification
+    type: registry-image
+    source:
+      repository: cfcommunity/slack-notification-resource
+      tag: latest
+
+
+resources:
+#- name: slack-notify
+#  type: slack-notification
+#  icon: slack
+#  source:
+#    url: https://hooks.slack.com/services/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
+
+- name: migration
+  type: git
+  icon: gitlab
+  source:
+    branch: main
+    uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
+    private_key: ((phoenix-osspi.osspi_gitlub_private_key))
+
+- name: serving-repo
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-release
+    branch: master
+    private_key: ((phoenix-osspi.svcboteos_github_private_key))
+
+jobs:
+  - name: serving-metric-store
+#    on_failure:
+#      do:
+#        - put: slack-notify
+#          params:
+#            silent: true
+#            text: "failed serving Metric Store"
+#    on_error:
+#      do:
+#        - put: slack-notify
+#          params:
+#            silent: true
+#            text: "errored serving Metric Store"
+    serial: true
+    plan:
+      - in_parallel:
+          - get: migration
+          - get: serving-repo
+            params: { submodules: all }
+      - task: osspi-scan-serving
+        file: migration/tasks/osspi/run-single-package-for-repo.yaml
+        input_mapping: { repo1: migration, repo2: serving-repo }
+        params:
+          REPO: repo2
+          OSM_ENVIRONMENT: ((osm-environment))
+          OSSTP_LOAD_DRY_RUN: false
+          OSM_PACKAGE_GROUP_NAME: metric-store-release
+          OSM_PACKAGE_GROUP_VERSION: ((tile-version))
+          API_KEY: c6f9416e2c80d8abda5d053d980aedd4b422438b
+          USERNAME: hmanukyan@vmware.com
+          PRODUCT: p-metric-store
+          VERSION: ((tile-version))
