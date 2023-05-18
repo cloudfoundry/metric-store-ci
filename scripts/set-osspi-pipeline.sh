@@ -29,4 +29,4 @@ fly --target runway set-pipeline \
     --var tile-version="${VERSION}" \
     --var osm-environment="${OSM_ENVIRONMENT}"
 
-# fly --target runway login --concourse-url https://runway-ci.eng.vmware.com --team-name tanzu-log-store
+# fly --target runway login --concourse-url https://runway-ci.eng.vmware.com --team-name tobs-k8s-group
