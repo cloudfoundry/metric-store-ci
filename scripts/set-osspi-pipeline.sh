@@ -16,7 +16,7 @@ fly -t runway sync || (
 ROOT_DIR=$(git rev-parse --show-toplevel)
 config_path=${ROOT_DIR}/pipelines/osspi-metric-store.yml
 
-TEAM="${TEAM:-tanzu-log-store}"
+TEAM="${TEAM:-tobs-k8s-group}"
 pipeline_name=${PIPELINE_NAME:-osspi-metric-store}
 VERSION=${VERSION:-"1.6.0"}
 OSM_ENVIRONMENT=${OSM_ENVIRONMENT:-"production"}
