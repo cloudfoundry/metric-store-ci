@@ -3,7 +3,8 @@
   "2-11": "us_2_11_lts2",
   "2-12": "us_2_12",
   "2-13": "us_2_13",
-  "us_3_0": "us_3_0"
+  "us_3_0": "us_3_0",
+  "us_4_0": "us_4_0"
 } %>
 resource_types:
 - name: slack-notification
@@ -239,7 +240,7 @@ resources:
   type: bosh-io-release
   source:
     repository: cloudfoundry/routing-release
-    regexp: .*262.*
+    regexp: .*269.*
 
 - name: hourly-during-the-workday
   type: time
