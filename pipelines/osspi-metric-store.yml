@@ -28,7 +28,7 @@ resources:
   source:
     branch: main
     uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
-    private_key: ((phoenix-osspi.osspi_gitlub_private_key))
+    private_key: ((phoenix-osspi.gitlab_private_key))
 
 - name: serving-repo
   type: git
@@ -66,7 +66,7 @@ jobs:
           OSSTP_LOAD_DRY_RUN: false
           OSM_PACKAGE_GROUP_NAME: metric-store-release
           OSM_PACKAGE_GROUP_VERSION: ((tile-version))
-          API_KEY: c6f9416e2c80d8abda5d053d980aedd4b422438b
-          USERNAME: hmanukyan@vmware.com
+          API_KEY: ((tas2to-osspi.apikey-((osm-environment))))
+          USERNAME: ((phoenix-osspi.user-((osm-environment))))
           PRODUCT: p-metric-store
           VERSION: ((tile-version))
