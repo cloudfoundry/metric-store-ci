@@ -1,0 +1,52 @@
+---
+resource_types:
+- name: gcs-resource
+  type: docker-image
+  source:
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
+    
+resources:
+#  Final Tile
+- name: tile
+  type: gcs-resource
+  source:
+    bucket: p-metric-store-release
+    json_key: ((shared.gcp_service_account_key))
+    regexp: tiles/(.*).pivotal
+
+- name: image
+  type: docker-image
+  source:
+    repository: gcr.io/cf-denver/pcf-observability-ci
+    username: _json_key
+    password: ((shared.gcp_service_account_key))
+
+jobs:
+- name: tile-scan
+  serial: true
+  plan:
+  - in_parallel:
+    - get: image
+    - get: tile
+      trigger: true
+  - do:
+    - task: osspi-scan-tile
+      image: image
+      config:
+        platform: linux
+        inputs:
+          - name: tile
+        params:
+          API_KEY: ((shared.osspi-apikey))
+        run:
+          path: /bin/bash
+          args:
+            - -c
+            - |
+              set -eu
+              bash -c "$(curl -fsSL https://build-artifactory.eng.vmware.com/osspicli-local/beta/osspicli/install.sh)"
+              
+              for tile in ./tile/*.pivotal; do
+                filename=$(basename "$tile" )
+                ~/.osspicli/osspi/osspi scan binary --upload-file $tile --delete-binary --to-dashboard --osspi-product "metric-store-tile" --osspi-apikey $API_KEY --audit-tag "dev-tile/$filename"
+              done
