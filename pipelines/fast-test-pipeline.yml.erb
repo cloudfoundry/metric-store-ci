@@ -49,7 +49,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     private_key: ((svcboteos_github_private_key))
-    branch: master
+    branch: Add-SRP-resource-to-pipeline
 
 - name: pcf-observability-ci-image
   type: docker-image
@@ -70,7 +70,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
-    branch: "future/SRPBE-3059/Add-SRP-resource-to-acceptance-pipeline"
+    branch: fast-test-develop
     private_key: ((svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
@@ -90,7 +90,7 @@ resources:
 - name: metric-store-dev-release
   type: gcs-resource
   source:
-    bucket: metric-store-ci-notifications
+    bucket: metric-store-ci-notifications§
     json_key: ((gcp_service_account_key))
     regexp: test/metric-store-dev-releases/release-(.*).tgz
 
@@ -242,11 +242,13 @@ jobs:
           passed: ["Bake-PAS-Tile"]
         - get: metric-store-develop
           passed: ["Bake-PAS-Tile"]
+        - get: metric-store-ci
     - task: "submit-metadata-for-metric-store-release"
       image: srp-helper
       config:
         platform: linux
         inputs:
+          - name: metric-store-ci
           - name: metric-store-develop
           - name: build-metadata
           - name: metric-store-version
