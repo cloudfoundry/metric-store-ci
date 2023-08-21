@@ -1,3 +1,4 @@
+############## Resource Types ################
 resource_types:
 - name: gcs-resource
   type: docker-image
@@ -11,6 +12,13 @@ resource_types:
     repository: pivotalcf/pivnet-resource
     tag: latest-final
 
+#### Secure Release Pipeline resource type
+- name: build-metadata
+  type: registry-image
+  source:
+    repository: pcfopsmanager/build-metadata-resource
+
+############## Resources ################
 resources:
 - name: metric-store-tile-image
   type: docker-image
@@ -24,6 +32,17 @@ resources:
   source:
     repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
+
+#### Secure Release Pipeline resources
+- name: srp-helper
+  type: registry-image
+  source:
+    repository: harbor.dhaka.cf-app.com/srp/srp-helper-task
+    username: ((srp-helper-harbor-credentials.username))
+    password: ((srp-helper-harbor-credentials.password))
+
+- name: build-metadata
+  type: build-metadata
 
 - name: metric-store-ci
   type: git
@@ -51,7 +70,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
-    branch: fast-test-develop
+    branch: "future/SRPBE-3059/Add-SRP-resource-to-acceptance-pipeline"
     private_key: ((svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
@@ -125,6 +144,7 @@ resources:
     repository: cloudfoundry/routing-release
     regexp: .*262.*
 
+############## Jobs ################
 jobs:
 - name: unit-tests
   serial: true
@@ -210,6 +230,74 @@ jobs:
     put: metric-store-version
     params:
       file: new-tile-version/version
+
+##### Secure Release Pipeline jobs
+- name: "collect-source-provenance"
+  serial: true
+  plan:
+    - in_parallel:
+        - get: srp-helper
+        - get: build-metadata
+        - get:  metric-store-version
+          passed: ["Bake-PAS-Tile"]
+        - get: metric-store-develop
+          passed: ["Bake-PAS-Tile"]
+    - task: "submit-metadata-for-metric-store-release"
+      image: srp-helper
+      config:
+        platform: linux
+        inputs:
+          - name: metric-store-develop
+          - name: build-metadata
+          - name: metric-store-version
+        params:
+          SRP_CLIENT_ID: ((srp-client-credentials.username))
+          SRP_CLIENT_SECRET: ((srp-client-credentials.password))
+          SRP_URL: https://apigw.vmware.com/v1/s1/api/helix-beta
+        run:
+          path: /bin/bash
+          args:
+            - -c
+            - |
+              set -x
+              set -euo pipefail
+              mkdir ./provenance
+
+              VERSION=$(cat metric-store-version/version)
+              BUILD_NUMBER=$(cat build-metadata/build-name)
+              BUILD_PIPELINE_NAME=$(cat build-metadata/build-pipeline-name)
+              BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
+              BUILD_ID=$(cat build-metadata/build-id)
+              COMP_UID="uid.obj.build.concourse(instance='concourse.cf-denver.com',namespace='metric-store-log-cache',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
+
+              srp --version
+              srp provenance source \
+                --scm-type git \
+                --name "metric-store-develop" \
+                --path metric-store-develop \
+                --saveto ./provenance/source.json \
+                --build-number "$BUILD_NUMBER" \
+                --version "$VERSION" \
+                --all-ephemeral true \
+                --build-type release \
+                --comp-uid "$COMP_UID"
+
+              srp config auth \
+                --client-id $SRP_CLIENT_ID \
+                --client-secret $SRP_CLIENT_SECRET \
+                --srp-endpoint $SRP_URL \
+                --verbose
+
+              srp metadata status \
+                --srp-endpoint $SRP_URL
+
+              srp metadata submit \
+                -p ./provenance/source.json \
+                -u "uid.mtd.provenance_3_0.fragment(obj_uid=$COMP_UID,revision='')" \
+                --srp-endpoint $SRP_URL
+
+              srp metadata get \
+                --uid "uid.mtd.provenance_3_0.fragment(obj_uid=$COMP_UID,revision='')"
 
 <% envs_we_care_about = {
   "us_3_0": "us_3_0"

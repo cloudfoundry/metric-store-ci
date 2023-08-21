@@ -40,6 +40,22 @@ credhub set \
   --type password \
   --password "$(op read "op://AOA-Legacy/metric-store-ci-deploy-key/private key")"
 
+srp_helper_credentials_json=$(op read "op://AOA-Legacy/srp_helper_credentials/notesPlain")
+
+credhub set \
+  --name /concourse/metric-store-log-cache/srp-helper-harbor-credentials \
+  --type user \
+  --username "$(echo "${srp_helper_credentials_json}" | gojq -r .client_id)" \
+  --password "$(echo "${srp_helper_credentials_json}" | gojq -r .client_secret)"
+
+srp_client_credentials_json=$(op read "op://AOA-Legacy/srp_client_credentials/notesPlain")
+
+credhub set \
+  --name /concourse/metric-store-log-cache/srp-client-credentials \
+  --type user \
+  --username "$(echo "${srp_client_credentials_json}" | gojq -r .client_id)" \
+  --password "$(echo "${srp_client_credentials_json}" | gojq -r .client_secret)"
+
 credhub set \
   --name /concourse/metric-store-log-cache/pws_datadog_forwarder_client \
   --type user \
