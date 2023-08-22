@@ -58,12 +58,35 @@ resources:
     initial_version: 0.0.0
     json_key: ((gcp_service_account_key))
 
+- name: weekly
+  type: time
+  source:
+    days: [ Monday ]
+    start: 6:00 PM
+    stop: 7:00 PM
+    location: America/Denver
+
+- name: manual-trigger
+  type: time
+  source:
+    interval: 1m
+
 jobs:
+- name: manually-trigger-bump-docker-golang
+  plan:
+    - put: manual-trigger
+
 - name: bump-docker-golang
   plan:
   - in_parallel:
+    - get: weekly
+      trigger: true
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
+    - get: manual-trigger
+      trigger: true
+      passed:
+        - manually-trigger-bump-docker-golang
   - task: bump-metric-store-base-golang
     image: cf-deployment-concourse-tasks-image
     config:
