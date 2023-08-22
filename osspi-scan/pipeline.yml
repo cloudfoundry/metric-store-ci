@@ -6,13 +6,13 @@ resource_types:
     repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
     
 resources:
-#  Final Tile
+#  Dev Tile
 - name: tile
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
+    bucket: metric-store-ci-notifications
     json_key: ((shared.gcp_service_account_key))
-    regexp: tiles/(.*).pivotal
+    regexp: temp-baked-tiles/app-metric-store-(.*).pivotal
 
 - name: image
   type: docker-image
