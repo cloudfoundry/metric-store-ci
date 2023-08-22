@@ -50,7 +50,6 @@ resources:
     branch: master
     private_key: ((denver_locks_deploy_key))
 
-
 - name: metric-store-ci
   type: git
   source:
@@ -167,7 +166,6 @@ resources:
   type: git
   source:
     uri: git@github.com:bosh-packages/golang-release
-    branch: master
     tag_filter: v*
     private_key: ((svcboteos_github_private_key))
 
