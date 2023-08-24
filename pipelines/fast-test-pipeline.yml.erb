@@ -255,7 +255,7 @@ jobs:
         params:
           SRP_CLIENT_ID: ((srp-client-credentials.username))
           SRP_CLIENT_SECRET: ((srp-client-credentials.password))
-          SRP_URL: https://apigw.vmware.com/v1/s1/api/helix-beta
+          SRP_URL: https://srp.vmware.com
         run:
           path: /bin/bash
           args:
@@ -271,6 +271,7 @@ jobs:
               BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
               BUILD_ID=$(cat build-metadata/build-id)
               COMP_UID="uid.obj.build.concourse(instance='concourse.cf-denver.com',namespace='metric-store-log-cache',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
+              OUTPUT_VERSION="3.2.1-${BUILD_PIPELINE_NAME}"
 
               srp --version
               srp provenance source \
@@ -287,8 +288,66 @@ jobs:
               srp config auth \
                 --client-id $SRP_CLIENT_ID \
                 --client-secret $SRP_CLIENT_SECRET \
-                --srp-endpoint $SRP_URL \
-                --verbose
+                --srp-endpoint $SRP_URL
+
+              export SRP_WORKING_DIR=~/tmp/srp-work
+
+              srp provenance init
+              srp provenance add-build gitlab --namespace 'metric-store-log-cache' --project 'metric-store-ci' --pipeline-id $BUILD_ID
+              srp provenance action start --name metric-store-build-action
+
+              curl https://build-artifactory.eng.vmware.com/osspicli-local/observer/linux-observer-2.0.0.tar.gz &&
+              mkdir ~/.observerz
+              cd ~/.observer
+              tar zxf /path/to/download/linux-observer-2.0.0.tar.gz
+
+              # in current versions, we require user set JAVA_HOME like
+              # if you do not have java in the env, please mount toolchain
+              # in future release, we will skip java config if not detected
+              export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
+
+              # set alias
+              alias observer_agent=~/.observer/bin/observer_agent.bash
+              observer_agent --version
+
+              observer_agent -m start_observer --output_environment envs.sh --env_to_shell
+              source ./envs.sh
+
+              srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+
+              echo " ===> ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory!!!"
+
+              echo " ===> Stopping observer and cleaning up"
+              source ./envs.sh unset
+
+              observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
+              cat ${SRP_WORKING_DIR}/network_provenance.json
+              rm -f envs.sh
+
+              srp provenance action import-cmd  --cmd '_build_under_observer.sh' --env-file=${SRP_WORKING_DIR}/build-env.json
+
+              echo "==========> srp provenance action import-observation"
+              srp provenance action stop
+              echo "==========> srp provenance action stop"
+
+              export APP_JAR="srp-example-gradle-${OUTPUT_VERSION}-SNAPSHOT.jar"
+
+              echo "==========> Creating srp_schematic.yaml"
+              echo "==========> Creation of srp_schematic.yaml file was done."
+
+              srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
+              echo "==========> Created ${SRP_WORKING_DIR}/prov3_fragment_${BUILD_ID}.json"
+
+              DTR=`cat ${SRP_WORKING_DIR}/distance-to-root`
+              echo "==========> calculated DTR='${DTR}', git rev-list --count HEAD=$(git rev-list --count HEAD)"
+
+              if [ "${SRP_CLIENT_ID}" != "" ] && [ "${SRP_CLIENT_SECRET}" != "" ]; then
+                echo "==========> Start"
+                srp provenance submit --verbose --path ${SRP_WORKING_DIR}/prov3_fragment.json
+                echo "==========> Stop"
+              else
+                echo "==========> Skipping SRP submission.  Both SRP_CLIENT_ID and SRP_CLIENT_SECRET must be defined"
+              fi
 
               srp metadata status \
                 --srp-endpoint $SRP_URL

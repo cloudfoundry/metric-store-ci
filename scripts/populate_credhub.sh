@@ -14,6 +14,7 @@ bbl_dir=${1:-$HOME/workspace/denver-deployments/concourse}
 pushd "${bbl_dir}"
     eval "$(bbl print-env)"
 popd
+credhub get --name /concourse/metric-store-log-cache/srp-helper-harbor-credentials
 
 credhub set \
   --name /concourse/metric-store-log-cache/datadog_api_key \
@@ -47,7 +48,7 @@ credhub set \
   --type user \
   --username "$(echo "${srp_helper_credentials_json}" | gojq -r .client_id)" \
   --password "$(echo "${srp_helper_credentials_json}" | gojq -r .client_secret)"
-
+credhub get --name /concourse/metric-store-log-cache/srp-helper-harbor-credentials
 srp_client_credentials_json=$(op read "op://AOA-Legacy/srp_client_credentials/notesPlain")
 
 credhub set \

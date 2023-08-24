@@ -1,0 +1,55 @@
+---
+# schema_id is 1.0, don't change it.
+schema_id: '1.0'
+
+# Unless you project involves multiple source repos, don't update this section.
+# $(env:source_path) is a variable that will be passed in by Runway.
+sources:
+  source:
+    typename: source_tree.git
+    path: https://github.com/cloudfoundry/metric-store-ci
+    branch: Add-SRP-resource-to-pipeline
+
+outputs:
+  # Your project supposed to build out Jar file and push to some registry,
+  # thus don't update this line.
+  package.maven(name='com.example:srp-gradle-example',version='1.2.3-srp-pipeline',original_location='https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/metric-store-ci/1.2.3-srp-pipeline'):
+    # url_base is used to verify if artifacts are uploaded to expected destination.
+    # In this example, as we upload a Jar file, we define a manifest item "srp-example-gradle-*-SNAPSHOT.jar".
+    # Say we find the local artifact at "$(env:BRANCH_DIR)/build/libs/srp-example-gradle-1.2.3-SNAPSHOT.jar",
+    # the path will be replaced with url_base, so we get an upload URL:
+    # https://artifactory.eng.vmware.com/artifactory/devtools-docker-local/vmware/runway/srp-onboard-examples/gradle-app/$(env:OUTPUT_VERSION)/srp-example-gradle-1.0.00SNAPSHOT.jar,
+    # the URL must appear in network observations, otherwise provenance generation will fail.
+
+    url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/metric-store-ci/1.2.3-srp-pipeline
+    manifest:
+      - https://github.com/cloudfoundry/metric-store-ci/build/libs/:
+          include:
+            - "srp-example-gradle-*-SNAPSHOT.jar"
+          manifest_root: "./"
+
+    # All incorporated dependencies can be detected by a Syft scan at end of every stage, thus no need to run extra scan.
+    scanner_instances:
+      - scanner: srpcli-gradle
+        args: [ "--gradle-lock=$(env:BRANCH_DIR)/gradle.lockfile" ]
+      - scanner: srpcli-syft
+        args: ["--scan-target=$(env:BRANCH_DIR)/build/libs/srp-example-gradle-$(env:OUTPUT_VERSION)-SNAPSHOT.jar", "--incorporated=true", "--usage=functionality"]
+
+    # Define source code as an input. Usually you don't need to update this section.
+    inputs:
+      $(sources:source_uid):
+        is_components_source: true
+        incorporated: false
+        usages: ["testing", "building"]
+
+    # You need to update this section with your project's information. Spdx info
+    # will be used to generate SBOM.
+    spdx_info:
+      package:
+        supplier: "Organization: VMware"
+        originator: "Organization: VMware"
+        license_declared: "MIT"
+        license_concluded: "MIT"
+        home_page: "http://www.homepage.com"
+        short_summary: "short summary of the package"
+        detailed_description: "detailed description of the package"
