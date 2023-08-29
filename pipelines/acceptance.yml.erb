@@ -25,6 +25,20 @@ resource_types:
     tag: latest-final
 
 resources:
+#### TAS CVE resources
+- name: concourse-cve-scan
+  type: git
+  source:
+    uri: git@github.com:pivotal/concourse-cve-scan.git
+    branch: main
+    private_key: ((svcboteos_github_private_key))
+- name: tas-cve
+  type: github-release
+  source:
+    access_token: ((svcboteos_github_access_token))
+    repository: tas-cve
+    user: pivotal
+
 - name: cf-deployment
   type: git
   source:
@@ -339,6 +353,25 @@ jobs:
       params:
         silent: true
         attachments_file: metadata/alert_message_failure
+
+  ##### CVE Scan Bosh release
+- name: scan-and-upload-to-tas-cve
+  plan:
+  - in_parallel:
+      - get: concourse-cve-scan
+      - get: metric-store-develop
+        trigger: true
+        passed: [ "unit-tests" ]
+      - get: tas-cve
+  - task: run-scan
+    file: concourse-cve-scan/tasks/scan/scan.yml
+    input_mapping:
+      target-bosh-release: metric-store-develop
+    params:
+      GRYPE_FAILURE_LEVEL: high
+      DRY_RUN: false
+      RELEASE_NAME: p-metric-store
+      RELEASE_VERSION: pre-release-cve-scan
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
