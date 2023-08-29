@@ -111,7 +111,7 @@ jobs:
       image: cf-deployment-concourse-tasks-image
       file: metric-store-ci/tasks/refresh-env/task.yml
       params:
-        ID: 216
+        ID: 538
 
 - name: go-dependencies
   serial: true
