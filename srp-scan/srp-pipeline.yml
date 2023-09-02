@@ -1,0 +1,183 @@
+resource_types:
+#### Secure Release Pipeline resource type
+- name: build-metadata
+  type: registry-image
+  source:
+    repository: pcfopsmanager/build-metadata-resource
+
+############## Resources ################
+resources:
+#### Secure Release Pipeline resources
+- name: srp-helper-test
+  type: registry-image
+  source:
+    repository: harbor.dhaka.cf-app.com/srp/srp-helper-task
+    username: ((phoenix-osspi.srp-harbor-username))
+    password: ((phoenix-osspi.srp-harbor-password))
+
+- name: build-metadata
+  type: build-metadata
+
+- name: metric-store-ci
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-ci
+    private_key: ((phoenix-osspi.svcboteos_github_private_key))
+    branch: srp-scan
+
+- name: metric-store-develop
+  type: git
+  source:
+    uri: git@github.com:cloudfoundry/metric-store-release
+    branch: develop
+    private_key: ((phoenix-osspi.svcboteos_github_private_key))
+    ignore_paths:
+    - .final_builds
+    - releases
+    disable_ci_skip: false
+    clean_tags: true
+
+- name: metric-store-version
+  type: semver
+  source:
+    driver: gcs
+    bucket: metric-store-ci-versions
+    key: test/metric-store-release-acceptance-tile
+    json_key: ((phoenix-osspi.gcp_service_account_key))
+    initial_version: 0.2.0-build.24
+
+
+
+############## Jobs ################
+jobs:
+##### Secure Release Pipeline jobs
+- name: "collect-srp-source-provenance"
+  serial: true
+  plan:
+    - in_parallel:
+        - get: srp-helper-test
+        - get: build-metadata
+        - get: metric-store-version
+        - get: metric-store-develop
+        - get: metric-store-ci
+    - task: "submit-metadata-for-metric-store-release"
+      image: srp-helper-test
+      config:
+        platform: linux
+        inputs:
+          - name: metric-store-ci
+          - name: metric-store-develop
+          - name: build-metadata
+          - name: metric-store-version
+        params:
+          SRP_CLIENT_ID: ((phoenix-osspi.srp-client-id))
+          SRP_CLIENT_SECRET: ((phoenix-osspi.srp-client-secret))
+          SRP_URL: https://srp.vmware.com
+          SRP_KEY: ((phoenix-osspi.svcboteos_github_private_key))
+        run:
+          path: /bin/bash
+          args:
+            - -c
+            - |
+              set -x
+              set -euo pipefail
+              mkdir ./provenance
+
+              VERSION=$(cat metric-store-version/version)
+              BUILD_NUMBER=$(cat build-metadata/build-name)
+              BUILD_PIPELINE_NAME=$(cat build-metadata/build-pipeline-name)
+              BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
+              BUILD_ID=$(cat build-metadata/build-id)
+              COMP_UID="uid.obj.build.runway(instance='runway-ci.eng.vmware.com',namespace='tobs-k8s-group',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
+              OUTPUT_VERSION="3.2.1-${BUILD_PIPELINE_NAME}"
+
+              export SRP_WORKING_DIR=/srp-work
+              export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
+
+              srp --version
+              srp provenance source \
+                --scm-type git \
+                --name "metric-store-develop" \
+                --path metric-store-develop \
+                --saveto ./provenance/source.json \
+                --build-number "$BUILD_NUMBER" \
+                --version "$VERSION" \
+                --all-ephemeral true \
+                --build-type release \
+                --comp-uid "$COMP_UID"
+
+              srp config auth \
+                --client-id $SRP_CLIENT_ID \
+                --client-secret $SRP_CLIENT_SECRET \
+                --srp-endpoint $SRP_URL
+
+              export GITHUB_ACTION="metric-store-build-action"
+              export GITHUB_FQDN="github.com"
+              export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
+              export GITHUB_REF="refs/heads/master"
+
+              srp provenance init
+              srp provenance add-build github --action ${GITHUB_ACTION} --build-id ${BUILD_ID} --instance ${GITHUB_FQDN} --namespace ${GITHUB_REPOSITORY} --ref ${GITHUB_REF}
+              srp provenance declare-source git --verbose --set-key=mainsrc --path ./metric-store-develop --branch=master
+              srp provenance action start --name metric-store-build-action
+
+              export SRPCLIVERSION="0.13.9-20230830052206-61eed54-187.1"
+              curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
+              mkdir -p /srp-tools/observer
+              cd /srp-tools
+              tar zxf /tmp/srp-tools-linux.tar.gz
+              observer_agent --version
+              srp --version
+              
+              export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
+
+              alias observer_agent=~/.observer/bin/observer_agent.bash
+              observer_agent --version
+
+              observer_agent -m start_observer --output_environment ${SRP_WORKING_DIR}/envs.sh --env_to_shell
+              set +u
+              source ${SRP_WORKING_DIR}/envs.sh
+              set -u
+
+              srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+              source ${SRP_WORKING_DIR}/envs.sh unset
+
+              observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
+              cat ${SRP_WORKING_DIR}/network_provenance.json
+              rm -f envs.sh
+
+              srp provenance action import-cmd  --cmd '_build_under_observer.sh' --env-file=${SRP_WORKING_DIR}/build-env.json
+              srp provenance action stop
+              
+              export APP_JAR="srp-example-gradle-${OUTPUT_VERSION}-SNAPSHOT.jar"
+
+              cd -
+              echo "==========> Creating srp_schematic.yaml"
+              srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
+              echo "==========> Creation of srp_schematic.yaml file was done."
+              cd -
+
+              srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
+              echo "==========> Created ${SRP_WORKING_DIR}/prov3_fragment_${BUILD_ID}.json"
+
+              if [ "${SRP_CLIENT_ID}" != "" ] && [ "${SRP_CLIENT_SECRET}" != "" ]; then
+                echo "==========> Start"
+                srp provenance submit --verbose --path ${SRP_WORKING_DIR}/prov3_fragment.json
+                echo "==========> Stop"
+              else
+                echo "==========> Skipping SRP submission.  Both SRP_CLIENT_ID and SRP_CLIENT_SECRET must be defined"
+              fi
+
+              echo "==============> Working to this row!!!"
+
+              srp metadata status \
+                --srp-endpoint $SRP_URL
+
+              cd -
+              srp metadata submit \
+                -p ./provenance/source.json \
+                -u "uid.mtd.provenance_3_0.fragment(obj_uid=$COMP_UID,revision='')" \
+                --srp-endpoint $SRP_URL
+
+              srp metadata get \
+                --uid "uid.mtd.provenance_3_0.fragment(obj_uid=$COMP_UID,revision='')"
