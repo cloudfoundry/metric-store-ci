@@ -8,7 +8,7 @@ sources:
   source:
     typename: source_tree.git
     path: $(env:BRANCH_DIR)
-    branch: refs/heads/master
+    branch: $(env:BUILD_BRANCH)
 
 # Define source code as an input. Usually you don't need to update this section.
 # As this schematic has two outputs, and they take the same source as an input,
