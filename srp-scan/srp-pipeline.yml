@@ -89,7 +89,7 @@ jobs:
               BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
               BUILD_ID=$(cat build-metadata/build-id)
               COMP_UID="uid.obj.build.runway(instance='runway-ci.eng.vmware.com',namespace='tobs-k8s-group',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
-              OUTPUT_VERSION="3.2.1-${BUILD_PIPELINE_NAME}"
+              OUTPUT_VERSION="3.2.1-${BUILD_ID}"
 
               export SRP_WORKING_DIR=/srp-work
               export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
@@ -154,7 +154,12 @@ jobs:
               cd -
               echo "==========> Creating srp_schematic.yaml"
               srp provenance schematic --help
-              export BUILD_ID=$(cat build-metadata/build-id) 
+              export BUILD_ID=$(cat build-metadata/build-id)
+              export BRANCH_DIR=https://github.com/cloudfoundry/metric-store-release
+              export BUILD_BRANCH=refs/heads/master
+              export OUTPUT_VERSION=1.2.3-7741762
+              export BUILD_PROJECT=srp-example-golang-bldweb-deps
+  
               srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml 
               echo "==========> Creation of srp_schematic.yaml file was done."
               cd -
