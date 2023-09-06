@@ -153,7 +153,9 @@ jobs:
 
               cd -
               echo "==========> Creating srp_schematic.yaml"
+              rp provenance schematic --help
               srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
+              srp provenance schematic --help
               echo "==========> Creation of srp_schematic.yaml file was done."
               cd -
 

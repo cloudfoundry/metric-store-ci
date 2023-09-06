@@ -7,8 +7,8 @@ schema_id: '1.0'
 sources:
   source:
     typename: source_tree.git
-    path: $(env:BRANCH_DIR)
-    branch: $(env:BUILD_BRANCH)
+    path: https://github.com/cloudfoundry/metric-store-release
+    branch: refs/heads/master
 
 # Define source code as an input. Usually you don't need to update this section.
 # As this schematic has two outputs, and they take the same source as an input,
@@ -38,7 +38,7 @@ spdx_templates:
 outputs:
   # In this example, we are publishing only one output, a binary created for Linux targets.  If you have others, for
   # Mac etc, you would need one per output that is published.
-  file(org=srp.vmware.com/vps,name=app-linux-amd64,version=$(env:OUTPUT_VERSION),build_id=$(env:BUILD_ID)):
+  file(org=srp.vmware.com/vps,name=app-linux-amd64,version=$(env:OUTPUT_VERSION),build_id=$(env:PIPELINE_ID)):
     # url_base is used to verify if artifacts are uploaded to expected destination.
     # In this example, as we upload an executable file, we define a manifest item "linux-amd64/app".
     # Say we find the local artifact at "$(env:release_path)/linux-amd64/app",
@@ -48,7 +48,7 @@ outputs:
     url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
 
     manifest:
-      - $(env:BRANCH_DIR)/:
+      - https://github.com/cloudfoundry/metric-store-release/:
           include:
             - "app-linux-amd64"
           manifest_root: "./"
@@ -63,6 +63,6 @@ outputs:
     # executables, so that "functionality" will be added to their usages.
     scanner_instances:
       - scanner: srpcli-go
-        args: ["--go-mod=$(env:BRANCH_DIR)/go.mod", "--incorporated=false", "--usage=testing"]
+        args: ["--go-mod=https://github.com/cloudfoundry/metric-store-release/go.mod", "--incorporated=false", "--usage=testing"]
       - scanner: srpcli-syft
-        args: ["--scan-target=$(env:BRANCH_DIR)/app-linux-amd64", "--incorporated=true", "--usage=functionality" ]
+        args: ["--scan-target=https://github.com/cloudfoundry/metric-store-release/app-linux-amd64", "--incorporated=true", "--usage=functionality" ]
