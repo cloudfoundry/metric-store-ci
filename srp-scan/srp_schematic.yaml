@@ -7,7 +7,7 @@ schema_id: '1.0'
 sources:
   source:
     typename: source_tree.git
-    path: https://github.com/cloudfoundry/metric-store-release
+    path: $(env:BRANCH_DIR)
     branch: refs/heads/master
 
 # Define source code as an input. Usually you don't need to update this section.
