@@ -38,14 +38,14 @@ spdx_templates:
 outputs:
   # In this example, we are publishing only one output, a binary created for Linux targets.  If you have others, for
   # Mac etc, you would need one per output that is published.
-  file(org=srp.vmware.com/vps,name=app-linux-amd64,version=1.2.3-7741762,build_id=$(env:BUILD_ID)):
+  file(org=srp.vmware.com/vps,name=app-linux-amd64,version=1.2.3-7741762,build_id=3328600993):
     # url_base is used to verify if artifacts are uploaded to expected destination.
     # In this example, as we upload an executable file, we define a manifest item "linux-amd64/app".
     # Say we find the local artifact at "$(env:release_path)/linux-amd64/app",
     # the path will be replaced with url_base, so we get an upload URL:
     # https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/srp-example-golang-bldweb-deps/1.2.3/app-linux-amd64,
     # the URL must appear in network observations, otherwise provenance generation will fail.
-    url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/srp-example-golang-bldweb-deps/1.2.3-7741762/app-linux-amd64
+    url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/metric-store-release/1.2.3-7741762/app-linux-amd64
 
     manifest:
       - https://github.com/cloudfoundry/metric-store-release/:
