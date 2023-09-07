@@ -29,7 +29,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
-    branch: develop
+    branch: master
     private_key: ((phoenix-osspi.svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
@@ -152,10 +152,11 @@ jobs:
               export APP_JAR="srp-example-gradle-${OUTPUT_VERSION}-SNAPSHOT.jar"
 
               cd -
+              ls -la
               echo "==========> Creating srp_schematic.yaml"
               srp provenance schematic --help
               export BUILD_ID=$(cat build-metadata/build-id)
-              export BRANCH_DIR=https://github.com/cloudfoundry/metric-store-release
+              export BRANCH_DIR=metric-store-develop
               export BUILD_BRANCH=refs/heads/master
               export OUTPUT_VERSION=1.2.3-7741762
               export BUILD_PROJECT=srp-example-golang-bldweb-deps
