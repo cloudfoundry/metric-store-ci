@@ -51,7 +51,7 @@ outputs:
     # url_base: https://artifactory.eng.vmware.com/artifactory/gemfire-dev-maven-local/nativeclient/$(env:gemfire_native_version)
     # url_base: https://artifactory.eng.vmware.com/artifactory/$(env:BRANCH_DIR)/nativeclient/$(env:OUTPUT_VERSION)
     # url_base: https://artifactory.eng.vmware.com/artifactory/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
-    url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    url_base: https://artifactory.eng.vmware.com/artifactory/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
 
     manifest:
       - $(env:BRANCH_DIR)/:
@@ -71,4 +71,4 @@ outputs:
       - scanner: srpcli-go
         args: ["--go-mod=$(env:BRANCH_DIR)/go.mod", "--incorporated=false", "--usage=testing"]
       - scanner: srpcli-syft
-        args: ["--scan-target=$(env:BRANCH_DIR)", "--incorporated=true", "--usage=functionality" ]
+        args: ["--scan-target=$(env:BRANCH_DIR)/", "--incorporated=true", "--usage=functionality" ]
