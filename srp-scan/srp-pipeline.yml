@@ -158,7 +158,7 @@ jobs:
               export BUILD_ID=$(cat build-metadata/build-id)
               export BRANCH_DIR=metric-store-develop
               export BUILD_BRANCH=refs/heads/master
-              export OUTPUT_VERSION=1.2.3-7741762
+              export OUTPUT_VERSION=1.2.3-${BUILD_ID}
               export BUILD_PROJECT=srp-example-golang-bldweb-deps
   
               srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml 
