@@ -47,7 +47,7 @@ outputs:
     # the URL must appear in network observations, otherwise provenance generation will fail.
     # url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
     # url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)
-    url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
 
     manifest:
       - $(env:BRANCH_DIR)/:
