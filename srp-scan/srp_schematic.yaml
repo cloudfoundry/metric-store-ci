@@ -45,7 +45,8 @@ outputs:
     # the path will be replaced with url_base, so we get an upload URL:
     # https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/srp-example-golang-bldweb-deps/1.2.3/app-linux-amd64,
     # the URL must appear in network observations, otherwise provenance generation will fail.
-    url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    # url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)
 
     manifest:
       - $(env:BRANCH_DIR)/:
