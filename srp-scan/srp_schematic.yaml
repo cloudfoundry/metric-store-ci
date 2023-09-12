@@ -52,7 +52,8 @@ outputs:
     # url_base: https://artifactory.eng.vmware.com/artifactory/$(env:BRANCH_DIR)/nativeclient/$(env:OUTPUT_VERSION)
     # url_base: https://artifactory.eng.vmware.com/artifactory/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
     # url_base: https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
-    url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+#    url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/
 
     manifest:
       - $(env:BRANCH_DIR)/:
