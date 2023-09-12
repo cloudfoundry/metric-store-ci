@@ -90,6 +90,8 @@ jobs:
               BUILD_ID=$(cat build-metadata/build-id)
               COMP_UID="uid.obj.build.runway(instance='runway-ci.eng.vmware.com',namespace='tobs-k8s-group',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
               OUTPUT_VERSION="3.2.1-${BUILD_ID}"
+              BUILD_PROJECT=metric-store-release
+              ARTIFACTORY_AUTH_TOKEN='Test'
 
               export SRP_WORKING_DIR=/srp-work
               export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
@@ -140,6 +142,16 @@ jobs:
               set -u
 
               srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+
+              if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
+                APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
+                PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/${APP_JAR}"
+                echo "Publishing build output to ${PUBLISH_URL}"
+                curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T ./build/libs/${APP_JAR} ${PUBLISH_URL}
+              else
+                echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
+              fi
+
               source ${SRP_WORKING_DIR}/envs.sh unset
 
               observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
@@ -149,7 +161,7 @@ jobs:
               srp provenance action import-cmd  --cmd '_build_under_observer.sh' --env-file=${SRP_WORKING_DIR}/build-env.json
               srp provenance action stop
               
-              export APP_JAR="srp-example-gradle-${OUTPUT_VERSION}-SNAPSHOT.jar"
+              export APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
 
               cd -
               ls -la
