@@ -122,6 +122,10 @@ jobs:
               srp provenance add-build github --action ${GITHUB_ACTION} --build-id ${BUILD_ID} --instance ${GITHUB_FQDN} --namespace ${GITHUB_REPOSITORY} --ref ${GITHUB_REF}
               srp provenance declare-source git --verbose --set-key=mainsrc --path ./metric-store-develop --branch=master
               srp provenance action start --name metric-store-build-action
+              echo "============> "
+              pwd
+              ls -la
+              echo "============> "
 
               export SRPCLIVERSION="0.13.9-20230830052206-61eed54-187.1"
               curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
@@ -131,41 +135,79 @@ jobs:
               observer_agent --version
               srp --version
               
+              echo "============> 1"
+              pwd
+              ls -la
+              echo "============> 1"
+
+              # download golang tools
+              curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
+              tar zxf /tmp/go-linux-amd64.tar.gz
+              export PATH=/srp-tools/go/bin:${PATH}
+              go version
+              
+              echo "============> 2"
+              pwd
+              ls -la
+              echo "============> 2"
+
+              srp util env --saveto=${SRP_WORKING_DIR}/network_provenance.json
+              srp provenance action import-observation --name=build-obs --file=${SRP_WORKING_DIR}/network_provenance.json
+              
               export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
 
               alias observer_agent=~/.observer/bin/observer_agent.bash
               observer_agent --version
 
               observer_agent -m start_observer --output_environment ${SRP_WORKING_DIR}/envs.sh --env_to_shell
+              
+              echo "============> 3"
+              pwd
+              ls -la
+              echo "============> 3"
+
               set +u
               source ${SRP_WORKING_DIR}/envs.sh
               set -u
 
+              export CGO_ENABLED=0
+              export GOPRIVATE="gitlab.eng.vmware.com/*"
+              export GOPROXY="https://build-artifactory.eng.vmware.com/artifactory/proxy-golang-remote"
+              export GOSUMDB="https://build-artifactory.eng.vmware.com/artifactory/go-gosumdb-remote"
+              echo $GOROOT
+              export GOROOT=/home/aspear/go/go1.19.5
+              
+              echo "============> 4"
+              pwd
+              ls -la
+              echo "============> 4"
+              
+              echo "Running go build for linux/amd64"
+              GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/bldweb/main.go
+              
+              echo "Extracting incorporated dependencies from the output using go version"
+              go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
+              
+              # capture env used in the build
               srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
-
+              
               if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
-                APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
-                PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/${APP_JAR}"
-                echo "Publishing build output to ${PUBLISH_URL}"
-                curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T ./build/libs/${APP_JAR} ${PUBLISH_URL}
+                PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64"
+                echo "=====> Publishing build output to ${PUBLISH_URL}"
+                curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64 ${PUBLISH_URL}
               else
                 echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
               fi
 
               source ${SRP_WORKING_DIR}/envs.sh unset
-
+              cat ${SRP_WORKING_DIR}/network_provenance.json
               observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
               cat ${SRP_WORKING_DIR}/network_provenance.json
               rm -f envs.sh
-
-              srp provenance action import-cmd  --cmd '_build_under_observer.sh' --env-file=${SRP_WORKING_DIR}/build-env.json
               srp provenance action stop
-              
-              export APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
 
+              export APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
               cd -
-              ls -la
-              echo "==========> Creating srp_schematic.yaml"
               srp provenance schematic --help
               export BUILD_ID=$(cat build-metadata/build-id)
               export BRANCH_DIR=metric-store-develop
@@ -173,22 +215,15 @@ jobs:
               export OUTPUT_VERSION=1.2.3-${BUILD_ID}
               export BUILD_PROJECT=metric-store-release
   
-              srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml 
-              echo "==========> Creation of srp_schematic.yaml file was done."
+              srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
               cd -
-
               srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
-              echo "==========> Created ${SRP_WORKING_DIR}/prov3_fragment_${BUILD_ID}.json"
 
               if [ "${SRP_CLIENT_ID}" != "" ] && [ "${SRP_CLIENT_SECRET}" != "" ]; then
-                echo "==========> Start"
                 srp provenance submit --verbose --path ${SRP_WORKING_DIR}/prov3_fragment.json
-                echo "==========> Stop"
               else
-                echo "==========> Skipping SRP submission.  Both SRP_CLIENT_ID and SRP_CLIENT_SECRET must be defined"
+                echo "Skipping SRP submission. Both SRP_CLIENT_ID and SRP_CLIENT_SECRET must be defined"
               fi
-
-              echo "==============> Working to this row!!!"
 
               srp metadata status \
                 --srp-endpoint $SRP_URL
