@@ -91,7 +91,7 @@ jobs:
               COMP_UID="uid.obj.build.runway(instance='runway-ci.eng.vmware.com',namespace='tobs-k8s-group',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
               OUTPUT_VERSION="3.2.1-${BUILD_ID}"
               BUILD_PROJECT=metric-store-release
-              ARTIFACTORY_AUTH_TOKEN='Test'
+              ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
 
               export SRP_WORKING_DIR=/srp-work
               export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
@@ -174,19 +174,40 @@ jobs:
               export GOPRIVATE="gitlab.eng.vmware.com/*"
               export GOPROXY="https://build-artifactory.eng.vmware.com/artifactory/proxy-golang-remote"
               export GOSUMDB="https://build-artifactory.eng.vmware.com/artifactory/go-gosumdb-remote"
+              export GOROOT=$(go env GOROOT)
               echo $GOROOT
-              export GOROOT=/home/aspear/go/go1.19.5
               
               echo "============> 4"
               pwd
               ls -la
               echo "============> 4"
+              cd -
+              cd metric-store-develop/src
               
               echo "Running go build for linux/amd64"
-              GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/bldweb/main.go
+              GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
+              
+              echo "============> 5"
+              pwd
+              ls -la
+              echo "============> 5"
               
               echo "Extracting incorporated dependencies from the output using go version"
               go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
+              
+              cd -
+              
+              echo "============> 6"
+              pwd
+              ls -la
+              echo "============> 6"              
+              cd -
+              
+              echo "============> 7"
+              pwd
+              ls -la
+              echo "============> 7"
+              
               
               # capture env used in the build
               srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
