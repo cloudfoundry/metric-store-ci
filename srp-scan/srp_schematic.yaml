@@ -38,7 +38,7 @@ spdx_templates:
 outputs:
   # In this example, we are publishing only one output, a binary created for Linux targets.  If you have others, for
   # Mac etc, you would need one per output that is published.
-#  file(org=srp.vmware.com/vps,name=app-linux-amd64,version=$(env:OUTPUT_VERSION),build_id=$(env:BUILD_ID)):
+  file(org=srp.vmware.com,name=app-linux-amd64,version=$(env:OUTPUT_VERSION),build_id=$(env:BUILD_ID)):
     # url_base is used to verify if artifacts are uploaded to expected destination.
     # In this example, as we upload an executable file, we define a manifest item "linux-amd64/app".
     # Say we find the local artifact at "$(env:release_path)/linux-amd64/app",
