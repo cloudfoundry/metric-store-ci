@@ -89,8 +89,8 @@ jobs:
               BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
               BUILD_ID=$(cat build-metadata/build-id)
               COMP_UID="uid.obj.build.runway(instance='runway-ci.eng.vmware.com',namespace='tobs-k8s-group',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
-              OUTPUT_VERSION="3.2.1-${BUILD_ID}"
-              BUILD_PROJECT=metric-store-release
+              OUTPUT_VERSION="1.0.0-${BUILD_ID}"
+              BUILD_PROJECT=metric-store-release-1
               ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
 
               export SRP_WORKING_DIR=/srp-work
@@ -122,10 +122,6 @@ jobs:
               srp provenance add-build github --action ${GITHUB_ACTION} --build-id ${BUILD_ID} --instance ${GITHUB_FQDN} --namespace ${GITHUB_REPOSITORY} --ref ${GITHUB_REF}
               srp provenance declare-source git --verbose --set-key=mainsrc --path ./metric-store-develop --branch=master
               srp provenance action start --name metric-store-build-action
-              echo "============> "
-              pwd
-              ls -la
-              echo "============> "
 
               export SRPCLIVERSION="0.13.9-20230830052206-61eed54-187.1"
               curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
@@ -134,22 +130,12 @@ jobs:
               tar zxf /tmp/srp-tools-linux.tar.gz
               observer_agent --version
               srp --version
-              
-              echo "============> 1"
-              pwd
-              ls -la
-              echo "============> 1"
 
               # download golang tools
               curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
               tar zxf /tmp/go-linux-amd64.tar.gz
               export PATH=/srp-tools/go/bin:${PATH}
               go version
-              
-              echo "============> 2"
-              pwd
-              ls -la
-              echo "============> 2"
 
               srp util env --saveto=${SRP_WORKING_DIR}/network_provenance.json
               srp provenance action import-observation --name=build-obs --file=${SRP_WORKING_DIR}/network_provenance.json
@@ -160,11 +146,6 @@ jobs:
               observer_agent --version
 
               observer_agent -m start_observer --output_environment ${SRP_WORKING_DIR}/envs.sh --env_to_shell
-              
-              echo "============> 3"
-              pwd
-              ls -la
-              echo "============> 3"
 
               set +u
               source ${SRP_WORKING_DIR}/envs.sh
@@ -176,11 +157,7 @@ jobs:
               export GOSUMDB="https://build-artifactory.eng.vmware.com/artifactory/go-gosumdb-remote"
               export GOROOT=$(go env GOROOT)
               echo $GOROOT
-              
-              echo "============> 4"
-              pwd
-              ls -la
-              echo "============> 4"
+
               cd -
               cd metric-store-develop/src
               
@@ -196,19 +173,9 @@ jobs:
               go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
               
               cd -
-              
-              echo "============> 6"
-              pwd
-              ls -la
-              echo "============> 6"              
+             
               cd -
-              
-              echo "============> 7"
-              pwd
-              ls -la
-              echo "============> 7"
-              
-              
+
               # capture env used in the build
               srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
               
@@ -233,8 +200,8 @@ jobs:
               export BUILD_ID=$(cat build-metadata/build-id)
               export BRANCH_DIR=metric-store-develop
               export BUILD_BRANCH=refs/heads/master
-              export OUTPUT_VERSION=1.2.3-${BUILD_ID}
-              export BUILD_PROJECT=metric-store-release
+              export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
+              export BUILD_PROJECT=metric-store-release-1
   
               srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
               cd -
