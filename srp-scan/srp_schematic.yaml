@@ -60,7 +60,7 @@ outputs:
     manifest:
       - $(env:BRANCH_DIR)/:
           include:
-            - "app-linux-amd64"
+            - "**"
           manifest_root: "./"
 
     merge_input_templates: [source]
