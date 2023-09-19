@@ -46,10 +46,10 @@ outputs:
     # https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/srp-example-golang-bldweb-deps/1.2.3/app-linux-amd64,
     # the URL must appear in network observations, otherwise provenance generation will fail.
     # url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
-    url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    # url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
 
     manifest:
-      - https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)/:
+      - $(env:BRANCH_DIR)/src:
           include:
             - "app-linux-amd64"
           manifest_root: "./"
