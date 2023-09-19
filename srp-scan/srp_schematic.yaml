@@ -49,7 +49,7 @@ outputs:
     url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
 
     manifest:
-      - $(env:BRANCH_DIR)/src:
+      - https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)/:
           include:
             - "app-linux-amd64"
           manifest_root: "./"
