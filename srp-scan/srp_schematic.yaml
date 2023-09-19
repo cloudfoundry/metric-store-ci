@@ -49,9 +49,9 @@ outputs:
     url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
 
     manifest:
-      - $(env:BRANCH_DIR)/:
+      - $(env:BRANCH_DIR)/src:
           include:
-            - "**"
+            - "app-linux-amd64"
           manifest_root: "./"
 
     merge_input_templates: [source]
@@ -66,4 +66,4 @@ outputs:
       - scanner: srpcli-go
         args: ["--go-mod=$(env:BRANCH_DIR)/go.mod", "--incorporated=false", "--usage=testing"]
       - scanner: srpcli-syft
-        args: ["--scan-target=$(env:BRANCH_DIR)/releases/download/v1.5.4/release.tgz", "--incorporated=true", "--usage=functionality" ]
+        args: ["--scan-target=$(env:BRANCH_DIR)/", "--incorporated=true", "--usage=functionality" ]
