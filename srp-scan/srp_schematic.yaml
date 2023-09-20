@@ -29,11 +29,11 @@ spdx_templates:
     package:
       supplier: "Organization: VMware"
       originator: "Organization: VMware"
-      license_declared: "MIT"
-      license_concluded: "MIT"
-      home_page: "http://www.homepage.com"
-      short_summary: "short summary of the package"
-      detailed_description: "detailed description of the package"
+      license_declared: "Apache License 2.0"
+      license_concluded: "Apache License 2.0"
+      home_page: "https://github.com/cloudfoundry/metric-store-release"
+      short_summary: "A persistent storage layer for metrics sent through the Loggregator subsystem"
+      detailed_description: "Metric Store Release is a BOSH release for Metric Store. It provides a persistent storage layer for metrics sent through the Loggregator subsystem. It is multi-tenant aware (the auth proxy ensures that you only have access to metrics from your apps), easy to query (it is 100% compatible with the Prometheus Query API, with some exceptions listed below), and has a powerful storage engine (the InfluxDB storage engine has built-in compression and a memory-efficient series index)."
 
 outputs:
   # In this example, we are publishing only one output, a binary created for Linux targets.  If you have others, for
@@ -46,7 +46,7 @@ outputs:
     # https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/srp-example-golang-bldweb-deps/1.2.3/app-linux-amd64,
     # the URL must appear in network observations, otherwise provenance generation will fail.
     # url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
-    # url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)/app-linux-amd64
 
     manifest:
       - $(env:BRANCH_DIR)/src:
@@ -66,4 +66,4 @@ outputs:
       - scanner: srpcli-go
         args: ["--go-mod=$(env:BRANCH_DIR)/go.mod", "--incorporated=false", "--usage=testing"]
       - scanner: srpcli-syft
-        args: ["--scan-target=$(env:BRANCH_DIR)/", "--incorporated=true", "--usage=functionality" ]
+        args: ["--scan-target=$(env:BRANCH_DIR)/app-linux-amd64", "--incorporated=true", "--usage=functionality" ]
