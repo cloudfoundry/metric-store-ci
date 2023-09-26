@@ -85,7 +85,6 @@ resources:
   type: git
   source:
     uri: git@github.com:bosh-packages/golang-release
-    branch: master
     tag_filter: v*
     private_key: ((svcboteos_github_private_key))
 
@@ -123,7 +122,7 @@ resources:
   type: bosh-io-release
   source:
     repository: cloudfoundry/routing-release
-    regexp: .*262.*
+    regexp: .*
 
 jobs:
 - name: unit-tests
