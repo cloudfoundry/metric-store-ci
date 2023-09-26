@@ -66,4 +66,4 @@ outputs:
       - scanner: srpcli-go
         args: ["--go-mod=$(env:BRANCH_DIR)/go.mod", "--incorporated=false", "--usage=testing"]
       - scanner: srpcli-syft
-        args: ["--scan-target=$(env:BRANCH_DIR)/app-linux-amd64", "--incorporated=true", "--usage=functionality" ]
+        args: ["--scan-target=$(env:BRANCH_DIR)", "--incorporated=true", "--usage=functionality" ]
