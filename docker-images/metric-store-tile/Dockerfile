@@ -8,7 +8,7 @@ RUN apt-get update; apt-get install --yes \
     rsync \
     unzip \
     psmisc \
-    python \
+    python-is-python3 \
     vim
 
 RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz \
