@@ -1,226 +1,215 @@
 resource_types:
-#### Secure Release Pipeline resource type
-- name: build-metadata
-  type: registry-image
-  source:
-    repository: pcfopsmanager/build-metadata-resource
+  #### Secure Release Pipeline resource type
+  - name: build-metadata
+    type: registry-image
+    source:
+      repository: pcfopsmanager/build-metadata-resource
 
 ############## Resources ################
 resources:
-#### Secure Release Pipeline resources
-- name: srp-helper-test
-  type: registry-image
-  source:
-    repository: harbor.dhaka.cf-app.com/srp/srp-helper-task
-    username: ((phoenix-osspi.srp-harbor-username))
-    password: ((phoenix-osspi.srp-harbor-password))
+  #### Secure Release Pipeline resources
+  - name: srp-helper-test
+    type: registry-image
+    source:
+      repository: harbor.dhaka.cf-app.com/srp/srp-helper-task
+      username: ((phoenix-osspi.srp-harbor-username))
+      password: ((phoenix-osspi.srp-harbor-password))
 
-- name: build-metadata
-  type: build-metadata
+  - name: build-metadata
+    type: build-metadata
 
-- name: metric-store-ci
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/metric-store-ci
-    private_key: ((phoenix-osspi.svcboteos_github_private_key))
-    branch: srp-scan
+  - name: metric-store-ci
+    type: git
+    source:
+      uri: git@github.com:cloudfoundry/metric-store-ci
+      private_key: ((phoenix-osspi.svcboteos_github_private_key))
+      branch: srp-scan
 
-- name: metric-store-develop
-  type: git
-  source:
-    uri: git@github.com:cloudfoundry/metric-store-release
-    branch: master
-    private_key: ((phoenix-osspi.svcboteos_github_private_key))
-    ignore_paths:
-    - .final_builds
-    - releases
-    disable_ci_skip: false
-    clean_tags: true
+  - name: metric-store-develop
+    type: git
+    source:
+      uri: git@github.com:cloudfoundry/metric-store-release
+      branch: master
+      private_key: ((phoenix-osspi.svcboteos_github_private_key))
+      ignore_paths:
+        - .final_builds
+        - releases
+      disable_ci_skip: false
+      clean_tags: true
 
-- name: metric-store-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: metric-store-ci-versions
-    key: test/metric-store-release-acceptance-tile
-    json_key: ((phoenix-osspi.gcp_service_account_key))
-    initial_version: 0.2.0-build.24
+  - name: metric-store-version
+    type: semver
+    source:
+      driver: gcs
+      bucket: metric-store-ci-versions
+      key: test/metric-store-release-acceptance-tile
+      json_key: ((phoenix-osspi.gcp_service_account_key))
+      initial_version: 0.2.0-build.24
 
 
 
 ############## Jobs ################
 jobs:
-##### Secure Release Pipeline jobs
-- name: "collect-srp-source-provenance"
-  serial: true
-  plan:
-    - in_parallel:
-        - get: srp-helper-test
-        - get: build-metadata
-        - get: metric-store-version
-        - get: metric-store-develop
-        - get: metric-store-ci
-    - task: "submit-metadata-for-metric-store-release"
-      image: srp-helper-test
-      config:
-        platform: linux
-        inputs:
-          - name: metric-store-ci
-          - name: metric-store-develop
-          - name: build-metadata
-          - name: metric-store-version
-        params:
-          SRP_CLIENT_ID: ((phoenix-osspi.srp-client-id))
-          SRP_CLIENT_SECRET: ((phoenix-osspi.srp-client-secret))
-          SRP_URL: https://srp.vmware.com
-          SRP_KEY: ((phoenix-osspi.svcboteos_github_private_key))
-        run:
-          path: /bin/bash
-          args:
-            - -c
-            - |
-              set -x
-              set -euo pipefail
-              mkdir ./provenance
+  ##### Secure Release Pipeline jobs
+  - name: "collect-srp-source-provenance"
+    serial: true
+    plan:
+      - in_parallel:
+          - get: srp-helper-test
+          - get: build-metadata
+          - get: metric-store-version
+          - get: metric-store-develop
+          - get: metric-store-ci
+      - task: "submit-metadata-for-metric-store-release"
+        image: srp-helper-test
+        config:
+          platform: linux
+          inputs:
+            - name: metric-store-ci
+            - name: metric-store-develop
+            - name: build-metadata
+            - name: metric-store-version
+          params:
+            SRP_CLIENT_ID: ((phoenix-osspi.srp-client-id))
+            SRP_CLIENT_SECRET: ((phoenix-osspi.srp-client-secret))
+            SRP_URL: https://srp.vmware.com
+            SRP_KEY: ((phoenix-osspi.svcboteos_github_private_key))
+          run:
+            path: /bin/bash
+            args:
+              - -c
+              - |
+                set -x
+                set -euo pipefail
+                mkdir ./provenance
+                
+                VERSION=$(cat metric-store-version/version)
+                BUILD_NUMBER=$(cat build-metadata/build-name)
+                BUILD_PIPELINE_NAME=$(cat build-metadata/build-pipeline-name)
+                BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
+                BUILD_ID=$(cat build-metadata/build-id)
+                OUTPUT_VERSION="1.0.0-${BUILD_ID}"
+                BUILD_PROJECT=metric-store-release
+                ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
+                
+                srp --version
+                srp update -y
+                srp --version
+                
+                srp config auth \
+                  --client-id $SRP_CLIENT_ID \
+                  --client-secret $SRP_CLIENT_SECRET \
+                  --srp-endpoint $SRP_URL
+                
+                export GITHUB_ACTION="metric-store-build-action"
+                export GITHUB_FQDN="github.com"
+                export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
+                export GITHUB_REF="refs/heads/master"
+                export FQDN="runway-ci-srp.eng.vmware.com"
+                export NM="tobs-k8s-group"
 
-              VERSION=$(cat metric-store-version/version)
-              BUILD_NUMBER=$(cat build-metadata/build-name)
-              BUILD_PIPELINE_NAME=$(cat build-metadata/build-pipeline-name)
-              BUILD_JOB_NAME=$(cat build-metadata/build-job-name)
-              BUILD_ID=$(cat build-metadata/build-id)
-              COMP_UID="uid.obj.build.runway(instance='runway-ci.eng.vmware.com',namespace='tobs-k8s-group',pipeline='$BUILD_PIPELINE_NAME',job='$BUILD_JOB_NAME',build_id='$BUILD_ID')"
-              OUTPUT_VERSION="1.0.0-${BUILD_ID}"
-              BUILD_PROJECT=metric-store-release-1
-              ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
+                export SRP_WORKING_DIR=/srp-work
+                srp provenance init
+                
+                srp provenance add-build github --action ${GITHUB_ACTION} --build-id ${BUILD_ID} --instance ${GITHUB_FQDN} --namespace ${GITHUB_REPOSITORY} --ref ${GITHUB_REF}
+                srp provenance declare-source git --verbose --set-key=mainsrc --path ./metric-store-develop --branch=master
+                srp provenance action start --name metric-store-build-action
 
-              export SRP_WORKING_DIR=/srp-work
-              export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
+                srp util env --saveto=${SRP_WORKING_DIR}/network_provenance.json
+                srp provenance action import-observation --name=build-obs --file=${SRP_WORKING_DIR}/network_provenance.json
+                
+                export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
+                export SRPCLIVERSION="0.14.3-20230929133803-6bc513b-234"
+                curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
+                mkdir -p /srp-tools/observer
+                cd /srp-tools
+                tar zxf /tmp/srp-tools-linux.tar.gz
+                observer_agent --version
+                srp update -y
+                srp --version
+                
+                # download golang tools
+                curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
+                tar zxf /tmp/go-linux-amd64.tar.gz
+                export PATH=/srp-tools/go/bin:${PATH}
+                go version
+                
+                export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
+                
+                alias observer_agent=./observer/bin/observer_agent.bash
+                observer_agent --version
+                
+                export BUILD_BRANCH=refs/heads/master
+                export BUILD_NAMESPACE="tobs-k8s-group"
+                export BUILD_PROJECT=${BUILD_PROJECT}
+                export BUILD_ID=${BUILD_ID}
+                export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
+                
+                observer_agent -m start_observer --output_environment ${SRP_WORKING_DIR}/envs.sh --env_to_shell
+                source ${SRP_WORKING_DIR}/envs.sh set
+                
+                export CGO_ENABLED=0
+                export GOPRIVATE="gitlab.eng.vmware.com/*"
+                export GOPROXY="https://build-artifactory.eng.vmware.com/artifactory/proxy-golang-remote"
+                export GOSUMDB="https://build-artifactory.eng.vmware.com/artifactory/go-gosumdb-remote"
+                export GOROOT=$(go env GOROOT)
+                echo $GOROOT
+                
+                # Change to /tmp/build/fd2c3cf9/ directory
+                cd -
+                
+                cd metric-store-develop/src
+                echo "Running go build for linux/amd64"
+                GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
+                
+                echo "Extracting incorporated dependencies from the output using go version"
+                go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
+                
+                if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
+                  PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64"
+                  echo "=====> Publishing build output to ${PUBLISH_URL}"
+                  curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64 ${PUBLISH_URL}
+                else
+                  echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
+                fi
+                
+                cat ${SRP_WORKING_DIR}/network_provenance.json
+                
+                # capture env used in the build
+                srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+                
+                observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
+                cat ${SRP_WORKING_DIR}/network_provenance.json
+                source ${SRP_WORKING_DIR}/envs.sh unset
+                rm -f ${SRP_WORKING_DIR}/envs.sh
+                srp provenance action stop
 
-              srp --version
-              srp provenance source \
-                --scm-type git \
-                --name "metric-store-develop" \
-                --path metric-store-develop \
-                --saveto ./provenance/source.json \
-                --build-number "$BUILD_NUMBER" \
-                --version "$VERSION" \
-                --all-ephemeral true \
-                --build-type release \
-                --comp-uid "$COMP_UID"
+                export APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
+                
+                # Changed to /tmp/build/fd2c3cf9 directory
+                cd -
+                
+                srp provenance schematic --help
+                export BUILD_ID=$(cat build-metadata/build-id)
+                export BRANCH_DIR=metric-store-develop
+                export BUILD_BRANCH=refs/heads/master
+                export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
+                export BUILD_PROJECT=metric-store-release
 
-              srp config auth \
-                --client-id $SRP_CLIENT_ID \
-                --client-secret $SRP_CLIENT_SECRET \
-                --srp-endpoint $SRP_URL
+                srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
+                # Change back to /tmp/build/fd2c3cf9/metric-store-develop/src directory
+                cd -  
+                srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
 
-              export GITHUB_ACTION="metric-store-build-action"
-              export GITHUB_FQDN="github.com"
-              export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
-              export GITHUB_REF="refs/heads/master"
+                if [ "${SRP_CLIENT_ID}" != "" ] && [ "${SRP_CLIENT_SECRET}" != "" ]; then
+                  echo "==============================================="
+                  cat  ${SRP_WORKING_DIR}/prov3_fragment.json
+                  echo "==============================================="
+                  srp provenance submit --verbose --path ${SRP_WORKING_DIR}/prov3_fragment.json
+                else
+                  echo "Skipping SRP submission. Both SRP_CLIENT_ID and SRP_CLIENT_SECRET must be defined"
+                fi
 
-              srp provenance init
-              srp provenance add-build github --action ${GITHUB_ACTION} --build-id ${BUILD_ID} --instance ${GITHUB_FQDN} --namespace ${GITHUB_REPOSITORY} --ref ${GITHUB_REF}
-              srp provenance declare-source git --verbose --set-key=mainsrc --path ./metric-store-develop --branch=master
-              srp provenance action start --name metric-store-build-action
+                srp metadata status \
+                  --srp-endpoint $SRP_URL
 
-              export SRPCLIVERSION="0.13.9-20230830052206-61eed54-187.1"
-              curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
-              mkdir -p /srp-tools/observer
-              cd /srp-tools
-              tar zxf /tmp/srp-tools-linux.tar.gz
-              observer_agent --version
-              srp --version
-
-              # download golang tools
-              curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
-              tar zxf /tmp/go-linux-amd64.tar.gz
-              export PATH=/srp-tools/go/bin:${PATH}
-              go version
-
-              srp util env --saveto=${SRP_WORKING_DIR}/network_provenance.json
-              srp provenance action import-observation --name=build-obs --file=${SRP_WORKING_DIR}/network_provenance.json
-              
-              export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
-
-              alias observer_agent=~/.observer/bin/observer_agent.bash
-              observer_agent --version
-
-              observer_agent -m start_observer --output_environment ${SRP_WORKING_DIR}/envs.sh --env_to_shell
-
-              set +u
-              source ${SRP_WORKING_DIR}/envs.sh
-              set -u
-
-              export CGO_ENABLED=0
-              export GOPRIVATE="gitlab.eng.vmware.com/*"
-              export GOPROXY="https://build-artifactory.eng.vmware.com/artifactory/proxy-golang-remote"
-              export GOSUMDB="https://build-artifactory.eng.vmware.com/artifactory/go-gosumdb-remote"
-              export GOROOT=$(go env GOROOT)
-              echo $GOROOT
-
-              cd -
-              cd metric-store-develop/src
-              
-              echo "Running go build for linux/amd64"
-              GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
-              
-              echo "============> 5"
-              pwd
-              ls -la
-              echo "============> 5"
-              
-              echo "Extracting incorporated dependencies from the output using go version"
-              go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
-              
-              cd -
-             
-              cd -
-
-              # capture env used in the build
-              srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
-              
-              if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
-                PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64"
-                echo "=====> Publishing build output to ${PUBLISH_URL}"
-                curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64 ${PUBLISH_URL}
-              else
-                echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
-              fi
-
-              source ${SRP_WORKING_DIR}/envs.sh unset
-              cat ${SRP_WORKING_DIR}/network_provenance.json
-              observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
-              cat ${SRP_WORKING_DIR}/network_provenance.json
-              rm -f envs.sh
-              srp provenance action stop
-
-              export APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
-              cd -
-              srp provenance schematic --help
-              export BUILD_ID=$(cat build-metadata/build-id)
-              export BRANCH_DIR=metric-store-develop
-              export BUILD_BRANCH=refs/heads/master
-              export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
-              export BUILD_PROJECT=metric-store-release-1
-  
-              srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
-              cd -
-              srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
-
-              if [ "${SRP_CLIENT_ID}" != "" ] && [ "${SRP_CLIENT_SECRET}" != "" ]; then
-                srp provenance submit --verbose --path ${SRP_WORKING_DIR}/prov3_fragment.json
-              else
-                echo "Skipping SRP submission. Both SRP_CLIENT_ID and SRP_CLIENT_SECRET must be defined"
-              fi
-
-              srp metadata status \
-                --srp-endpoint $SRP_URL
-
-              cd -
-              srp metadata submit \
-                -p ./provenance/source.json \
-                -u "uid.mtd.provenance_3_0.fragment(obj_uid=$COMP_UID,revision='')" \
-                --srp-endpoint $SRP_URL
-
-              srp metadata get \
-                --uid "uid.mtd.provenance_3_0.fragment(obj_uid=$COMP_UID,revision='')"
