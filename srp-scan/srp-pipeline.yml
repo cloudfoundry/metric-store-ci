@@ -91,10 +91,25 @@ jobs:
                 OUTPUT_VERSION="1.0.0-${BUILD_ID}"
                 BUILD_PROJECT=metric-store-release
                 ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
-                
+
+                export SRP_WORKING_DIR=/srp-work
+                # download Observer agent
+                export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
+                export SRPCLIVERSION="0.15.1-20231012115959-17ea2c6-242"
+                curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
+                mkdir -p /srp-tools/observer
+                cd /srp-tools
+                tar zxf /tmp/srp-tools-linux.tar.gz
+                observer_agent --version
                 srp --version
                 srp update -y
                 srp --version
+                
+                # download golang tools
+                curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
+                tar zxf /tmp/go-linux-amd64.tar.gz
+                export PATH=/srp-tools/go/bin:${PATH}
+                go version
                 
                 srp config auth \
                   --client-id $SRP_CLIENT_ID \
@@ -108,37 +123,23 @@ jobs:
                 export FQDN="runway-ci-srp.eng.vmware.com"
                 export NM="tobs-k8s-group"
 
-                export SRP_WORKING_DIR=/srp-work
                 srp provenance init
-                
                 srp provenance add-build github --action ${GITHUB_ACTION} --build-id ${BUILD_ID} --instance ${GITHUB_FQDN} --namespace ${GITHUB_REPOSITORY} --ref ${GITHUB_REF}
+
+                # Change to /tmp/build/fd2c3cf9/ directory
+                cd -
+
                 srp provenance declare-source git --verbose --set-key=mainsrc --path ./metric-store-develop --branch=master
                 srp provenance action start --name metric-store-build-action
 
                 srp util env --saveto=${SRP_WORKING_DIR}/network_provenance.json
                 srp provenance action import-observation --name=build-obs --file=${SRP_WORKING_DIR}/network_provenance.json
-                
-                export PATH=/srp-tools:/srp-tools/observer/bin:$PATH
-                export SRPCLIVERSION="0.14.3-20230929133803-6bc513b-234"
-                curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
-                mkdir -p /srp-tools/observer
-                cd /srp-tools
-                tar zxf /tmp/srp-tools-linux.tar.gz
-                observer_agent --version
-                srp update -y
-                srp --version
-                
-                # download golang tools
-                curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
-                tar zxf /tmp/go-linux-amd64.tar.gz
-                export PATH=/srp-tools/go/bin:${PATH}
-                go version
-                
+
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
                 
                 alias observer_agent=./observer/bin/observer_agent.bash
                 observer_agent --version
-                
+
                 export BUILD_BRANCH=refs/heads/master
                 export BUILD_NAMESPACE="tobs-k8s-group"
                 export BUILD_PROJECT=${BUILD_PROJECT}
@@ -154,10 +155,7 @@ jobs:
                 export GOSUMDB="https://build-artifactory.eng.vmware.com/artifactory/go-gosumdb-remote"
                 export GOROOT=$(go env GOROOT)
                 echo $GOROOT
-                
-                # Change to /tmp/build/fd2c3cf9/ directory
-                cd -
-                
+
                 cd metric-store-develop/src
                 echo "Running go build for linux/amd64"
                 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
@@ -183,20 +181,16 @@ jobs:
                 source ${SRP_WORKING_DIR}/envs.sh unset
                 rm -f ${SRP_WORKING_DIR}/envs.sh
                 srp provenance action stop
-
-                export APP_JAR="srp-metric-store-release-go-local-${OUTPUT_VERSION}-SNAPSHOT.jar"
                 
                 # Changed to /tmp/build/fd2c3cf9 directory
                 cd -
                 
-                srp provenance schematic --help
                 export BUILD_ID=$(cat build-metadata/build-id)
                 export BRANCH_DIR=metric-store-develop
                 export BUILD_BRANCH=refs/heads/master
                 export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
                 export BUILD_PROJECT=metric-store-release
 
-                srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
                 # Change back to /tmp/build/fd2c3cf9/metric-store-develop/src directory
                 cd -  
                 srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
@@ -212,4 +206,3 @@ jobs:
 
                 srp metadata status \
                   --srp-endpoint $SRP_URL
-
