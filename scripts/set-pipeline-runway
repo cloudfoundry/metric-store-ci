@@ -1,0 +1,364 @@
+#!/bin/bash
+
+set -e
+
+RUNWAY=0
+BOLD='\033[1m'
+CLEAR='\033[0m'
+
+current_dir="$(cd $(dirname "${BASH_SOURCE[0]}") && pwd )"
+project_dir=$(cd "${current_dir}"/.. && pwd)
+
+function warning {
+  YELLOW='\033[0;33m'
+  local message=${1}
+
+  echo -e "${YELLOW}${BOLD}${message}${CLEAR}"
+}
+
+function error {
+  RED='\033[0;31m'
+  local message=${1}
+
+  echo -e "${RED}${BOLD}${message}${CLEAR}"
+}
+
+function success {
+  GREEN='\033[0;32m'
+  local message=${1}
+
+  echo -e "${GREEN}${BOLD}${message}${CLEAR}"
+}
+
+function step {
+    local message=${1}
+    printf "%-46s ... " "${message}"
+}
+
+function step_ok {
+    local message=${1}
+    success "[OK] ${message}"
+}
+
+function step_error {
+    local message=${1}
+    error "[ERROR] ${message}"
+    echo
+}
+
+function step_info {
+    local message=${1}
+    warning "[INFO] ${message}"
+    echo
+}
+
+function fail {
+    local message=${1}
+    warning "> ${message}"
+    exit 1
+}
+
+function info_block {
+    local title=${1}
+    local command=${2}
+
+    warning "-- start of ${title} --"
+    eval "${command}"
+    warning "-- end of ${title} --"
+    echo
+}
+
+function error_block {
+    local title=${1}
+    local command=${2}
+
+    error "-- start of ${title} errors --"
+    set +e
+    eval "${command}"
+    set -e
+    error "-- end of ${title} errors --"
+    echo
+}
+
+function list {
+    local collection=("${@}")
+    for i in "${collection[@]}"; do
+        echo " - ${i}"
+    done
+}
+
+function find_pipeline {
+    step "Finding pipeline"
+    local query=${1}
+    local pipeline_dir="${project_dir}/pipelines/"
+    local top_level_pipelines=()
+    local other_pipelines=()
+    local matching_pipelines=()
+    local normalized_pipeline
+
+    pushd "${pipeline_dir}" > /dev/null
+        while IFS=  read -r -d $'\n'; do
+            normalized_pipeline=`echo ${REPLY} | cut -c 3-`
+            top_level_pipelines+=("$normalized_pipeline")
+        done < <(find . -maxdepth 1 -type f \( ! -name . \) | sort)
+
+        while IFS=  read -r -d $'\0'; do
+            normalized_pipeline=`echo ${REPLY} | cut -c 3-`
+            other_pipelines+=($normalized_pipeline)
+        done < <(find . -mindepth 2 -type f \( ! -name . \) -print0)
+    popd > /dev/null
+
+    pipeline=''
+
+    if [[ ${query} != '' ]]; then
+        # top level pipeline starts with query
+        for p in "${top_level_pipelines[@]}"; do
+            if [[ "${p}" == "${query}"* ]]; then
+                pipeline=${p}
+            fi
+        done
+
+        # top level pipeline substring matches query
+        if [[ ${pipeline} = '' ]]; then
+            for p in "${top_level_pipelines[@]}"; do
+                if [[ "${p}" =~ "${query}" ]]; then
+                    pipeline=${p}
+                fi
+            done
+        fi
+
+        # any pipeline substring matches query
+        if [[ ${pipeline} = '' ]]; then
+            for p in "${other_pipelines[@]}"; do
+                if [[ "${p}" =~ "${query}" ]]; then
+                    matching_pipelines+=("${p}")
+                fi
+            done
+        fi
+    fi
+
+    if [[ ${pipeline} = '' ]]; then
+        if [[ ${#matching_pipelines[@]} -eq 1 ]]; then
+            pipeline=${matching_pipelines[0]}
+        elif [[ ${#matching_pipelines[@]} -eq 0 ]]; then
+            step_error "found 0 matches for '${query}'"
+
+            echo "Available pipelines are:"
+            list "${top_level_pipelines[@]}"
+            list "${other_pipelines[@]}"
+            echo
+
+            fail "Please adjust your query to match an available pipeline and try again"
+        else
+            step_error "found ${#matching_pipelines[@]} matches for '${query}'"
+
+            echo "Matching pipelines were:"
+            list "${matching_pipelines[@]}"
+            echo
+
+            fail "Please adjust your query to match a specific pipeline and try again"
+        fi
+    fi
+
+    step_ok "found ${pipeline}"
+
+    config_path=${pipeline_dir}${pipeline}
+
+    if [[ "$pipeline" == pws* ]]; then
+        TARGET="${TARGET:-pws}"
+        TEAM="${TEAM:-pcf-observability}"
+    else
+        if [[ ${RUNWAY} -eq 0 ]]; then
+            TARGET="${TARGET:-runway}"
+            TEAM="${TEAM:-metric-store-log-cache}"
+        else
+            TARGET="${TARGET:-runway-ci-sfo}"
+            TEAM="${TEAM:-tanzu-observe-stores}"
+        fi
+    fi
+
+    pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')
+}
+
+function validate_usage {
+    local query=${1}
+
+    if [ "$query" = "-h" ] || [ "$query" = "--help" ] || [ -z "$query" ]; then
+        print_usage
+        exit 1
+    fi
+}
+
+function validate_pipeline {
+    step "Validating '${pipeline_name}' pipeline"
+    local output
+    local status
+
+    set +e
+    output=$(fly -t ${TARGET} validate-pipeline -c ${config_path} 2>&1)
+    status=$?
+    set -e
+
+    if [ $status -eq 0 ]; then
+        step_ok "valid"
+    else
+        step_error "invalid"
+        error_block "validation" "echo \"${output}\""
+        fail "Please fix the above errors and try again"
+    fi
+}
+
+function _login_fly {
+  if [ -z "${DISPLAY}" ]; then
+    info_block "fly login" "DISPLAY=:1 fly -t $TARGET login -b -n $TEAM"
+  else
+    info_block "fly login" "fly -t $TARGET login -b -n $TEAM"
+  fi
+}
+
+function login_fly {
+    step "Checking fly auth status for '${TARGET}'"
+    local output
+    local status
+
+    set +e
+    output=$(fly -t $TARGET status 2>&1)
+    status=$?
+    set -e
+
+    if [ $status -eq 0 ]; then
+        step_ok "logged in"
+    else
+        step_info "not logged in"
+        _login_fly
+    fi
+}
+
+function check_fly {
+    step "Checking fly CLI status for '${TARGET}'"
+    local output
+    local status
+
+    set +e
+    output=$(fly -t $TARGET get-pipeline -p ${pipeline_name} 2>&1)
+    status=$?
+    set -e
+
+    if [ $status -eq 0 ]; then
+        step_ok "ready to go"
+    elif [[ "${output}" =~ "out of sync with the target" ]]; then
+        step_info "sync required"
+        info_block "sync" "fly -t $TARGET sync"
+        login_fly
+    else
+        step_info "login required"
+        _login_fly
+    fi
+}
+
+function preprocess_pipeline {
+    local output
+    local status
+
+    if [[ "${pipeline}" == *".erb" ]]; then
+        step "Preprocessing erb pipeline"
+        tmpfile=$(mktemp)
+
+        set +e
+        $(command -v erb >/dev/null 2>&1)
+        status=$?
+        set -e
+
+        if [ $status -eq 1 ]; then
+            step_error "erb not found"
+            fail "To process .erb pipelines, erb is required but not installed."
+        fi
+
+        set +e
+        output=$(erb ${config_path} > ${tmpfile} 2>&1)
+        status=$?
+        set -e
+
+        if [ $status -eq 0 ]; then
+            step_ok "processed"
+            config_path=${tmpfile}
+        else
+            step_error "erb failed"
+            error_block "erb" "erb ${config_path} > ${tmpfile}"
+            fail "please fix the erb errors then try again"
+        fi
+    fi
+}
+
+function reconfigure_pipeline {
+    fly \
+      --target "${TARGET}" set-pipeline \
+      --pipeline "${pipeline_name}" \
+      --var env_name="yuzu" \
+      --var sys_domain="yuzu.cf-denver.com" \
+      --var bbl_state_dir="acceptance-bosh/claimed/yuzu" \
+      --config "${config_path}"
+}
+
+function fly_pipeline {
+    step "Reconfiguring '${pipeline_name}' pipeline"
+    local status
+
+    set +e
+    (echo "N" | reconfigure_pipeline | grep -Fxq "no changes to apply")
+    status=$?
+    set -e
+
+    if [ $status -eq 0 ]; then
+        step_ok "no changes to apply"
+    else
+        step_info "there are changes to apply"
+        info_block "changes" reconfigure_pipeline
+    fi
+}
+
+function print_usage {
+    echo "usage: $0 <pipeline>"
+    echo " - where <pipeline> can be a substring of available pipeline paths"
+}
+
+function cleanup {
+    if [[ "${pipeline}" == *".erb" ]]; then
+        rm ${tmpfile}
+    fi
+}
+
+function main {
+    validate_usage $1
+    find_pipeline $1
+    login_fly
+    check_fly
+    preprocess_pipeline
+    validate_pipeline
+
+    if [ $? -eq 0 ]; then
+        fly_pipeline
+    fi
+
+    cleanup
+
+    success "DONE!"
+}
+
+while getopts "r" option; do
+    case ${option} in
+        r )
+            warning "using Runway CI pipeline"
+            RUNWAY=1
+            ;;
+        \? )
+            error "You have to use: [-r]"
+            ;;
+        : )
+            error "Invalid option: $OPTARG requires an argument" 1>&2
+            ;;
+    esac
+done
+shift $(expr $OPTIND - 1 )
+
+main $1
