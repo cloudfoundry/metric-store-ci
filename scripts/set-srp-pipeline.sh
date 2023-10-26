@@ -14,7 +14,7 @@ fly -t runway sync || (
 )
 
 ROOT_DIR=$(git rev-parse --show-toplevel)
-config_path=${ROOT_DIR}/srp-scan/cf-auth-proxy/srp-pipeline.yml
+config_path=${ROOT_DIR}/pipelines/srp-pipeline.yml
 
 TEAM="${TEAM:-tobs-k8s-group}"
 pipeline_name=${PIPELINE_NAME:-srp-metric-store}
