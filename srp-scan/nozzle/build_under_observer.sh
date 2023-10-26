@@ -26,18 +26,18 @@ mkdir -p ${SRP_WORKING_DIR}
 echo "Running go build for linux/amd64"
 cd metric-store-develop/src
 echo "Running go build for linux/amd64"
-GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
+GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-nozzle cmd/metric-store/main.go
 
 echo "Extracting incorporated dependencies from the output using go version"
-go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
+go version -m app-linux-amd64-nozzle > ${SRP_WORKING_DIR}/go-app-deps.txt
 
 # capture env used in the build
 srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
 
 if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
- PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64"
+ PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-nozzle"
  echo "=====> Publishing build output to ${PUBLISH_URL}"
- curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64 ${PUBLISH_URL}
+ curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-nozzle ${PUBLISH_URL}
  else
  echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
 fi
