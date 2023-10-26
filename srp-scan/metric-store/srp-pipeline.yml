@@ -148,6 +148,26 @@ jobs:
                 cd metric-store-develop/src
                 echo "Running go build for linux/amd64"
                 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
+                GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
+                GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 cmd/metric-store/main.go
+                
+                
+                BASE_DIR="metric-store-develop/src/cmd"
+                # Iterate over all directories in the base directory
+                for dir in $BASE_DIR/*; do
+                  if [ -d "$dir" ]; then
+                    pushd "$dir" > /dev/null  # Navigate to the directory and push it to the stack
+                    echo "Building in $dir"
+                    GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64 $dir/main.go
+                    # Put the Artifactory
+                    popd > /dev/null  # Return to the previous directory by popping the stack
+                  fi
+                done
+                
+                
+                
+                
+                
                 
                 echo "Extracting incorporated dependencies from the output using go version"
                 go version -m app-linux-amd64 > ${SRP_WORKING_DIR}/go-app-deps.txt
@@ -191,11 +211,11 @@ jobs:
                 srp provenance action start --name metric-store-build-action
                 srp provenance action import-observation --name=build-obs --file=${SRP_WORKING_DIR}/network_provenance.json
                 cat ${SRP_WORKING_DIR}/network_provenance.json
-                srp provenance action import-cmd  --cmd './metric-store-ci/srp-scan/build_under_observer.sh' --env-file=${SRP_WORKING_DIR}/build-env.json
+                srp provenance action import-cmd  --cmd './metric-store-ci/srp-scan/metric-store/build_under_observer.sh' --env-file=${SRP_WORKING_DIR}/build-env.json
                 srp provenance action stop
   
                 # add output and all inputs.
-                srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/srp_schematic.yaml
+                srp provenance schematic --verbose --path ./metric-store-ci/srp-scan/metric-store/srp_schematic.yaml
   
                 srp provenance compile --saveto ${SRP_WORKING_DIR}/prov3_fragment.json
   
