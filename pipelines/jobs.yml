@@ -11,7 +11,7 @@ resource_types:
 - name: slack-notification
   type: docker-image
   source:
-    repository: cfcommunity/slack-notification-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
     tag: latest
 
 resources:
@@ -20,7 +20,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -32,12 +32,12 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
 
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
 
 - name: docker-images
@@ -45,7 +45,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     branch: master
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     paths:
     - docker-images
 
@@ -54,7 +54,7 @@ resources:
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: after-standup
   type: time
@@ -68,7 +68,7 @@ resources:
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack_high_visibility_alert_webhook_url))
+    url: ((metric-store.slack_high_visibility_alert_webhook_url))
 
 jobs:
 - name: build-docker-images
