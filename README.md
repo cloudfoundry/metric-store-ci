@@ -6,7 +6,7 @@ CI pipelines and tasks for developing and shipping github.com/cloudfoundry/metri
 # To set pipeline
 
 Log into concourse with
-```fly --target runway login --concourse-urlhttps://runway-ci-sfo.eng.vmware.com/ --team-name tanzu-phoenix-projects```
+```fly --target runway login --concourse-url https://runway-ci-sfo.eng.vmware.com/ --team-name tanzu-phoenix-projects```
 
 When updating credentials. Update the file in 1Password then run
 ``` ./scripts/populate_credhub.sh```
