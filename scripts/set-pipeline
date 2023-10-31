@@ -170,10 +170,10 @@ function find_pipeline {
     else
         if [[ ${RUNWAY} -eq 0 ]]; then
             TARGET="${TARGET:-runway}"
-            TEAM="${TEAM:-tanzu-metric-store-log-cache}"
+            TEAM="${TEAM:-phoenix-metric-store}"
         else
             TARGET="${TARGET:-runway-ci-sfo}"
-            TEAM="${TEAM:-tanzu-metric-store-log-cache}"
+            TEAM="${TEAM:-phoenix-metric-store}"
         fi
     fi
 
