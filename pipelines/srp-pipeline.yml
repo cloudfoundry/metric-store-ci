@@ -23,9 +23,9 @@ resources:
     source:
       uri: git@github.com:cloudfoundry/metric-store-ci
       private_key: ((phoenix-osspi.svcboteos_github_private_key))
-      branch: srp-scan
+      branch: master
 
-  - name: metric-store-develop
+  - name: metric-store-release
     type: git
     source:
       uri: git@github.com:cloudfoundry/metric-store-release
@@ -57,7 +57,7 @@ jobs:
           - get: srp-helper-test
           - put: build-metadata
           - get: metric-store-version
-          - get: metric-store-develop
+          - get: metric-store-release
           - get: metric-store-ci
       - task: "submit-metadata-for-metric-store"
         image: srp-helper-test
@@ -65,7 +65,7 @@ jobs:
           platform: linux
           inputs:
             - name: metric-store-ci
-            - name: metric-store-develop
+            - name: metric-store-release
             - name: build-metadata
             - name: metric-store-version
           params:
@@ -89,8 +89,8 @@ jobs:
                 BUILD_ID=$(cat build-metadata/build-id)
                 OUTPUT_VERSION="1.0.0-${BUILD_ID}"
                 BUILD_PROJECT=metric-store-release
-                BUILD_BRANCH=$(cat metric-store-develop/.git/refs/heads/master)
-                ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
+                BUILD_BRANCH=$(cat ${BUILD_PROJECT}/.git/refs/heads/master)
+                ARTIFACTORY_AUTH_TOKEN=((phoenix-osspi.artifactory_auth_token))
 
                 export SRP_WORKING_DIR=/srp-work
                 # download Observer agent
@@ -98,28 +98,26 @@ jobs:
                 export SRPCLIVERSION="0.15.1-20231012115959-17ea2c6-242"
                 curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
                 mkdir -p /srp-tools/observer
-                cd /srp-tools
-                tar zxf /tmp/srp-tools-linux.tar.gz
-                observer_agent --version
-                srp --version
-                srp update -y
-                srp --version
+                pushd /srp-tools
+                  tar zxf /tmp/srp-tools-linux.tar.gz
+                  observer_agent --version
+                  srp --version
+                  srp update -y
+                  srp --version
+  
+                  # download golang tools
+                  curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
+                  tar zxf /tmp/go-linux-amd64.tar.gz
+                  export PATH=/srp-tools/go/bin:${PATH}
+  
+                  export GITHUB_ACTION="metric-store-build-action"
+                  export GITHUB_FQDN="github.com"
+                  export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
+                  export GITHUB_REF="refs/heads/master"
+                  export FQDN="runway-ci-srp.eng.vmware.com"
+                  export NM="tobs-k8s-group"
+                popd
 
-                # download golang tools
-                curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
-                tar zxf /tmp/go-linux-amd64.tar.gz
-                export PATH=/srp-tools/go/bin:${PATH}
-                go version
-
-                export GITHUB_ACTION="metric-store-build-action"
-                export GITHUB_FQDN="github.com"
-                export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
-                export GITHUB_REF="refs/heads/master"
-                export FQDN="runway-ci-srp.eng.vmware.com"
-                export NM="tobs-k8s-group"
-
-                # Change to /tmp/build/fd2c3cf9/ directory
-                cd -
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
 
                 alias observer_agent=./observer/bin/observer_agent.bash
@@ -128,8 +126,8 @@ jobs:
                 export BUILD_NAMESPACE="tobs-k8s-group"
                 export BUILD_PROJECT=${BUILD_PROJECT}
                 export BUILD_ID=${BUILD_ID}
-                export BRANCH_DIR=metric-store-develop
-                export BUILD_BRANCH=$(cat metric-store-develop/.git/refs/heads/master)
+                export BRANCH_DIR=metric-store-release
+                export BUILD_BRANCH=$(cat ${BRANCH_DIR}/.git/refs/heads/master)
                 export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
 
                 observer_agent -m start_observer --output_environment envs.sh --env_to_shell
@@ -143,24 +141,23 @@ jobs:
                 echo $GOROOT                
                 mkdir -p ${SRP_WORKING_DIR}
 
-                cd metric-store-develop/src
-                echo "Running go build for linux/amd64"
-                GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-metric-store cmd/metric-store/main.go
-
-                echo "Extracting incorporated dependencies from the output using go version"
-                go version -m app-linux-amd64-metric-store > ${SRP_WORKING_DIR}/go-app-deps.txt
-
-                # capture env used in the build
-                srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
-
-                if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
-                  PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-metric-store"
-                  echo "=====> Publishing build output to ${PUBLISH_URL}"
-                  curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-metric-store ${PUBLISH_URL}
-                else
-                  echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
-                fi
-                cd -
+                pushd metric-store-release/src
+                  echo "Running go build for app-linux-amd64-metric-store"
+                  GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-metric-store cmd/metric-store/main.go
+  
+                  go version -m app-linux-amd64-metric-store > ${SRP_WORKING_DIR}/go-app-deps.txt
+  
+                  # capture env used in the build
+                  srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+  
+                  if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
+                    PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-metric-store"
+                    echo "=====> Publishing build output to ${PUBLISH_URL}"
+                    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-metric-store ${PUBLISH_URL}
+                  else
+                    echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
+                  fi
+                popd
 
                 echo "stopping observer and cleaning up"
 
@@ -214,7 +211,7 @@ jobs:
           - get: srp-helper-test
           - put: build-metadata
           - get: metric-store-version
-          - get: metric-store-develop
+          - get: metric-store-release
           - get: metric-store-ci
       - task: "submit-metadata-for-metric-store-cf-auth-proxy"
         image: srp-helper-test
@@ -222,7 +219,7 @@ jobs:
           platform: linux
           inputs:
             - name: metric-store-ci
-            - name: metric-store-develop
+            - name: metric-store-release
             - name: build-metadata
             - name: metric-store-version
           params:
@@ -246,8 +243,8 @@ jobs:
                 BUILD_ID=$(cat build-metadata/build-id)
                 OUTPUT_VERSION="1.0.0-${BUILD_ID}"
                 BUILD_PROJECT=metric-store-release
-                BUILD_BRANCH=$(cat metric-store-develop/.git/refs/heads/master)
-                ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
+                BUILD_BRANCH=$(cat ${BUILD_PROJECT}/.git/refs/heads/master)
+                ARTIFACTORY_AUTH_TOKEN=((phoenix-osspi.artifactory_auth_token))
 
                 export SRP_WORKING_DIR=/srp-work
                 # download Observer agent
@@ -255,28 +252,26 @@ jobs:
                 export SRPCLIVERSION="0.15.1-20231012115959-17ea2c6-242"
                 curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
                 mkdir -p /srp-tools/observer
-                cd /srp-tools
-                tar zxf /tmp/srp-tools-linux.tar.gz
-                observer_agent --version
-                srp --version
-                srp update -y
-                srp --version
-                
-                # download golang tools
-                curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
-                tar zxf /tmp/go-linux-amd64.tar.gz
-                export PATH=/srp-tools/go/bin:${PATH}
-                go version
-                
-                export GITHUB_ACTION="metric-store-build-action"
-                export GITHUB_FQDN="github.com"
-                export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
-                export GITHUB_REF="refs/heads/master"
-                export FQDN="runway-ci-srp.eng.vmware.com"
-                export NM="tobs-k8s-group"
+                pushd /srp-tools
+                  tar zxf /tmp/srp-tools-linux.tar.gz
+                  observer_agent --version
+                  srp --version
+                  srp update -y
+                  srp --version
+                  
+                  # download golang tools
+                  curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
+                  tar zxf /tmp/go-linux-amd64.tar.gz
+                  export PATH=/srp-tools/go/bin:${PATH}
+                  
+                  export GITHUB_ACTION="metric-store-build-action"
+                  export GITHUB_FQDN="github.com"
+                  export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
+                  export GITHUB_REF="refs/heads/master"
+                  export FQDN="runway-ci-srp.eng.vmware.com"
+                  export NM="tobs-k8s-group"
+                popd
 
-                # Change to /tmp/build/fd2c3cf9/ directory
-                cd -
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
                 
                 alias observer_agent=./observer/bin/observer_agent.bash
@@ -285,8 +280,8 @@ jobs:
                 export BUILD_NAMESPACE="tobs-k8s-group"
                 export BUILD_PROJECT=${BUILD_PROJECT}
                 export BUILD_ID=${BUILD_ID}
-                export BRANCH_DIR=metric-store-develop
-                export BUILD_BRANCH=$(cat metric-store-develop/.git/refs/heads/master)
+                export BRANCH_DIR=metric-store-release
+                export BUILD_BRANCH=$(cat ${BRANCH_DIR}/.git/refs/heads/master)
                 export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
                 
                 observer_agent -m start_observer --output_environment envs.sh --env_to_shell
@@ -300,24 +295,23 @@ jobs:
                 echo $GOROOT                
                 mkdir -p ${SRP_WORKING_DIR}
 
-                cd metric-store-develop/src
-                echo "Running go build for linux/amd64"
-                GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-cf-auth-proxy cmd/cf-auth-proxy/main.go
+                pushd metric-store-release/src
+                  echo "Running go build for app-linux-amd64-cf-auth-proxy"
+                  GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-cf-auth-proxy cmd/cf-auth-proxy/main.go
   
-                echo "Extracting incorporated dependencies from the output using go version"
-                go version -m app-linux-amd64-cf-auth-proxy > ${SRP_WORKING_DIR}/go-app-deps.txt
-                
-                # capture env used in the build
-                srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
-  
-                if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
-                  PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-cf-auth-proxy"
-                  echo "=====> Publishing build output to ${PUBLISH_URL}"
-                  curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-cf-auth-proxy ${PUBLISH_URL}
-                else
-                  echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
-                fi
-                cd -
+                  go version -m app-linux-amd64-cf-auth-proxy > ${SRP_WORKING_DIR}/go-app-deps.txt
+                  
+                  # capture env used in the build
+                  srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+    
+                  if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
+                    PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-cf-auth-proxy"
+                    echo "=====> Publishing build output to ${PUBLISH_URL}"
+                    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-cf-auth-proxy ${PUBLISH_URL}
+                  else
+                    echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
+                  fi
+                popd
                 
                 echo "stopping observer and cleaning up"
 
@@ -371,7 +365,7 @@ jobs:
           - get: srp-helper-test
           - put: build-metadata
           - get: metric-store-version
-          - get: metric-store-develop
+          - get: metric-store-release
           - get: metric-store-ci
       - task: "submit-metadata-for-metric-store-nozzle"
         image: srp-helper-test
@@ -379,7 +373,7 @@ jobs:
           platform: linux
           inputs:
             - name: metric-store-ci
-            - name: metric-store-develop
+            - name: metric-store-release
             - name: build-metadata
             - name: metric-store-version
           params:
@@ -403,7 +397,7 @@ jobs:
                 BUILD_ID=$(cat build-metadata/build-id)
                 OUTPUT_VERSION="1.0.0-${BUILD_ID}"
                 BUILD_PROJECT=metric-store-release
-                BUILD_BRANCH=$(cat metric-store-develop/.git/refs/heads/master)
+                BUILD_BRANCH=$(cat ${BUILD_PROJECT}/.git/refs/heads/master)
                 ARTIFACTORY_AUTH_TOKEN=cmVmdGtuOjAxOjE3MjYyMjY1MDI6cWU2U1FlazVjNjVoNUllV2pWWU1BQ0NnaHJV
 
                 export SRP_WORKING_DIR=/srp-work
@@ -412,28 +406,26 @@ jobs:
                 export SRPCLIVERSION="0.15.1-20231012115959-17ea2c6-242"
                 curl -o /tmp/srp-tools-linux.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/srp-tools-generic-local/all/${SRPCLIVERSION}/srp-tools-linux-amd64-${SRPCLIVERSION}.tar.gz &&
                 mkdir -p /srp-tools/observer
-                cd /srp-tools
-                tar zxf /tmp/srp-tools-linux.tar.gz
-                observer_agent --version
-                srp --version
-                srp update -y
-                srp --version
-                
-                # download golang tools
-                curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
-                tar zxf /tmp/go-linux-amd64.tar.gz
-                export PATH=/srp-tools/go/bin:${PATH}
-                go version
-                
-                export GITHUB_ACTION="metric-store-build-action"
-                export GITHUB_FQDN="github.com"
-                export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
-                export GITHUB_REF="refs/heads/master"
-                export FQDN="runway-ci-srp.eng.vmware.com"
-                export NM="tobs-k8s-group"
+                pushd /srp-tools
+                  tar zxf /tmp/srp-tools-linux.tar.gz
+                  observer_agent --version
+                  srp --version
+                  srp update -y
+                  srp --version
+                  
+                  # download golang tools
+                  curl -o /tmp/go-linux-amd64.tar.gz  -L https://artifactory.eng.vmware.com/artifactory/golang-dist-cache/go1.19.5.linux-amd64.tar.gz
+                  tar zxf /tmp/go-linux-amd64.tar.gz
+                  export PATH=/srp-tools/go/bin:${PATH}
+                  
+                  export GITHUB_ACTION="metric-store-build-action"
+                  export GITHUB_FQDN="github.com"
+                  export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
+                  export GITHUB_REF="refs/heads/master"
+                  export FQDN="runway-ci-srp.eng.vmware.com"
+                  export NM="tobs-k8s-group"
+                popd
 
-                # Change to /tmp/build/fd2c3cf9/ directory
-                cd -
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
                 
                 alias observer_agent=./observer/bin/observer_agent.bash
@@ -442,13 +434,12 @@ jobs:
                 export BUILD_NAMESPACE="tobs-k8s-group"
                 export BUILD_PROJECT=${BUILD_PROJECT}
                 export BUILD_ID=${BUILD_ID}
-                export BRANCH_DIR=metric-store-develop
-                export BUILD_BRANCH=$(cat metric-store-develop/.git/refs/heads/master)
+                export BRANCH_DIR=metric-store-release
+                export BUILD_BRANCH=$(cat ${BRANCH_DIR}/.git/refs/heads/master)
                 export OUTPUT_VERSION="1.0.0-${BUILD_ID}"
-                
+
                 observer_agent -m start_observer --output_environment envs.sh --env_to_shell
                 source ./envs.sh set
-                
                 export CGO_ENABLED=0
                 export GOPRIVATE="gitlab.eng.vmware.com/*"
                 export GOPROXY="https://build-artifactory.eng.vmware.com/artifactory/proxy-golang-remote"
@@ -457,27 +448,25 @@ jobs:
                 echo $GOROOT                
                 mkdir -p ${SRP_WORKING_DIR}
 
-                cd metric-store-develop/src
-                echo "Running go build for linux/amd64"
-                GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-nozzle cmd/cf-auth-proxy/main.go
-                
-                echo "Extracting incorporated dependencies from the output using go version"
-                go version -m app-linux-amd64-nozzle > ${SRP_WORKING_DIR}/go-app-deps.txt
-                
-                # capture env used in the build
-                srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
-                
-                if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
-                  PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-nozzle"
-                  echo "=====> Publishing build output to ${PUBLISH_URL}"
-                  curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-nozzle ${PUBLISH_URL}
-                else
-                  echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
-                fi
-                cd -
-                
-                echo "stopping observer and cleaning up"
+                pushd metric-store-release/src
+                  echo "Running go build for linux/amd64"
+                  GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o app-linux-amd64-nozzle cmd/cf-auth-proxy/main.go
+  
+                  go version -m app-linux-amd64-nozzle > ${SRP_WORKING_DIR}/go-app-deps.txt
+                  
+                  # capture env used in the build
+                  srp util env --saveto=${SRP_WORKING_DIR}/build-env.json
+                  
+                  if [ "${ARTIFACTORY_AUTH_TOKEN}" != "" ]; then
+                    PUBLISH_URL="https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/${BUILD_PROJECT}/${OUTPUT_VERSION}/app-linux-amd64-nozzle"
+                    echo "=====> Publishing build output to ${PUBLISH_URL}"
+                    curl -H "X-JFrog-Art-Api:${ARTIFACTORY_AUTH_TOKEN}" -T app-linux-amd64-nozzle ${PUBLISH_URL}
+                  else
+                    echo "ARTIFACTORY_AUTH_TOKEN is not set, skipping publish to artifactory"
+                  fi
+                popd
 
+                echo "stopping observer and cleaning up"
                 observer_agent -m stop_observer -f ${SRP_WORKING_DIR}/network_provenance.json
                 cat ${SRP_WORKING_DIR}/network_provenance.json
                 source ./envs.sh unset
