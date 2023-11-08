@@ -9,19 +9,19 @@ resource_types:
 - name: slack-notification
   type: docker-image
   source:
-    repository: cfcommunity/slack-notification-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
     tag: latest
 
 - name: gcs-resource
   type: docker-image
   source:
-    repository: frodenas/gcs-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
     tag: v0.5.1
 
 - name: pivnet
   type: docker-image
   source:
-    repository: pivotalcf/pivnet-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/pivotalcf/pivnet-resource
     tag: latest-final
 
 resources:
@@ -31,11 +31,11 @@ resources:
   source:
     uri: git@github.com:pivotal/concourse-cve-scan.git
     branch: main
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
 - name: tas-cve
   type: github-release
   source:
-    access_token: ((svcboteos_github_access_token))
+    access_token: ((metric-store.svcboteos_github_access_token))
     repository: tas-cve
     user: pivotal
 
@@ -54,7 +54,7 @@ resources:
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
 
 - name: denver-locks
@@ -62,13 +62,13 @@ resources:
   source:
     uri: git@github.com:pivotal-cf/denver-locks.git
     branch: master
-    private_key: ((denver_locks_deploy_key))
+    private_key: ((metric-store.denver_locks_deploy_key))
 
 - name: metric-store-ci
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    private_key: ((metric_store_ci_deploy_key))
+    private_key: ((metric-store.metric_store_ci_deploy_key))
     branch: master
 
 - name: pcf-observability-ci-image
@@ -76,14 +76,14 @@ resources:
   source:
     repository: gcr.io/cf-denver/pcf-observability-ci
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-tile-image
   type: docker-image
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-base-image
   type: docker-image
@@ -91,14 +91,14 @@ resources:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
     tag: latest
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-develop
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -110,7 +110,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: release-elect
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     clean_tags: true
 
 - name: metric-store-master
@@ -118,7 +118,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     disable_ci_skip: true
     clean_tags: true
 
@@ -129,20 +129,20 @@ resources:
     bucket: metric-store-ci-notifications
     key: metric-store-dev-release-version
     initial_version: 0.0.0
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-dev-release
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     regexp: metric-store-dev-releases/release-(.*).tgz
 
 - name: metric-store-osl
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     regexp: osl/(.*).txt
 
 - name: metric-store-final-release
@@ -150,14 +150,14 @@ resources:
   source:
     bucket: oss-metric-store-releases
     versioned_file: release.tgz
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-github-release
   type: github-release
   source:
     user: cloudfoundry
     repository: metric-store-release
-    access_token: ((svcboteos_github_access_token))
+    access_token: ((metric-store.svcboteos_github_access_token))
     drafts: true
 
 - name: bumper-tool
@@ -181,12 +181,12 @@ resources:
   source:
     uri: git@github.com:bosh-packages/golang-release
     tag_filter: v*
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
 
 - name: slack-alert
   type: slack-notification
   source:
-    url: ((slack_high_visibility_alert_webhook_url))
+    url: ((metric-store.slack_high_visibility_alert_webhook_url))
 
 - name: notification-cf-deploy-version
   type: semver
@@ -195,7 +195,7 @@ resources:
     bucket: metric-store-ci-notifications
     key: log-cache-slack-cf-deploy-version
     initial_version: 0.0.0
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-version
   type: semver
@@ -203,14 +203,14 @@ resources:
     driver: gcs
     bucket: metric-store-ci-versions
     key: metric-store-release-acceptance-tile
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     initial_version: 0.2.0-build.24
 
 - name: dev-tile
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     regexp: temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
 
@@ -218,14 +218,14 @@ resources:
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     regexp: tiles/(.*).pivotal
 
 - name: metric-store-pivnet-metadata
   type: gcs-resource
   source:
     bucket: p-metric-store-release
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     versioned_file: pivnet/metadata.yml
 
 - name: gcp-light-stemcell
@@ -239,7 +239,7 @@ resources:
 - name: metric-store-pivnet
   type: pivnet
   source:
-    api_token: ((pivnet_token))
+    api_token: ((metric-store.pivnet_token))
     product_slug: p-metric-store
 
 - name: bpm-release
@@ -340,7 +340,7 @@ jobs:
         bosh-dev-release-dir: metric-store-develop
         bosh-dev-release-version: metric-store-dev-release-version
       params:
-        JSON_KEY: ((gcp_service_account_key))
+        JSON_KEY: ((metric-store.gcp_service_account_key))
     - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
@@ -395,7 +395,7 @@ jobs:
     image: cf-deployment-concourse-tasks-image
     file: metric-store-ci/tasks/add-credhub-vars/task.yml
     params:
-      WEBHOOK_URL: ((slack_high_visibility_alert_webhook_url))
+      WEBHOOK_URL: ((metric-store.slack_high_visibility_alert_webhook_url))
       BBL_STATE_DIR: ((bbl_state_dir))
       SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
@@ -411,7 +411,7 @@ jobs:
         input_mapping:
           bosh-release-tarball: metric-store-dev-release
         params:
-          BBL_STATE_DIR: ((bbl_state_dir))
+          BBL_STATE_DIR: ((metric-store.bbl_state_dir))
     - do:
       - get: grafana-boshrelease
       - task: upload-grafana-release
@@ -420,7 +420,7 @@ jobs:
         input_mapping:
           release-dir: grafana-boshrelease
         params:
-          BBL_STATE_DIR: ((bbl_state_dir))
+          BBL_STATE_DIR: ((metric-store.bbl_state_dir))
 
   - task: copy-ops-files
     image: cf-deployment-concourse-tasks-image
@@ -681,7 +681,7 @@ jobs:
             set -e
             sleep 10
     params:
-      TOOLSMITHS_API_TOKEN: ((smith_token))
+      TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
   - task: "Upload and Config"
     input_mapping:
       tile-version: metric-store-version
@@ -711,7 +711,7 @@ jobs:
             set -e
             smith unclaim -e $(cat environment/name)
       params:
-        TOOLSMITHS_API_TOKEN: ((smith_token))
+        TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
   on_failure:
     do:
     - put: slack-alert
@@ -791,7 +791,7 @@ jobs:
     params:
       SOURCE_BRANCH: release-elect
       DEST_BRANCH: master
-      TRACKER_API_TOKEN: ((tracker_token))
+      TRACKER_API_TOKEN: ((metric-store.tracker_token))
   - put: metric-store-master
     params:
       repository: merged-dest
@@ -829,7 +829,7 @@ jobs:
       pivnet-metadata: metric-store-pivnet-metadata
       metric-store-develop: metric-store-develop
     params:
-      JSON_KEY: ((gcp_service_account_key))
+      JSON_KEY: ((metric-store.gcp_service_account_key))
   - put: metric-store-develop
     params:
       repository: metric-store-develop-modified

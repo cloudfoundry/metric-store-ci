@@ -2,13 +2,13 @@ resource_types:
 - name: gcs-resource
   type: docker-image
   source:
-    repository: frodenas/gcs-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
     tag: v0.5.1
 
 - name: pivnet
   type: docker-image
   source:
-    repository: pivotalcf/pivnet-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/pivotalcf/pivnet-resource
     tag: latest-final
 
 resources:
@@ -17,19 +17,19 @@ resources:
   source:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
 
 - name: metric-store-ci
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     branch: master
 
 - name: pcf-observability-ci-image
@@ -37,7 +37,7 @@ resources:
   source:
     repository: gcr.io/cf-denver/pcf-observability-ci
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-base-image
   type: docker-image
@@ -45,14 +45,14 @@ resources:
     repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
     tag: latest
     username: _json_key
-    password: ((gcp_service_account_key))
+    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-develop
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: fast-test-develop
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
     ignore_paths:
     - .final_builds
     - releases
@@ -66,13 +66,13 @@ resources:
     bucket: metric-store-ci-notifications
     key: test/metric-store-dev-release-version
     initial_version: 0.0.0
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-dev-release
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     regexp: test/metric-store-dev-releases/release-(.*).tgz
 
 - name: concourse-tasks
@@ -86,7 +86,7 @@ resources:
   source:
     uri: git@github.com:bosh-packages/golang-release
     tag_filter: v*
-    private_key: ((svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
 
 - name: metric-store-version
   type: semver
@@ -94,14 +94,14 @@ resources:
     driver: gcs
     bucket: metric-store-ci-versions
     key: test/metric-store-release-acceptance-tile
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     initial_version: 0.2.0-build.24
 
 - name: dev-tile
   type: gcs-resource
   source:
     bucket: metric-store-ci-notifications
-    json_key: ((gcp_service_account_key))
+    json_key: ((metric-store.gcp_service_account_key))
     regexp: test/temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
 
@@ -168,7 +168,7 @@ jobs:
         bosh-dev-release-dir: metric-store-develop
         bosh-dev-release-version: metric-store-dev-release-version
       params:
-        JSON_KEY: ((gcp_service_account_key))
+        JSON_KEY: ((metric-store.gcp_service_account_key))
     - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
@@ -263,7 +263,7 @@ jobs:
                 set -e
                 sleep 10
       params:
-        TOOLSMITHS_API_TOKEN: ((smith_token))
+        TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
     - task: "Upload and Config"
       input_mapping:
         tile-version: metric-store-version

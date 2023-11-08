@@ -169,11 +169,11 @@ function find_pipeline {
         TEAM="${TEAM:-pcf-observability}"
     else
         if [[ ${RUNWAY} -eq 0 ]]; then
-            TARGET="${TARGET:-cf-denver}"
-            TEAM="${TEAM:-metric-store-log-cache}"
+            TARGET="${TARGET:-runway}"
+            TEAM="${TEAM:-phoenix-metric-store}"
         else
-            TARGET="${TARGET:-runway-ci}"
-            TEAM="${TEAM:-tanzu-observe-stores}"
+            TARGET="${TARGET:-runway-ci-sfo}"
+            TEAM="${TEAM:-phoenix-metric-store}"
         fi
     fi
 

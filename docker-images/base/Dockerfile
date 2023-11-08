@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM harbor-repo.vmware.com/dockerhub-proxy-cache/library/golang:latest as base
 
 RUN go version
 

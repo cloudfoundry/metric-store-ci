@@ -8,21 +8,21 @@ resource_types:
 - name: gcs-resource
   type: docker-image
   source:
-    repository: frodenas/gcs-resource
+    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
 
 resources:
 - name: metric-store-ci
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    branch: master
-    private_key: ((svcboteos_github_private_key))
+    branch: ci
+    private_key: ((metric-store.svcboteos_github_private_key))
 
 - name: certs
   type: gcs-resource
   source:
     bucket: yuzu-certs
-    json_key: ((cf_denver_service_account))
+    json_key: ((metric-store.cf_denver_service_account))
     regexp: yuzu-certs-(.*).tgz
 
 - name: monthly
@@ -39,7 +39,7 @@ jobs:
   - task: prepare-service-account
     file: metric-store-ci/tasks/generate-certs/prepare-service-account.yml
     params:
-      GCP_SERVICE_ACCOUNT_JSON: ((cf_denver_service_account))
+      GCP_SERVICE_ACCOUNT_JSON: ((metric-store.cf_denver_service_account))
   - task: generate-certs
     file: metric-store-ci/tasks/generate-certs/generate-certs.yml
     attempts: 3
@@ -64,7 +64,7 @@ jobs:
   - task: prepare-service-account
     file: metric-store-ci/tasks/generate-certs/prepare-service-account.yml
     params:
-      GCP_SERVICE_ACCOUNT_JSON: ((cf_denver_service_account))
+      GCP_SERVICE_ACCOUNT_JSON: ((metric-store.cf_denver_service_account))
   - task: extract-certs
     file: metric-store-ci/tasks/generate-certs/extract-certs.yml
   - task: install-certs
