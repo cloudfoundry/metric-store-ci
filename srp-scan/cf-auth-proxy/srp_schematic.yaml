@@ -1,0 +1,69 @@
+---
+# schema_id is 1.0, don't change it.
+schema_id: '1.0'
+
+# Unless your project involves multiple source repos, don't update this section.
+# $(env:BRANCH_DIR) is a variable that is created by the shell calling this build.
+sources:
+  source:
+    typename: source_tree.git
+    path: $(env:BRANCH_DIR)
+    branch: $(env:BUILD_BRANCH)
+
+# Define source code as an input. Usually you don't need to update this section.
+# As this schematic has two outputs, and they take the same source as an input,
+# defining "source" under "input_templates" helps avoid duplicate code.
+input_templates:
+  source:
+    $(sources:source_uid):
+      is_components_source: true
+      incorporated: false
+      usages: ["testing", "building"]
+
+# You need to update this section with your project's information. Spdx info
+# will be used to generate SBOM.  This app only has one output so this could
+# have been done inline below, but maintaining it in a separate section allows
+# sharing it in the case you have multiple outputs
+spdx_templates:
+  spdx:
+    package:
+      supplier: "Organization: VMware"
+      originator: "Organization: VMware"
+      license_declared: "Apache License 2.0"
+      license_concluded: "Apache License 2.0"
+      home_page: "https://github.com/cloudfoundry/metric-store-release"
+      short_summary: "A persistent storage layer for metrics sent through the Loggregator subsystem"
+      detailed_description: "Metric Store Release is a BOSH release for Metric Store. It provides a persistent storage layer for metrics sent through the Loggregator subsystem. It is multi-tenant aware (the auth proxy ensures that you only have access to metrics from your apps), easy to query (it is 100% compatible with the Prometheus Query API, with some exceptions listed below), and has a powerful storage engine (the InfluxDB storage engine has built-in compression and a memory-efficient series index)."
+
+outputs:
+  # In this example, we are publishing only one output, a binary created for Linux targets.  If you have others, for
+  # Mac etc, you would need one per output that is published.
+  file(org=srp.vmware.com,name=app-linux-amd64-cf-auth-proxy,version=$(env:OUTPUT_VERSION),build_id=$(env:BUILD_ID)):
+    # url_base is used to verify if artifacts are uploaded to expected destination.
+    # In this example, as we upload an executable file, we define a manifest item "linux-amd64/app".
+    # Say we find the local artifact at "$(env:release_path)/linux-amd64/app",
+    # the path will be replaced with url_base, so we get an upload URL:
+    # https://artifactory.eng.vmware.com/artifactory/srp-examples-generic-local/srp-example-golang-bldweb-deps/1.2.3/app-linux-amd64,
+    # the URL must appear in network observations, otherwise provenance generation will fail.
+    # url_base: https://artifactory.eng.vmware.com/$(env:BRANCH_DIR)/srp-examples-generic-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+    url_base: https://artifactory.eng.vmware.com/artifactory/srp-metric-store-release-go-local/$(env:BUILD_PROJECT)/$(env:OUTPUT_VERSION)
+
+    manifest:
+      - $(env:BRANCH_DIR)/src:
+          include:
+            - "app-linux-amd64-cf-auth-proxy"
+          manifest_root: "./"
+
+    merge_input_templates: [source]
+
+    merge_spdx_template: spdx
+
+    # As go.mod contains all dependent go modules that are used for building and
+    # testing, thus we scan go.mod first and marking usage as "testing". Then scan
+    # a buildout executable file to find out package are really used to build the
+    # executables, so that "functionality" will be added to their usages.
+    scanner_instances:
+      - scanner: srpcli-go
+        args: ["--go-mod=$(env:BRANCH_DIR)/go.mod", "--incorporated=false", "--usage=testing"]
+      - scanner: srpcli-syft
+        args: ["--scan-target=$(env:BRANCH_DIR)/src/app-linux-amd64-cf-auth-proxy", "--incorporated=true", "--usage=functionality" ]
