@@ -1,17 +1,11 @@
 <% envs_we_care_about = {
-  "2-7": "us_2_7_lts",
-  "2-11": "us_2_11_lts2",
-  "2-13": "us_2_13",
-  "us_3_0": "us_3_0",
-  "us_4_0": "us_4_0"
+  "tas-2-11": "tas-2_11",
+  "tas-2-13": "tas-2_13",
+  "tas-3": "tas_three",
+  "tas-4": "tas_four",
+  "tas-5": "tas-5_0"
 } %>
 resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
-    tag: latest
-
 - name: gcs-resource
   type: docker-image
   source:
@@ -24,6 +18,12 @@ resource_types:
     repository: harbor-repo.vmware.com/dockerhub-proxy-cache/pivotalcf/pivnet-resource
     tag: latest-final
 
+- name: shepherd
+  type: registry-image
+  source:
+    repository: us-west2-docker.pkg.dev/shepherd-268822/shepherd2/concourse-resource
+    tag: v1
+
 resources:
 #### TAS CVE resources
 - name: concourse-cve-scan
@@ -32,6 +32,7 @@ resources:
     uri: git@github.com:pivotal/concourse-cve-scan.git
     branch: main
     private_key: ((metric-store.svcboteos_github_private_key))
+
 - name: tas-cve
   type: github-release
   source:
@@ -76,7 +77,7 @@ resources:
   source:
     repository: gcr.io/cf-denver/pcf-observability-ci
     username: _json_key
-    password: ((metric-store.gcp_service_account_key))
+    password: ((metric-store.denver_service_account_key))
 
 - name: metric-store-tile-image
   type: docker-image
@@ -183,20 +184,6 @@ resources:
     tag_filter: v*
     private_key: ((metric-store.svcboteos_github_private_key))
 
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: ((metric-store.slack_high_visibility_alert_webhook_url))
-
-- name: notification-cf-deploy-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: metric-store-ci-notifications
-    key: log-cache-slack-cf-deploy-version
-    initial_version: 0.0.0
-    json_key: ((metric-store.gcp_service_account_key))
-
 - name: metric-store-version
   type: semver
   source:
@@ -262,13 +249,26 @@ resources:
     stop: 7:00 PM
     days: [Monday, Tuesday, Wednesday, Thursday, Friday]
 
-shared:
-  - &send-alert-message
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        text_file: messages/success.txt
+<% envs_we_care_about.each do |env_version, pool_name| %>
+- name: "<%= env_version %>-env"
+  type: shepherd
+  source:
+    url: https://v2.shepherd.run
+    service-account-key: "((metric-store.shepherd_service_account_key))"
+    lease:
+      namespace: phoenix
+      pool:
+        namespace: official # Replace with the namespace that the pool is located.
+        name: "<%= pool_name %>"
+    output:
+      json-file:
+        - path: "pcf.yml"
+          fields:
+            password: "output.ops_manager.password"
+            target: "output.ops_manager.url"
+            username: "output.ops_manager.username"
+
+<% end %>
 
 jobs:
 - name: bump-dev-release-version
@@ -287,11 +287,6 @@ jobs:
     - get: metric-store-base-image
     - get: metric-store-develop
       trigger: true
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Metric Store Unit Tests
-      TEAM: metric-store-log-cache
   - task: run-tests
     attempts: 3
     image: metric-store-base-image
@@ -309,12 +304,6 @@ jobs:
             pushd metric-store-develop
               scripts/test unit
             popd
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
 - name: create-dev-release
   serial: true
@@ -328,11 +317,6 @@ jobs:
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
-    - task: create-slack-message
-      file: metric-store-ci/tasks/alert-message-create/task.yml
-      params:
-        TITLE: Create Dev Release
-        TEAM: metric-store-log-cache
     - task: create-dev-release
       file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
@@ -347,12 +331,6 @@ jobs:
         content_type: application/octet-stream
     - put: metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
   ##### CVE Scan Bosh release
 - name: scan-and-upload-to-tas-cve
@@ -383,21 +361,6 @@ jobs:
     - get: cf-deployment
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
-    - get: notification-cf-deploy-version
-      params: { bump: patch }
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
-    params:
-      TITLE: Metric Store CF Deploy
-      TEAM: metric-store-log-cache
-  - task: set-credhub-vars
-    image: cf-deployment-concourse-tasks-image
-    file: metric-store-ci/tasks/add-credhub-vars/task.yml
-    params:
-      WEBHOOK_URL: ((metric-store.slack_high_visibility_alert_webhook_url))
-      BBL_STATE_DIR: ((bbl_state_dir))
-      SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
     - do:
       - get: metric-store-develop
@@ -497,32 +460,6 @@ jobs:
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: ((sys_domain))
-  on_failure:
-    do:
-    - put: notification-cf-deploy-version
-      params: { file: notification-cf-deploy-version/version }
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-    - task: enable-disable-alert-failure
-      image: cf-deployment-concourse-tasks-image
-      file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
-      params: { alert_multiple: 5, ignore_first: true }
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      image: metric-store-base-image
-      file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
-    - put: slack-alert
-      params:
-        silent: true
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-cf-deploy-version
-      params: { bump: minor }
 
 - name: blackbox-deploy
   serial: true
@@ -598,11 +535,6 @@ jobs:
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
-    - task: create-slack-message
-      file: metric-store-ci/tasks/alert-message-create/task.yml
-      params:
-        TITLE: Bake PAS Tile
-        TEAM: metric-store-log-cache
     - task: "bake tile"
       image: pcf-observability-ci-image
       file: metric-store-ci/tasks/pas_tile_bake/task.yml
@@ -619,14 +551,8 @@ jobs:
     put: metric-store-version
     params:
       file: new-tile-version/version
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
-- name: "scan-tile-for-cves"
+- name: scan-tile-for-cves
   serial: true
   plan:
     - in_parallel:
@@ -664,43 +590,13 @@ jobs:
       passed: ["Bake-PAS-Tile"]
     - get: gcp-light-stemcell
       passed: ["Bake-PAS-Tile"]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: "Install-on-PCF-<%= env_version %>"
-      TEAM: metric-store-log-cache
-  - task: "Claim Smith Env"
-    attempts: 3
-    image: metric-store-tile-image
-    config:
-      platform: linux
-      outputs:
-      - name: environment
-      run:
-        path: sh
-        args:
-        - "-c"
-        - |
-          set -eu
-          # exports smith environment name to `env`
-          $(smith claim -p <%= pool_name %> -n "cf-metric-store CI" | tail -1)
-          echo "Claimed smith environment: ${env}"
-          echo ${env} > environment/name
-          smith read > environment/metadata
-    on_failure:
-      task: release-env
-      image: metric-store-tile-image
-      config:
-        platform: linux
-        run:
-          path: sh
-          args:
-          - "-c"
-          - |
-            set -e
-            sleep 10
-    params:
-      TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
+    - put: environment
+      resource: "<%= env_version %>-env"
+      params:
+        action: create
+        duration: 12h
+        resource: "<%= env_version %>-env"
+      timeout: 12h
   - task: "Upload and Config"
     input_mapping:
       tile-version: metric-store-version
@@ -715,28 +611,6 @@ jobs:
     attempts: 3
     image: pcf-observability-ci-image
     file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
-    on_success:
-      task: release-env
-      image: metric-store-tile-image
-      config:
-        platform: linux
-        inputs:
-        - name: environment
-        run:
-          path: sh
-          args:
-          - "-c"
-          - |
-            set -e
-            smith unclaim -e $(cat environment/name)
-      params:
-        TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 <% end %>
 
 - name: promotion-gate
@@ -757,17 +631,6 @@ jobs:
           <% envs_we_care_about.each do |name, _| %>
           - "Install-on-PCF-<%= name %>"
           <% end %>
-    - task: create-slack-message
-      file: metric-store-ci/tasks/alert-message-create/task.yml
-      params:
-        TITLE: Promotion Gate
-        TEAM: metric-store-log-cache
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
 - name: promote-to-release-elect
   serial: true
@@ -796,11 +659,6 @@ jobs:
     - get: metric-store-base-image
     - get: bumper-tool
     - get: metric-store-ci
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Promote To Master
-      TEAM: metric-store-log-cache
   - task: bumper
     image: metric-store-base-image
     file: metric-store-ci/tasks/bumper/task.yml
@@ -814,12 +672,6 @@ jobs:
   - put: metric-store-master
     params:
       repository: merged-dest
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
 - name: build-final-release
   plan:
@@ -836,11 +688,6 @@ jobs:
       passed: [ promotion-gate ]
     - get: cf-routing-release
       passed: [ promotion-gate ]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Building Final Release
-      TEAM: metric-store-log-cache
   - task: create-final-release
     file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
     image: pcf-observability-ci-image
@@ -861,18 +708,6 @@ jobs:
     params:
       file: metric-store-final-release/release-*.tgz
       content_type: application/octet-stream
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_success
 
 - name: publish-github-release
   serial: true
@@ -901,7 +736,6 @@ jobs:
       globs:
       - github-release/*.tgz
 
-
 - name: Bake-Final-Tile
   plan:
   - in_parallel:
@@ -919,11 +753,6 @@ jobs:
       passed: [ build-final-release ]
     - get: metric-store-final-release
       passed: [ build-final-release ]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Releasing Final Tile
-      TEAM: metric-store-log-cache
   - task: bake-final-tile
     file: metric-store-ci/tasks/tile_bake_final/task.yml
     image: pcf-observability-ci-image
@@ -934,28 +763,11 @@ jobs:
     params:
       file: baked-tile/*.pivotal
       content_type: application/octet-stream
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_success
 
 - name: Push-to-Pivnet
   plan:
   - get: metric-store-ci
   - get: metric-store-base-image
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Uploading Final Tile to PivNet
-      TEAM: metric-store-log-cache
   - get: final-tile
     passed:
     - "Bake-Final-Tile"
@@ -971,15 +783,3 @@ jobs:
       file_glob: final-tile/*.pivotal
       metadata_file: metric-store-pivnet-metadata/metadata.yml
       override: false # do not re-upload already uploaded version
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_success
