@@ -5,6 +5,9 @@
   "tas-4": "tas_four",
   "tas-5": "tas-5_0"
 } %>
+---
+gcs-service-account: &gcs-service-account ((metric-store.cf_denver_service_account))
+
 resource_types:
 - name: gcs-resource
   type: docker-image
@@ -72,27 +75,13 @@ resources:
     private_key: ((metric-store.metric_store_ci_deploy_key))
     branch: master
 
-- name: pcf-observability-ci-image
+- name: bake-image
   type: docker-image
   source:
-    repository: gcr.io/cf-denver/pcf-observability-ci
+    repository: gcr.io/cf-denver/docker-bake
     username: _json_key
     password: ((metric-store.denver_service_account_key))
-
-- name: metric-store-tile-image
-  type: docker-image
-  source:
-    repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
-    username: _json_key
-    password: ((metric-store.gcp_service_account_key))
-
-- name: metric-store-base-image
-  type: docker-image
-  source:
-    repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
     tag: latest
-    username: _json_key
-    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-develop
   type: git
@@ -127,31 +116,31 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: metric-store-ci-notifications
-    key: metric-store-dev-release-version
-    initial_version: 0.0.0
-    json_key: ((metric-store.gcp_service_account_key))
+    bucket: metric-store-bucket
+    key: ((github-branch))/((major-minor))/metric-store-dev-release-version
+    initial_version: 1.6.1
+    json_key: *gcs-service-account
 
 - name: metric-store-dev-release
   type: gcs-resource
   source:
-    bucket: metric-store-ci-notifications
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: metric-store-dev-releases/release-(.*).tgz
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/metric-store-dev-releases/release-(.*).tgz
 
 - name: metric-store-osl
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: osl/(.*).txt
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/osl/(.*).txt
 
 - name: metric-store-final-release
   type: gcs-resource
   source:
-    bucket: oss-metric-store-releases
-    versioned_file: release.tgz
-    json_key: ((metric-store.gcp_service_account_key))
+    bucket: metric-store-bucket
+    regexp: ((github-branch))/((major-minor))/artifacts/releases/.*.tgz
+    json_key: *gcs-service-account
 
 - name: metric-store-github-release
   type: github-release
@@ -188,32 +177,32 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: metric-store-ci-versions
-    key: metric-store-release-acceptance-tile
-    json_key: ((metric-store.gcp_service_account_key))
+    bucket: metric-store-bucket
+    key: ((github-branch))/((major-minor))/versions/current_version
+    json_key: *gcs-service-account
     initial_version: 0.2.0-build.24
 
 - name: dev-tile
   type: gcs-resource
   source:
-    bucket: metric-store-ci-notifications
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: temp-baked-tiles/(.*).pivotal
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
 
 - name: final-tile
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: tiles/(.*).pivotal
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/tiles/(.*).pivotal
 
 - name: metric-store-pivnet-metadata
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
-    json_key: ((metric-store.gcp_service_account_key))
-    versioned_file: pivnet/metadata.yml
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    versioned_file: ((github-branch))/((major-minor))/pivnet/metadata.yml
 
 - name: gcp-light-stemcell
   type: bosh-io-stemcell
@@ -284,12 +273,12 @@ jobs:
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: metric-store-base-image
+    - get: bake-image
     - get: metric-store-develop
       trigger: true
   - task: run-tests
     attempts: 3
-    image: metric-store-base-image
+    image: bake-image
     config:
       platform: linux
       inputs:
@@ -324,32 +313,13 @@ jobs:
         bosh-dev-release-dir: metric-store-develop
         bosh-dev-release-version: metric-store-dev-release-version
       params:
-        JSON_KEY: ((metric-store.gcp_service_account_key))
+        JSON_KEY: *gcs-service-account
     - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
     - put: metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
-
-  ##### CVE Scan Bosh release
-- name: scan-and-upload-to-tas-cve
-  plan:
-  - in_parallel:
-      - get: concourse-cve-scan
-      - get: metric-store-develop
-        trigger: true
-        passed: [ "unit-tests" ]
-      - get: tas-cve
-  - task: run-scan
-    file: concourse-cve-scan/tasks/scan/scan.yml
-    input_mapping:
-      target-bosh-release: metric-store-develop
-    params:
-      GRYPE_FAILURE_LEVEL: high
-      DRY_RUN: false
-      RELEASE_NAME: p-metric-store
-      RELEASE_VERSION: pre-release-cve-scan
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
@@ -531,12 +501,12 @@ jobs:
       - get: metric-store-version
         params:
           pre: build
-      - get: pcf-observability-ci-image
+      - get: bake-image
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
     - task: bake
-      image: pcf-observability-ci-image
+      image: bake-image
       file: metric-store-ci/tasks/pas_tile_bake/task.yml
       input_mapping:
         metric-store-release: metric-store-develop
@@ -581,8 +551,7 @@ jobs:
       passed: [bake-tile]
     - get: metric-store-dev-release
       passed: [bake-tile]
-    - get: pcf-observability-ci-image
-    - get: metric-store-tile-image
+    - get: bake-image
     - get: metric-store-version
       passed: [bake-tile]
     - get: dev-tile
@@ -601,15 +570,15 @@ jobs:
     input_mapping:
       tile-version: metric-store-version
       baked-tile: dev-tile
-    image: pcf-observability-ci-image
+    image: bake-image
     file: metric-store-ci/tasks/tile_install/task-prep.yml
   - task: apply-changes-cf
     attempts: 3
-    image: pcf-observability-ci-image
+    image: bake-image
     file: metric-store-ci/tasks/tile_install/task-apply-cf.yml
   - task: apply-changes-metric-store
     attempts: 3
-    image: pcf-observability-ci-image
+    image: bake-image
     file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
 <% end %>
 
@@ -656,11 +625,11 @@ jobs:
       passed: ["promote-to-release-elect"]
       trigger: true
     - get: metric-store-master
-    - get: metric-store-base-image
+    - get: bake-image
     - get: bumper-tool
     - get: metric-store-ci
   - task: bumper
-    image: metric-store-base-image
+    image: bake-image
     file: metric-store-ci/tasks/bumper/task.yml
     input_mapping:
       source: metric-store-release-elect
@@ -677,7 +646,7 @@ jobs:
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: pcf-observability-ci-image
+    - get: bake-image
     - get: metric-store-pivnet-metadata
     - get: metric-store-develop
     - get: metric-store-master
@@ -690,12 +659,12 @@ jobs:
       passed: [ promotion-gate ]
   - task: create-final-release
     file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
-    image: pcf-observability-ci-image
+    image: bake-image
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       metric-store-develop: metric-store-develop
     params:
-      JSON_KEY: ((metric-store.gcp_service_account_key))
+      JSON_KEY: *gcs-service-account
   - put: metric-store-develop
     params:
       repository: metric-store-develop-modified
@@ -719,10 +688,10 @@ jobs:
       passed: [build-final-release]
     - get: metric-store-final-release
     - get: metric-store-ci
-    - get: pcf-observability-ci-image
+    - get: bake-image
   - task: github-publish-release-metadata
     file: metric-store-ci/tasks/publish-github-release/task.yml
-    image: pcf-observability-ci-image
+    image: bake-image
     input_mapping:
       release-version: metric-store-pivnet-metadata
       release-tarball: metric-store-final-release
@@ -740,7 +709,7 @@ jobs:
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: pcf-observability-ci-image
+    - get: bake-image
     - get: metric-store-pivnet-metadata
       passed: [ build-final-release ]
     - get: metric-store-master
@@ -755,7 +724,7 @@ jobs:
       passed: [ build-final-release ]
   - task: bake-final-tile
     file: metric-store-ci/tasks/tile_bake_final/task.yml
-    image: pcf-observability-ci-image
+    image: bake-image
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       stemcell: gcp-light-stemcell
@@ -767,7 +736,7 @@ jobs:
 - name: push-to-pivnet
   plan:
   - get: metric-store-ci
-  - get: metric-store-base-image
+  - get: bake-image
   - get: final-tile
     passed:
     - bake-final-tile
@@ -776,7 +745,7 @@ jobs:
     - bake-final-tile
   - get: metric-store-osl
   - task: inject-osl-into-tile
-    image: metric-store-base-image
+    image: bake-image
     file: metric-store-ci/tasks/add-osl/task.yml
   - put: metric-store-pivnet
     params:
