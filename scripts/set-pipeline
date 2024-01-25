@@ -285,9 +285,8 @@ function reconfigure_pipeline {
     fly \
       --target "${TARGET}" set-pipeline \
       --pipeline "${pipeline_name}" \
-      --var env_name="yuzu" \
-      --var sys_domain="yuzu.cf-denver.com" \
-      --var bbl_state_dir="acceptance-bosh/claimed/yuzu" \
+      --var github-branch="master" \
+      --var major-minor="1.6" \
       --config "${config_path}"
 }
 
@@ -338,6 +337,13 @@ function main {
 
 while getopts "r" option; do
     case ${option} in
+        r )
+            warning "using Runway CI pipeline"
+            RUNWAY=1
+            ;;
+        \? )
+            error "You have to use: [-r]"
+            ;;
         : )
             error "Invalid option: $OPTARG requires an argument" 1>&2
             ;;
