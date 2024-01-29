@@ -1,11 +1,16 @@
 #!/bin/bash
 set -eux
 
-workspace=$(pwd)
+export workspace=$(pwd)
 
-bumper_path=$GOPATH/src/github.com/loggregator/bumper
+export bumper_path=$GOPATH/src/github.com/loggregator/bumper
 mkdir -p $bumper_path
 cp -R bumper-tool/. $bumper_path
+pushd $bumper_path
+    go mod init
+    go mod tidy
+popd
+
 pushd $bumper_path/cmd/bumper
     go build -o $workspace/bumper/bumper
 popd
