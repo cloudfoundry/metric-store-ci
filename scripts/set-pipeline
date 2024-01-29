@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "fly -t runway-ms login -c https://runway-ci-sfo.eng.vmware.com/ -n phoenix-metric-store\n\n"
 set -e
 
 RUNWAY=0
@@ -172,7 +173,7 @@ function find_pipeline {
             TARGET="${TARGET:-runway}"
             TEAM="${TEAM:-phoenix-metric-store}"
         else
-            TARGET="${TARGET:-runway-ci-sfo}"
+            TARGET="${TARGET:-runway-ms}"
             TEAM="${TEAM:-phoenix-metric-store}"
         fi
     fi

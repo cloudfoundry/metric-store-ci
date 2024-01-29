@@ -626,6 +626,25 @@ jobs:
         silent: true
         attachments_file: metadata/alert_message_failure
 
+- name: "scan-tile-for-cves"
+  serial: true
+  plan:
+    - in_parallel:
+        - get: tile
+          resource: dev-tile
+          passed: [ "Bake-PAS-Tile" ]
+          trigger: true
+        - get: tas-cve
+        - get: concourse-cve-scan
+        - get: tile-version
+          resource: metric-store-version
+    - task: scan-tile
+      file: concourse-cve-scan/tasks/scan-tile/scan-tile.yml
+      params:
+        GRYPE_FAILURE_LEVEL: high
+        DRY_RUN: false
+        TILE_NAME: p-metric-store
+
 <% envs_we_care_about.each do |env_version, pool_name| %>
 - name: "Install-on-PCF-<%= env_version %>"
   plan:
