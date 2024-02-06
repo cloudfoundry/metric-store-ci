@@ -40,7 +40,7 @@ jobs:
       OSM_ENVIRONMENT: ((osm-environment))
       API_KEY: ((metric-store.osspi-apikey-((osm-environment))))
       USERNAME: ((metric-store.osspi-user-((osm-environment))))
-      PRODUCT: p-metric-store
+      PRODUCT: Metric_Store
       VERSION: ((tile-version))
       OSM_PACKAGE_GROUP_NAME: metric-store-repo
       PREPARE: |
