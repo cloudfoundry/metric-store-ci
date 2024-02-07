@@ -78,7 +78,7 @@ resources:
 - name: bake-image
   type: docker-image
   source:
-    repository: gcr.io/cf-denver/docker-bake
+    repository: gcr.io/cf-denver/metric-store-ci
     username: _json_key
     password: ((metric-store.denver_service_account_key))
     tag: latest
