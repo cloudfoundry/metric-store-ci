@@ -16,18 +16,6 @@ RUN apt-get update; apt-get install --yes \
   vim
 
 
-# Create a directory for the new repository's keyring, if it doesn't exist
-RUN mkdir -m 0755 -p /etc/apt/keyrings/
-
-RUN curl -fsSL https://download.docker.com/linux/debian/gpg |  gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-RUN add-apt-repository \
-  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" \
-    |  tee /etc/apt/sources.list.d/docker.list > /dev/null
-RUN apt-get update; apt-get install --yes \
-  docker-ce \
-  docker-ce-cli \
-  containerd.io
-
 RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.3.9.tar.gz \
   && tar -xzvf chruby-0.3.9.tar.gz \
   && cd chruby-0.3.9/ \
