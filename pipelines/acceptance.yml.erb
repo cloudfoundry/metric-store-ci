@@ -313,7 +313,7 @@ jobs:
         bosh-dev-release-dir: metric-store-develop
         bosh-dev-release-version: metric-store-dev-release-version
       params:
-        JSON_KEY: *gcs-service-account
+        JSON_KEY: "((metric-store.gcp_service_account_key))"
     - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz

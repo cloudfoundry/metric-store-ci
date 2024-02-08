@@ -53,6 +53,7 @@ RUN curl -Lo /tmp/cf.tgz 'https://packages.cloudfoundry.org/stable?release=linux
     && chmod +x /usr/local/bin/cf
 
 RUN go install github.com/onsi/ginkgo/ginkgo@latest
+RUN go install github.com/mikefarah/yq/v3@latest
 RUN git config --global user.email "cf-log-cache@pivotal.io" && git config --global user.name "Metric Store CI"
 
 RUN cd /tmp \
