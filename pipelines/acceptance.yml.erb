@@ -34,7 +34,7 @@ resources:
   source:
     uri: git@github.com:pivotal/concourse-cve-scan.git
     branch: main
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
 
 - name: tas-cve
   type: github-release
@@ -88,7 +88,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
     ignore_paths:
     - .final_builds
     - releases
@@ -100,7 +100,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: release-elect
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
     clean_tags: true
 
 - name: metric-store-master
@@ -108,7 +108,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
     disable_ci_skip: true
     clean_tags: true
 
@@ -171,7 +171,7 @@ resources:
   source:
     uri: git@github.com:bosh-packages/golang-release
     tag_filter: v*
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
 
 - name: metric-store-version
   type: semver
