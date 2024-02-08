@@ -21,17 +21,17 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
   && cd chruby-0.3.9/ \
   && sudo make install
 
-RUN wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz \
-  && tar -xzvf ruby-install-0.7.0.tar.gz \
-  && cd ruby-install-0.7.0/ \
+RUN wget -O ruby-install-0.9.3.tar.gz https://github.com/postmodern/ruby-install/archive/v0.9.3.tar.gz \
+  && tar -xzvf ruby-install-0.9.3.tar.gz \
+  && cd ruby-install-0.9.3/ \
   && sudo make install
 
-RUN rm ruby-install-0.7.0.tar.gz \
-  && rm -rf ruby-install-0.7.0 \
+RUN rm ruby-install-0.9.3.tar.gz \
+  && rm -rf ruby-install-0.9.3 \
   && rm chruby-0.3.9.tar.gz \
   && rm -rf chruby-0.3.9
 
-RUN ruby-install --no-reinstall ruby-2.6.2
+RUN ruby-install --no-reinstall ruby 3.1
 
 # get v3 protoc from github, it was in beta at the time of writing
 RUN cd /tmp \
