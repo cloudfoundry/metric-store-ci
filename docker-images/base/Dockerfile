@@ -41,10 +41,16 @@ RUN cd /tmp \
 
 ENV GO111MODULE=auto
 
-RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh github.com/cloudfoundry/bosh-cli
-RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
+RUN curl -Lo $GOPATH/bin/bosh 'https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-7.1.3-linux-amd64' \
+    && chmod +x $GOPATH/bin/bosh
 
-RUN go get github.com/onsi/ginkgo/ginkgo
+RUN curl -Lo /tmp/cf.tgz 'https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.43.0&source=github-rel' \
+    && tar xvzf /tmp/cf.tgz -C /tmp \
+    && rm /tmp/cf.tgz /tmp/LICENSE /tmp/NOTICE \
+    && mv /tmp/cf /usr/local/bin/cf \
+    && chmod +x /usr/local/bin/cf
+
+RUN go install github.com/onsi/ginkgo/ginkgo@latest
 RUN git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
 
 RUN cd /tmp \
