@@ -147,6 +147,14 @@ blobstore:
       $(echo ${JSON_KEY})
 EOF
   fi
+cat << EOF > config/final.yml
+---
+name: metric-store
+blobstore:
+  provider: gcs
+  options:
+    bucket_name: metric-store-blobs
+EOF
 }
 
 extract_version() {
