@@ -8,7 +8,7 @@ TIMESTAMP=$(date +%s)
 mkdir -p releases
 
 echo_green "Copying dependency releases to releases directory"
-cp metric-store-final-release/release.tgz releases/metric-store-release-${RELEASE_VERSION}.tgz
+cp metric-store-final-release/release-${RELEASE_VERSION}.tgz releases/metric-store-release-${RELEASE_VERSION}.tgz
 
 for release in cf-routing-release bpm-release; do
   echo "Adding release: ${release}"

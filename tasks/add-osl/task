@@ -13,6 +13,8 @@ if ! grep -F $TILE_VERSION $OSL_FILENAME | grep -s -i 'Metric Store' > /dev/null
   exit 1
 fi
 
+apt-get update && apt-get install -y zip
+
 echo "Versions Match, appending OSL"
 zip $TILE_FILENAME $OSL_FILENAME > /dev/null
 
