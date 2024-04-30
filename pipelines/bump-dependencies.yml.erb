@@ -145,6 +145,7 @@ jobs:
       TITLE: Metric Store Bump Golang
       TEAM: metric-store-log-cache
   - task: bump-golang-release
+    attempts: 3
     image: metric-store-base-image
     file: metric-store-ci/tasks/bump-golang-release/task.yml
     input_mapping:
