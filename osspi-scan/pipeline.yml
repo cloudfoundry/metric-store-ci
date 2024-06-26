@@ -3,8 +3,10 @@ resource_types:
 - name: gcs-resource
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
-    
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/frodenas/gcs-resource
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
+
 resources:
 #  Dev Tile
 - name: tile

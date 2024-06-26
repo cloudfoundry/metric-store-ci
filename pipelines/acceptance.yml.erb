@@ -9,20 +9,26 @@ resource_types:
 - name: slack-notification
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/cfcommunity/slack-notification-resource
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: gcs-resource
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/frodenas/gcs-resource
     tag: v0.5.1
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: pivnet
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/pivotalcf/pivnet-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/pivotalcf/pivnet-resource
     tag: latest-final
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 resources:
 #### TAS CVE resources
@@ -54,8 +60,10 @@ resources:
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: denver-locks
   type: git
