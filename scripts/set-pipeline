@@ -286,7 +286,7 @@ function reconfigure_pipeline {
       --target "${TARGET}" set-pipeline \
       --pipeline "${pipeline_name}" \
       --var github-branch="master" \
-      --var major-minor="1.6" \
+      --var major-minor="1.7" \
       --config "${config_path}"
 }
 

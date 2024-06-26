@@ -18,7 +18,7 @@ config_path=${ROOT_DIR}/pipelines/srp-pipeline.yml
 
 TEAM="${TEAM:-tobs-k8s-group}"
 pipeline_name=${PIPELINE_NAME:-srp-metric-store}
-VERSION=${VERSION:-"1.6.0"}
+VERSION=${VERSION:-"1.7.0"}
 
 
 fly --target runway set-pipeline \

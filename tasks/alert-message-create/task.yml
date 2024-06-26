@@ -3,8 +3,10 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/cfcommunity/slack-notification-resource
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 inputs:
 - name: metric-store-ci

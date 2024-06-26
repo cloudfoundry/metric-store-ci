@@ -11,8 +11,10 @@ resource_types:
 - name: slack-notification
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/cfcommunity/slack-notification-resource
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 resources:
 - name: metric-store-develop
@@ -37,8 +39,10 @@ resources:
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: docker-images
   type: git

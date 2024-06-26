@@ -4,8 +4,10 @@ platform: linux
 image_resource:
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/certbot/dns-google
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/certbot/dns-google
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 inputs:
   - name: gcp-service-account
