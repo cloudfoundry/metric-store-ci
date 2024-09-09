@@ -203,6 +203,13 @@ resources:
     json_key: *gcs-service-account
     regexp: ((github-branch))/((major-minor))/tiles/(.*).pivotal
 
+- name: final-tile-with-osl
+  type: gcs-resource
+  source:
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/final-tiles/(.*).pivotal
+
 - name: metric-store-pivnet-metadata
   type: gcs-resource
   source:
@@ -217,12 +224,6 @@ resources:
     version_family: latest
     tarball: true
     preserve_filename: true
-
-- name: metric-store-pivnet
-  type: pivnet
-  source:
-    api_token: ((metric-store.pivnet_token))
-    product_slug: p-metric-store
 
 - name: bpm-release
   type: bosh-io-release
@@ -739,7 +740,7 @@ jobs:
       file: baked-tile/*.pivotal
       content_type: application/octet-stream
 
-- name: push-to-pivnet
+- name: push-tile-with-osl-to-gcp
   plan:
   - get: metric-store-ci
   - get: bake-image
@@ -753,8 +754,8 @@ jobs:
   - task: inject-osl-into-tile
     image: bake-image
     file: metric-store-ci/tasks/add-osl/task.yml
-  - put: metric-store-pivnet
+  - put: final-tile-with-osl
     params:
       file_glob: final-tile/*.pivotal
-      metadata_file: metric-store-pivnet-metadata/metadata.yml
+      content_type: application/octet-stream
       override: false # do not re-upload already uploaded version
