@@ -1,4 +1,4 @@
-FROM harbor-repo.vmware.com/dockerhub-proxy-cache/library/golang:latest as base
+FROM harbor-docker-virtual.usw1.packages.broadcom.com/library/golang:latest as base
 
 RUN go version
 
@@ -16,9 +16,9 @@ RUN wget -O chruby-0.3.9.tar.gz https://github.com/postmodern/chruby/archive/v0.
   && cd chruby-0.3.9/ \
   && sudo make install
 
-RUN wget -O ruby-install-0.7.0.tar.gz https://github.com/postmodern/ruby-install/archive/v0.7.0.tar.gz \
-  && tar -xzvf ruby-install-0.7.0.tar.gz \
-  && cd ruby-install-0.7.0/ \
+RUN wget -O ruby-install-0.9.3.tar.gz https://github.com/postmodern/ruby-install/archive/v0.9.3.tar.gz \
+  && tar -xzvf ruby-install-0.9.3.tar.gz \
+  && cd ruby-install-0.9.3/ \
   && sudo make install
 
 RUN curl -Lo /usr/local/bin/om https://github.com/pivotal-cf/om/releases/download/7.9.0/om-linux-amd64-7.8.2 \
@@ -30,12 +30,12 @@ RUN wget -q https://storage.googleapis.com/smith-cli/smith-v2.1.0_linux_amd64.ta
   && chmod +x smith \
   && mv smith /usr/local/bin
 
-RUN rm ruby-install-0.7.0.tar.gz \
-  && rm -rf ruby-install-0.7.0 \
+RUN rm ruby-install-0.9.3.tar.gz \
+  && rm -rf ruby-install-0.9.3 \
   && rm chruby-0.3.9.tar.gz \
   && rm -rf chruby-0.3.9
 
-RUN ruby-install --no-reinstall ruby-2.6.2
+RUN ruby-install ruby 3.1.2
 
 # get v3 protoc from github, it was in beta at the time of writing
 RUN cd /tmp \
@@ -43,10 +43,17 @@ RUN cd /tmp \
   && unzip *.zip \
   && cp ./protoc /usr/local/bin/
 
-# RUN go get -d github.com/cloudfoundry/bosh-cli && go build -o $GOPATH/bin/bosh github.com/cloudfoundry/bosh-cli
-# RUN curl -L "https://cli.run.pivotal.io/stable?release=debian64&source=github" > cf.deb && dpkg -i ./cf.deb
+RUN curl -Lo $GOPATH/bin/bosh 'https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-7.1.3-linux-amd64' \
+    && chmod +x $GOPATH/bin/bosh
+
+RUN curl -Lo /tmp/cf.tgz 'https://packages.cloudfoundry.org/stable?release=linux64-binary&version=6.43.0&source=github-rel' \
+    && tar xvzf /tmp/cf.tgz -C /tmp \
+    && rm /tmp/cf.tgz /tmp/LICENSE /tmp/NOTICE \
+    && mv /tmp/cf /usr/local/bin/cf \
+    && chmod +x /usr/local/bin/cf
 
 RUN go install github.com/onsi/ginkgo/ginkgo@latest
+RUN go install github.com/mikefarah/yq/v3@latest
 RUN git config --global user.email "cf-log-cache@pivotal.io" && git config --global user.name "Metric Store CI"
 
 RUN cd /tmp \
@@ -58,7 +65,7 @@ RUN cd /tmp \
     && unzip terraform.zip -d /usr/local/bin
 
 RUN cd /tmp \
-  && wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-200.0.0-linux-x86_64.tar.gz -O google-cloud-sdk.tar.gz \
+  && wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-370.0.0-linux-x86_64.tar.gz -O google-cloud-sdk.tar.gz \
   && tar xzvf google-cloud-sdk.tar.gz -C /usr/local/share \
   && /usr/local/share/google-cloud-sdk/install.sh \
   && ln -s /usr/local/share/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud

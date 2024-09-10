@@ -21,9 +21,6 @@ TILE_FILE=baked-tile/${TILE_NAME}-${RELEASE_VERSION}.pivotal
 
 STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."
-pushd metric-store-release/tile
-  erb -v stemcell_version="${STEMCELL_VERSION}" metadata.yml.erb > metadata.yml
-popd
 
 FORMS_DIRECTORY=""
 if [ -d metric-store-release/tile/forms ]; then
@@ -35,6 +32,7 @@ kiln bake \
     --metadata metric-store-release/tile/metadata.yml \
     --icon metric-store-release/tile/icon.png \
     --releases-directory releases \
+    --variable="stemcell_version=${STEMCELL_VERSION}" \
     --properties-directory metric-store-release/tile/properties \
     --jobs-directory metric-store-release/tile/jobs \
     ${FORMS_DIRECTORY} \

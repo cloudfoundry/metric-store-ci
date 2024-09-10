@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "fly -t runway-ms login -c https://runway-ci-sfo.eng.vmware.com/ -n phoenix-metric-store\n\n"
 set -e
 
 RUNWAY=0
@@ -164,18 +165,8 @@ function find_pipeline {
 
     config_path=${pipeline_dir}${pipeline}
 
-    if [[ "$pipeline" == pws* ]]; then
-        TARGET="${TARGET:-pws}"
-        TEAM="${TEAM:-pcf-observability}"
-    else
-        if [[ ${RUNWAY} -eq 0 ]]; then
-            TARGET="${TARGET:-runway}"
-            TEAM="${TEAM:-phoenix-metric-store}"
-        else
-            TARGET="${TARGET:-runway-ci-sfo}"
-            TEAM="${TEAM:-phoenix-metric-store}"
-        fi
-    fi
+    TARGET="${TARGET:-runway-ms}"
+    TEAM="${TEAM:-phoenix-metric-store}"
 
     pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')
 }
@@ -294,9 +285,8 @@ function reconfigure_pipeline {
     fly \
       --target "${TARGET}" set-pipeline \
       --pipeline "${pipeline_name}" \
-      --var env_name="yuzu" \
-      --var sys_domain="yuzu.cf-denver.com" \
-      --var bbl_state_dir="acceptance-bosh/claimed/yuzu" \
+      --var github-branch="master" \
+      --var major-minor="1.7" \
       --config "${config_path}"
 }
 

@@ -8,14 +8,16 @@ resource_types:
 - name: gcs-resource
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/frodenas/gcs-resource
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 resources:
 - name: metric-store-ci
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    branch: ci
+    branch: master
     private_key: ((metric-store.svcboteos_github_private_key))
 
 - name: certs

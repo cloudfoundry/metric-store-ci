@@ -4,69 +4,58 @@ resource_types:
     source:
       repository: devtools-docker.artifactory.eng.vmware.com/vmware/runway/resourcetypes/gitlab-resource
       tag: 1.0.0
-  - name: gcs-resource
-    type: docker-image
-    source:
-      repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
-  - name: slack-notification
-    type: registry-image
-    source:
-      repository: cfcommunity/slack-notification-resource
-      tag: latest
-
 
 resources:
-#- name: slack-notify
-#  type: slack-notification
-#  icon: slack
-#  source:
-#    url: https://hooks.slack.com/services/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
-
-- name: migration
+- name: osspi-tool
   type: git
   icon: gitlab
   source:
     branch: main
     uri: git@gitlab.eng.vmware.com:source-insight-tooling/norsk-to-osspi.git
-    private_key: ((phoenix-osspi.gitlab_private_key))
+    private_key: ((metric-store.gitlab-private-key))
 
-- name: serving-repo
+- name: metric-store-repo
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
-    private_key: ((phoenix-osspi.svcboteos_github_private_key))
+    private_key: ((metric-store.svcboteos_github_private_key))
 
 jobs:
-  - name: serving-metric-store
-#    on_failure:
-#      do:
-#        - put: slack-notify
-#          params:
-#            silent: true
-#            text: "failed serving Metric Store"
-#    on_error:
-#      do:
-#        - put: slack-notify
-#          params:
-#            silent: true
-#            text: "errored serving Metric Store"
-    serial: true
-    plan:
-      - in_parallel:
-          - get: migration
-          - get: serving-repo
-            params: { submodules: all }
-      - task: osspi-scan-serving
-        file: migration/tasks/osspi/run-single-package-for-repo.yaml
-        input_mapping: { repo1: migration, repo2: serving-repo }
-        params:
-          REPO: repo2
-          OSM_ENVIRONMENT: ((osm-environment))
-          OSSTP_LOAD_DRY_RUN: false
-          OSM_PACKAGE_GROUP_NAME: metric-store-release
-          OSM_PACKAGE_GROUP_VERSION: ((tile-version))
-          API_KEY: ((tas2to-osspi.apikey-((osm-environment))))
-          USERNAME: ((phoenix-osspi.user-((osm-environment))))
-          PRODUCT: p-metric-store
-          VERSION: ((tile-version))
+- name: metric-store-scan
+  serial: true
+  plan:
+  - in_parallel:
+    - get: osspi-tool
+    - get: metric-store-repo
+      trigger: true
+      params: { submodules: all }
+  - task: osspi-scan-metric-store-repo
+    file: osspi-tool/tasks/osspi/run-osspi-source.yaml
+    input_mapping:
+      repo1: osspi-tool
+      repo2: metric-store-repo
+    params:
+      REPO: repo2
+      OSM_ENVIRONMENT: ((osm-environment))
+      API_KEY: ((metric-store.osspi-apikey-((osm-environment))))
+      USERNAME: ((metric-store.osspi-user-((osm-environment))))
+      PRODUCT: Metric_Store
+      VERSION: ((tile-version))
+      OSM_PACKAGE_GROUP_NAME: metric-store-repo
+      PREPARE: |
+        go mod vendor
+      OSSPI_SCANNING_PARAMS: |
+        enable: true
+        include_bomtools: "go_mod"
+        search_depth: 5
+        go_mod.path: "/go/bin/go"
+        
+        # exclude for signature scans
+        exclude_patterns:
+          - metric-store-repo/vendor
+      OSSPI_IGNORE_RULES: |
+        - name_regex: onsi\/ginkgo
+          version_regex: .*
+        - name_regex: gomega
+          version_regex: .*

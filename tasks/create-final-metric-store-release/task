@@ -19,11 +19,12 @@ pushd metric-store-master
 
   # commit version bump
   write_version ${RELEASE_VERSION} src/internal/version
-  git add .
-  git commit -m "Bump version to ${RELEASE_VERSION}"
 
   # create release
   configure-blobstore
+
+  git add .
+  git commit -m "Bump version to ${RELEASE_VERSION}"
 
   bosh -n create-release --sha2 --final \
     --tarball ../metric-store-final-release/release-${RELEASE_VERSION}.tgz \

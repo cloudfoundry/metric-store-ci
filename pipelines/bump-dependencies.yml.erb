@@ -2,24 +2,19 @@
   GO_VERSION = 'latest'
 %>
 
-resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
-    tag: latest
-
 resources:
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: v5.20.0
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: metric-store-base-image
   type: docker-image
   source:
-    repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
+    repository: gcr.io/cf-denver/metric-store-ci
     username: _json_key
     password: ((metric-store.gcp_service_account_key))
 
@@ -27,7 +22,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
-    branch: ci
+    branch: master
     private_key: ((metric-store.svcboteos_github_private_key))
 
 - name: metric-store-release-develop
@@ -44,38 +39,16 @@ resources:
     tag_filter: v*
     private_key: ((metric-store.svcboteos_github_private_key))
 
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: ((metric-store.slack_high_visibility_alert_webhook_url))
-
-- name: notification-bump-golang-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: metric-store-ci-notifications
-    key: slack-bump-golang-version
-    initial_version: 0.0.0
-    json_key: ((metric-store.gcp_service_account_key))
-
 - name: weekly
   type: time
   source:
+    initial_version: true
     days: [ Monday ]
     start: 6:00 PM
     stop: 7:00 PM
     location: America/Denver
 
-- name: manual-trigger
-  type: time
-  source:
-    interval: 1m
-
 jobs:
-- name: manually-trigger-bump-docker-golang
-  plan:
-    - put: manual-trigger
-
 - name: bump-docker-golang
   plan:
   - in_parallel:
@@ -83,10 +56,6 @@ jobs:
       trigger: true
     - get: cf-deployment-concourse-tasks-image
     - get: metric-store-ci
-    - get: manual-trigger
-      trigger: true
-      passed:
-        - manually-trigger-bump-docker-golang
   - task: bump-metric-store-base-golang
     image: cf-deployment-concourse-tasks-image
     config:
@@ -136,14 +105,6 @@ jobs:
       trigger: true
     - get: metric-store-ci
     - get: metric-store-base-image
-    - get: notification-bump-golang-version
-      params: { bump: patch }
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-bump-golang-version }
-    params:
-      TITLE: Metric Store Bump Golang
-      TEAM: metric-store-log-cache
   - task: bump-golang-release
     image: metric-store-base-image
     file: metric-store-ci/tasks/bump-golang-release/task.yml
@@ -153,33 +114,8 @@ jobs:
       GITHUB_REPO: "cloudfoundry/metric-store-release"
       GITHUB_EMAIL: "cf-log-cache+github@pivotal.io"
       GITHUB_NAME: "Metric Store CI"
-      GITHUB_PRIVATE_KEY: ((metric-store.svcboteos_github_private_key))
-      GITHUB_AUTH_TOKEN: ((metric-store.svcboteos_github_access_token))
-      GOLANG_PACKAGE_VERSION: 1
+      GITHUB_PRIVATE_KEY: "((metric-store.svcboteos_github_private_key))"
+      GITHUB_AUTH_TOKEN: "((metric-store.svcboteos_github_access_token))"
+      GOLANG_PACKAGE_VERSION: "1"
       JSON_KEY: ((metric-store.gcp_service_account_key))
-  on_failure:
-    do:
-    - task: enable-disable-alert-failure
-      image: metric-store-base-image
-      file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: notification-bump-golang-version }
-    - put: slack-alert
-      params:
-        silent: true
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_failure
-    - put: notification-bump-golang-version
-      params: { file: notification-bump-golang-version/version }
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      image: metric-store-base-image
-      file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-bump-golang-version }
-    - put: slack-alert
-      params:
-        silent: true
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-bump-golang-version
-      params: { bump: minor }
+

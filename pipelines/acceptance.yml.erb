@@ -1,28 +1,35 @@
 <% envs_we_care_about = {
-  "2-7": "us_2_7_lts",
-  "2-11": "us_2_11_lts2",
-  "2-13": "us_2_13",
-  "us_3_0": "us_3_0",
-  "us_4_0": "us_4_0"
+  "tas-2-11": "tas-2_11",
+  "tas-2-13": "tas-2_13",
+  "tas-3": "tas_three",
+  "tas-4": "tas_four",
+  "tas-5": "tas-5_0"
 } %>
-resource_types:
-- name: slack-notification
-  type: docker-image
-  source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/cfcommunity/slack-notification-resource
-    tag: latest
+---
+gcs-service-account: &gcs-service-account ((metric-store.cf_denver_service_account))
 
+resource_types:
 - name: gcs-resource
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/frodenas/gcs-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/frodenas/gcs-resource
     tag: v0.5.1
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: pivnet
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/pivotalcf/pivnet-resource
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/pivotalcf/pivnet-resource
     tag: latest-final
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
+
+- name: shepherd
+  type: registry-image
+  source:
+    repository: us-west2-docker.pkg.dev/shepherd-268822/shepherd2/concourse-resource
+    tag: v1
 
 resources:
 #### TAS CVE resources
@@ -31,7 +38,8 @@ resources:
   source:
     uri: git@github.com:pivotal/concourse-cve-scan.git
     branch: main
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
+
 - name: tas-cve
   type: github-release
   source:
@@ -54,8 +62,10 @@ resources:
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
-    repository: harbor-repo.vmware.com/dockerhub-proxy-cache/relintdockerhubpushbot/cf-deployment-concourse-tasks
+    repository: harbor-docker-virtual.usw1.packages.broadcom.com/relintdockerhubpushbot/cf-deployment-concourse-tasks
     tag: latest
+    username: ((metric-store.jfrog-svc-username))
+    password: ((metric-store.jfrog-svc-password))
 
 - name: denver-locks
   type: git
@@ -69,36 +79,22 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     private_key: ((metric-store.metric_store_ci_deploy_key))
-    branch: master
+    branch: ci-cve-updates
 
-- name: pcf-observability-ci-image
+- name: bake-image
   type: docker-image
   source:
-    repository: gcr.io/cf-denver/pcf-observability-ci
+    repository: gcr.io/cf-denver/docker-bake
     username: _json_key
-    password: ((metric-store.gcp_service_account_key))
-
-- name: metric-store-tile-image
-  type: docker-image
-  source:
-    repository: gcr.io/cf-loggregator-log-cache/metric-store-tile
-    username: _json_key
-    password: ((metric-store.gcp_service_account_key))
-
-- name: metric-store-base-image
-  type: docker-image
-  source:
-    repository: gcr.io/cf-loggregator-log-cache/metric-store-ci
+    password: ((metric-store.denver_service_account_key))
     tag: latest
-    username: _json_key
-    password: ((metric-store.gcp_service_account_key))
 
 - name: metric-store-develop
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: develop
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
     ignore_paths:
     - .final_builds
     - releases
@@ -110,7 +106,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: release-elect
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
     clean_tags: true
 
 - name: metric-store-master
@@ -118,7 +114,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
     branch: master
-    private_key: ((metric-store.svcboteos_github_private_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
     disable_ci_skip: true
     clean_tags: true
 
@@ -126,31 +122,31 @@ resources:
   type: semver
   source:
     driver: gcs
-    bucket: metric-store-ci-notifications
-    key: metric-store-dev-release-version
-    initial_version: 0.0.0
-    json_key: ((metric-store.gcp_service_account_key))
+    bucket: metric-store-bucket
+    key: ((github-branch))/((major-minor))/metric-store-dev-release-version
+    initial_version: 1.7.0
+    json_key: *gcs-service-account
 
 - name: metric-store-dev-release
   type: gcs-resource
   source:
-    bucket: metric-store-ci-notifications
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: metric-store-dev-releases/release-(.*).tgz
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/metric-store-dev-releases/release-(.*).tgz
 
 - name: metric-store-osl
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: osl/(.*).txt
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/osl/(.*).txt
 
 - name: metric-store-final-release
   type: gcs-resource
   source:
-    bucket: oss-metric-store-releases
-    versioned_file: release.tgz
-    json_key: ((metric-store.gcp_service_account_key))
+    bucket: metric-store-bucket
+    regexp: ((github-branch))/((major-minor))/artifacts/releases/.*.tgz
+    json_key: *gcs-service-account
 
 - name: metric-store-github-release
   type: github-release
@@ -181,52 +177,45 @@ resources:
   source:
     uri: git@github.com:bosh-packages/golang-release
     tag_filter: v*
-    private_key: ((metric-store.svcboteos_github_private_key))
-
-- name: slack-alert
-  type: slack-notification
-  source:
-    url: ((metric-store.slack_high_visibility_alert_webhook_url))
-
-- name: notification-cf-deploy-version
-  type: semver
-  source:
-    driver: gcs
-    bucket: metric-store-ci-notifications
-    key: log-cache-slack-cf-deploy-version
-    initial_version: 0.0.0
-    json_key: ((metric-store.gcp_service_account_key))
+    private_key: "((metric-store.svcboteos_github_private_key))"
 
 - name: metric-store-version
   type: semver
   source:
     driver: gcs
-    bucket: metric-store-ci-versions
-    key: metric-store-release-acceptance-tile
-    json_key: ((metric-store.gcp_service_account_key))
+    bucket: metric-store-bucket
+    key: ((github-branch))/((major-minor))/versions/current_version
+    json_key: *gcs-service-account
     initial_version: 0.2.0-build.24
 
 - name: dev-tile
   type: gcs-resource
   source:
-    bucket: metric-store-ci-notifications
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: temp-baked-tiles/(.*).pivotal
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/temp-baked-tiles/(.*).pivotal
     initial_version: 0.2.0-build.24
 
 - name: final-tile
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
-    json_key: ((metric-store.gcp_service_account_key))
-    regexp: tiles/(.*).pivotal
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/tiles/(.*).pivotal
+
+- name: final-tile-with-osl
+  type: gcs-resource
+  source:
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    regexp: ((github-branch))/((major-minor))/final-tiles/(.*).pivotal
 
 - name: metric-store-pivnet-metadata
   type: gcs-resource
   source:
-    bucket: p-metric-store-release
-    json_key: ((metric-store.gcp_service_account_key))
-    versioned_file: pivnet/metadata.yml
+    bucket: metric-store-bucket
+    json_key: *gcs-service-account
+    versioned_file: ((github-branch))/((major-minor))/pivnet/metadata.yml
 
 - name: gcp-light-stemcell
   type: bosh-io-stemcell
@@ -235,12 +224,6 @@ resources:
     version_family: latest
     tarball: true
     preserve_filename: true
-
-- name: metric-store-pivnet
-  type: pivnet
-  source:
-    api_token: ((metric-store.pivnet_token))
-    product_slug: p-metric-store
 
 - name: bpm-release
   type: bosh-io-release
@@ -262,13 +245,26 @@ resources:
     stop: 7:00 PM
     days: [Monday, Tuesday, Wednesday, Thursday, Friday]
 
-shared:
-  - &send-alert-message
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        text_file: messages/success.txt
+<% envs_we_care_about.each do |env_version, pool_name| %>
+- name: "<%= env_version %>-env"
+  type: shepherd
+  source:
+    url: https://v2.shepherd.run
+    service-account-key: "((metric-store.shepherd_service_account_key))"
+    lease:
+      namespace: phoenix
+      pool:
+        namespace: official # Replace with the namespace that the pool is located.
+        name: "<%= pool_name %>"
+    output:
+      json-file:
+        - path: "pcf.yml"
+          fields:
+            password: "output.ops_manager.password"
+            target: "output.ops_manager.url"
+            username: "output.ops_manager.username"
+
+<% end %>
 
 jobs:
 - name: bump-dev-release-version
@@ -284,17 +280,12 @@ jobs:
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: metric-store-base-image
+    - get: bake-image
     - get: metric-store-develop
       trigger: true
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Metric Store Unit Tests
-      TEAM: metric-store-log-cache
   - task: run-tests
     attempts: 3
-    image: metric-store-base-image
+    image: bake-image
     config:
       platform: linux
       inputs:
@@ -309,12 +300,6 @@ jobs:
             pushd metric-store-develop
               scripts/test unit
             popd
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
 - name: create-dev-release
   serial: true
@@ -328,11 +313,6 @@ jobs:
         params: { pre: dev }
       - get: cf-deployment-concourse-tasks-image
       - get: golang-release
-    - task: create-slack-message
-      file: metric-store-ci/tasks/alert-message-create/task.yml
-      params:
-        TITLE: Create Dev Release
-        TEAM: metric-store-log-cache
     - task: create-dev-release
       file: metric-store-ci/tasks/create-dev-release/task.yml
       image: cf-deployment-concourse-tasks-image
@@ -340,38 +320,13 @@ jobs:
         bosh-dev-release-dir: metric-store-develop
         bosh-dev-release-version: metric-store-dev-release-version
       params:
-        JSON_KEY: ((metric-store.gcp_service_account_key))
+        JSON_KEY: "((metric-store.gcp_service_account_key))"
     - put: metric-store-dev-release
       params:
         file: metric-store-dev-release/release-*.tgz
         content_type: application/octet-stream
     - put: metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-
-  ##### CVE Scan Bosh release
-- name: scan-and-upload-to-tas-cve
-  plan:
-  - in_parallel:
-      - get: concourse-cve-scan
-      - get: metric-store-develop
-        trigger: true
-        passed: [ "unit-tests" ]
-      - get: tas-cve
-  - task: run-scan
-    file: concourse-cve-scan/tasks/scan/scan.yml
-    input_mapping:
-      target-bosh-release: metric-store-develop
-    params:
-      GRYPE_FAILURE_LEVEL: high
-      DRY_RUN: false
-      RELEASE_NAME: p-metric-store
-      RELEASE_VERSION: pre-release-cve-scan
 
 - name: cf-deploy
   serial_groups: [cf-deploy]
@@ -383,21 +338,6 @@ jobs:
     - get: cf-deployment
     - get: cf-deployment-concourse-tasks
     - get: cf-deployment-concourse-tasks-image
-    - get: notification-cf-deploy-version
-      params: { bump: patch }
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
-    params:
-      TITLE: Metric Store CF Deploy
-      TEAM: metric-store-log-cache
-  - task: set-credhub-vars
-    image: cf-deployment-concourse-tasks-image
-    file: metric-store-ci/tasks/add-credhub-vars/task.yml
-    params:
-      WEBHOOK_URL: ((metric-store.slack_high_visibility_alert_webhook_url))
-      BBL_STATE_DIR: ((bbl_state_dir))
-      SYSTEM_DOMAIN: ((sys_domain))
   - in_parallel:
     - do:
       - get: metric-store-develop
@@ -497,32 +437,6 @@ jobs:
       ORG: test
       SPACE: test
       SYSTEM_DOMAIN: ((sys_domain))
-  on_failure:
-    do:
-    - put: notification-cf-deploy-version
-      params: { file: notification-cf-deploy-version/version }
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-    - task: enable-disable-alert-failure
-      image: cf-deployment-concourse-tasks-image
-      file: metric-store-ci/tasks/enable-disable-alert-failure/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
-      params: { alert_multiple: 5, ignore_first: true }
-  on_success:
-    do:
-    - task: enable-disable-alert-success
-      image: metric-store-base-image
-      file: metric-store-ci/tasks/enable-disable-alert-success/task.yml
-      input_mapping: { slack-rate-limit-version: notification-cf-deploy-version }
-    - put: slack-alert
-      params:
-        silent: true
-        text_file: modified-metadata/alert_toggle
-        attachments_file: modified-metadata/alert_message_success
-    - put: notification-cf-deploy-version
-      params: { bump: minor }
 
 - name: blackbox-deploy
   serial: true
@@ -581,7 +495,7 @@ jobs:
             --deployment "$DEPLOYMENT_NAME" \
             --non-interactive
 
-- name: "Bake-PAS-Tile"
+- name: bake-tile
   plan:
     - in_parallel:
       - get: concourse-tasks
@@ -594,17 +508,12 @@ jobs:
       - get: metric-store-version
         params:
           pre: build
-      - get: pcf-observability-ci-image
+      - get: bake-image
       - get: gcp-light-stemcell
       - get: bpm-release
       - get: cf-routing-release
-    - task: create-slack-message
-      file: metric-store-ci/tasks/alert-message-create/task.yml
-      params:
-        TITLE: Bake PAS Tile
-        TEAM: metric-store-log-cache
-    - task: "bake tile"
-      image: pcf-observability-ci-image
+    - task: bake
+      image: bake-image
       file: metric-store-ci/tasks/pas_tile_bake/task.yml
       input_mapping:
         metric-store-release: metric-store-develop
@@ -619,105 +528,65 @@ jobs:
     put: metric-store-version
     params:
       file: new-tile-version/version
-  on_failure:
-    do:
-    - put: slack-alert
+
+- name: scan-tile-for-cves
+  serial: true
+  plan:
+    - in_parallel:
+        - get: tile
+          resource: dev-tile
+          passed: [ bake-tile ]
+          trigger: true
+        - get: tas-cve
+        - get: concourse-cve-scan
+        - get: tile-version
+          resource: metric-store-version
+    - task: scan-tile
+      file: concourse-cve-scan/tasks/scan-tile/scan-tile.yml
       params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
+        GRYPE_FAILURE_LEVEL: high
+        DRY_RUN: false
+        TILE_NAME: p-metric-store
 
 <% envs_we_care_about.each do |env_version, pool_name| %>
-- name: "Install-on-PCF-<%= env_version %>"
+- name: "install-on-<%= env_version %>"
   plan:
   - in_parallel:
     - get: concourse-tasks
     - get: metric-store-ci
     - get: metric-store-develop
-      passed: ["Bake-PAS-Tile"]
+      passed: [bake-tile]
     - get: metric-store-dev-release
-      passed: ["Bake-PAS-Tile"]
-    - get: pcf-observability-ci-image
-    - get: metric-store-tile-image
+      passed: [bake-tile]
+    - get: bake-image
     - get: metric-store-version
-      passed: ["Bake-PAS-Tile"]
+      passed: [bake-tile]
     - get: dev-tile
       trigger: true
-      passed: ["Bake-PAS-Tile"]
+      passed: [bake-tile]
     - get: gcp-light-stemcell
-      passed: ["Bake-PAS-Tile"]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: "Install-on-PCF-<%= env_version %>"
-      TEAM: metric-store-log-cache
-  - task: "Claim Smith Env"
-    attempts: 3
-    image: metric-store-tile-image
-    config:
-      platform: linux
-      outputs:
-      - name: environment
-      run:
-        path: sh
-        args:
-        - "-c"
-        - |
-          set -eu
-          # exports smith environment name to `env`
-          $(smith claim -p <%= pool_name %> -n "cf-metric-store CI" | tail -1)
-          echo "Claimed smith environment: ${env}"
-          echo ${env} > environment/name
-          smith read > environment/metadata
-    on_failure:
-      task: release-env
-      image: metric-store-tile-image
-      config:
-        platform: linux
-        run:
-          path: sh
-          args:
-          - "-c"
-          - |
-            set -e
-            sleep 10
-    params:
-      TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
-  - task: "Upload and Config"
+      passed: [bake-tile]
+    - put: environment
+      resource: "<%= env_version %>-env"
+      params:
+        action: create
+        duration: 12h
+        resource: "<%= env_version %>-env"
+      timeout: 12h
+  - task: upload-and-config
     input_mapping:
       tile-version: metric-store-version
       baked-tile: dev-tile
-    image: pcf-observability-ci-image
+    image: bake-image
     file: metric-store-ci/tasks/tile_install/task-prep.yml
-  - task: "Apply Changes CF"
+  - task: apply-changes-cf
     attempts: 3
-    image: pcf-observability-ci-image
+    image: bake-image
     file: metric-store-ci/tasks/tile_install/task-apply-cf.yml
-  - task: "Apply Changes Metric Store"
+  - task: apply-changes-metric-store
     attempts: 3
-    image: pcf-observability-ci-image
+    image: bake-image
     file: metric-store-ci/tasks/tile_install/task-apply-ms.yml
-    on_success:
-      task: release-env
-      image: metric-store-tile-image
-      config:
-        platform: linux
-        inputs:
-        - name: environment
-        run:
-          path: sh
-          args:
-          - "-c"
-          - |
-            set -e
-            smith unclaim -e $(cat environment/name)
-      params:
-        TOOLSMITHS_API_TOKEN: ((metric-store.smith_token))
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 <% end %>
 
 - name: promotion-gate
@@ -726,29 +595,18 @@ jobs:
     - in_parallel:
       - get: metric-store-ci
       - get: gcp-light-stemcell
-        passed: ["Bake-PAS-Tile"]
+        passed: [bake-tile]
       - get: bpm-release
-        passed: ["Bake-PAS-Tile"]
+        passed: [bake-tile]
       - get: cf-routing-release
-        passed: ["Bake-PAS-Tile"]
+        passed: [bake-tile]
       - get: develop
         resource: metric-store-develop
         trigger: true
         passed:
           <% envs_we_care_about.each do |name, _| %>
-          - "Install-on-PCF-<%= name %>"
+          - "install-on-<%= name %>"
           <% end %>
-    - task: create-slack-message
-      file: metric-store-ci/tasks/alert-message-create/task.yml
-      params:
-        TITLE: Promotion Gate
-        TEAM: metric-store-log-cache
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
 - name: promote-to-release-elect
   serial: true
@@ -774,16 +632,11 @@ jobs:
       passed: ["promote-to-release-elect"]
       trigger: true
     - get: metric-store-master
-    - get: metric-store-base-image
+    - get: bake-image
     - get: bumper-tool
     - get: metric-store-ci
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Promote To Master
-      TEAM: metric-store-log-cache
   - task: bumper
-    image: metric-store-base-image
+    image: bake-image
     file: metric-store-ci/tasks/bumper/task.yml
     input_mapping:
       source: metric-store-release-elect
@@ -795,18 +648,12 @@ jobs:
   - put: metric-store-master
     params:
       repository: merged-dest
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
 
 - name: build-final-release
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: pcf-observability-ci-image
+    - get: bake-image
     - get: metric-store-pivnet-metadata
     - get: metric-store-develop
     - get: metric-store-master
@@ -817,19 +664,14 @@ jobs:
       passed: [ promotion-gate ]
     - get: cf-routing-release
       passed: [ promotion-gate ]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Building Final Release
-      TEAM: metric-store-log-cache
   - task: create-final-release
     file: metric-store-ci/tasks/create-final-metric-store-release/task.yml
-    image: pcf-observability-ci-image
+    image: bake-image
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       metric-store-develop: metric-store-develop
     params:
-      JSON_KEY: ((metric-store.gcp_service_account_key))
+      JSON_KEY: *gcs-service-account
   - put: metric-store-develop
     params:
       repository: metric-store-develop-modified
@@ -842,18 +684,6 @@ jobs:
     params:
       file: metric-store-final-release/release-*.tgz
       content_type: application/octet-stream
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_success
 
 - name: publish-github-release
   serial: true
@@ -865,10 +695,10 @@ jobs:
       passed: [build-final-release]
     - get: metric-store-final-release
     - get: metric-store-ci
-    - get: pcf-observability-ci-image
+    - get: bake-image
   - task: github-publish-release-metadata
     file: metric-store-ci/tasks/publish-github-release/task.yml
-    image: pcf-observability-ci-image
+    image: bake-image
     input_mapping:
       release-version: metric-store-pivnet-metadata
       release-tarball: metric-store-final-release
@@ -882,12 +712,11 @@ jobs:
       globs:
       - github-release/*.tgz
 
-
-- name: Bake-Final-Tile
+- name: bake-final-tile
   plan:
   - in_parallel:
     - get: metric-store-ci
-    - get: pcf-observability-ci-image
+    - get: bake-image
     - get: metric-store-pivnet-metadata
       passed: [ build-final-release ]
     - get: metric-store-master
@@ -900,14 +729,9 @@ jobs:
       passed: [ build-final-release ]
     - get: metric-store-final-release
       passed: [ build-final-release ]
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Releasing Final Tile
-      TEAM: metric-store-log-cache
   - task: bake-final-tile
     file: metric-store-ci/tasks/tile_bake_final/task.yml
-    image: pcf-observability-ci-image
+    image: bake-image
     input_mapping:
       pivnet-metadata: metric-store-pivnet-metadata
       stemcell: gcp-light-stemcell
@@ -915,52 +739,23 @@ jobs:
     params:
       file: baked-tile/*.pivotal
       content_type: application/octet-stream
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_success
 
-- name: Push-to-Pivnet
+- name: push-tile-with-osl-to-gcp
   plan:
   - get: metric-store-ci
-  - get: metric-store-base-image
-  - task: create-slack-message
-    file: metric-store-ci/tasks/alert-message-create/task.yml
-    params:
-      TITLE: Uploading Final Tile to PivNet
-      TEAM: metric-store-log-cache
+  - get: bake-image
   - get: final-tile
     passed:
-    - "Bake-Final-Tile"
+    - bake-final-tile
   - get: metric-store-pivnet-metadata
     passed:
-    - "Bake-Final-Tile"
+    - bake-final-tile
   - get: metric-store-osl
-  - task: "inject OSL to tile"
-    image: metric-store-base-image
+  - task: inject-osl-into-tile
+    image: bake-image
     file: metric-store-ci/tasks/add-osl/task.yml
-  - put: metric-store-pivnet
+  - put: final-tile-with-osl
     params:
       file_glob: final-tile/*.pivotal
-      metadata_file: metric-store-pivnet-metadata/metadata.yml
+      content_type: application/octet-stream
       override: false # do not re-upload already uploaded version
-  on_failure:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_failure
-  on_success:
-    do:
-    - put: slack-alert
-      params:
-        silent: true
-        attachments_file: metadata/alert_message_success
