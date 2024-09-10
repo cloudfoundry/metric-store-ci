@@ -719,6 +719,7 @@ jobs:
     - get: bake-image
     - get: metric-store-pivnet-metadata
       passed: [ build-final-release ]
+      trigger: true
     - get: metric-store-master
       passed: [ build-final-release ]
     - get: gcp-light-stemcell
@@ -750,6 +751,7 @@ jobs:
   - get: metric-store-pivnet-metadata
     passed:
     - bake-final-tile
+    trigger: true
   - get: metric-store-osl
   - task: inject-osl-into-tile
     image: bake-image
