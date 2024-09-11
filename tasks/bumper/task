@@ -6,6 +6,9 @@ export workspace=$(pwd)
 export bumper_path=$GOPATH/src/github.com/loggregator/bumper
 mkdir -p $bumper_path
 cp -R bumper-tool/. $bumper_path
+rm -rf /usr/local/go
+export GO_VERSION=1.22.7
+wget -O - "https://dl.google.com/go/go${GO_VERSION}.linux-amd64.tar.gz" 2> /dev/null | tar xz -C /usr/local
 pushd $bumper_path
     go mod init
     go mod tidy

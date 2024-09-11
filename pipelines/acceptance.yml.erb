@@ -79,7 +79,7 @@ resources:
   source:
     uri: git@github.com:cloudfoundry/metric-store-ci
     private_key: ((metric-store.metric_store_ci_deploy_key))
-    branch: ci-cve-updates
+    branch: master
 
 - name: bake-image
   type: docker-image
@@ -105,7 +105,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
-    branch: release-elect
+    branch: release-elect-new
     private_key: "((metric-store.svcboteos_github_private_key))"
     clean_tags: true
 
@@ -113,7 +113,7 @@ resources:
   type: git
   source:
     uri: git@github.com:cloudfoundry/metric-store-release
-    branch: master
+    branch: master-new
     private_key: "((metric-store.svcboteos_github_private_key))"
     disable_ci_skip: true
     clean_tags: true
@@ -719,6 +719,7 @@ jobs:
     - get: bake-image
     - get: metric-store-pivnet-metadata
       passed: [ build-final-release ]
+      trigger: true
     - get: metric-store-master
       passed: [ build-final-release ]
     - get: gcp-light-stemcell
@@ -750,6 +751,7 @@ jobs:
   - get: metric-store-pivnet-metadata
     passed:
     - bake-final-tile
+    trigger: true
   - get: metric-store-osl
   - task: inject-osl-into-tile
     image: bake-image
