@@ -10,7 +10,7 @@ TIMESTAMP=$(date +%s)
 git config --global user.email "cf-log-cache+github@pivotal.io" && git config --global user.name "Metric Store CI"
 
 pushd metric-store-master
-  git checkout master
+  git checkout master-new
   echo_green "Adding SHA to metric-store-release"
   git rev-parse HEAD > sha
   echo "SHA: $(cat sha)"
