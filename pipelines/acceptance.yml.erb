@@ -642,7 +642,7 @@ jobs:
       source: metric-store-release-elect
       dest: metric-store-master
     params:
-      SOURCE_BRANCH: release-elect
+      SOURCE_BRANCH: release-elect-new
       DEST_BRANCH: master
       TRACKER_API_TOKEN: ((metric-store.tracker_token))
   - put: metric-store-master
@@ -758,6 +758,6 @@ jobs:
     file: metric-store-ci/tasks/add-osl/task.yml
   - put: final-tile-with-osl
     params:
-      file_glob: final-tile/*.pivotal
+      file: final-tile/*.pivotal
       content_type: application/octet-stream
       override: false # do not re-upload already uploaded version
