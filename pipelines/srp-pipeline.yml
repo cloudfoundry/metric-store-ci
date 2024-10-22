@@ -115,7 +115,7 @@ jobs:
                   export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
                   export GITHUB_REF="refs/heads/master"
                   export FQDN="runway-ci-srp.eng.vmware.com"
-                  export NM="tobs-k8s-group"
+                  export NM="tas-legacy-observability"
                 popd
 
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
@@ -123,7 +123,7 @@ jobs:
                 alias observer_agent=./observer/bin/observer_agent.bash
                 observer_agent --version
 
-                export BUILD_NAMESPACE="tobs-k8s-group"
+                export BUILD_NAMESPACE="tas-legacy-observability"
                 export BUILD_PROJECT=${BUILD_PROJECT}
                 export BUILD_ID=${BUILD_ID}
                 export BRANCH_DIR=metric-store-release
@@ -269,7 +269,7 @@ jobs:
                   export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
                   export GITHUB_REF="refs/heads/master"
                   export FQDN="runway-ci-srp.eng.vmware.com"
-                  export NM="tobs-k8s-group"
+                  export NM="tas-legacy-observability"
                 popd
 
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
@@ -277,7 +277,7 @@ jobs:
                 alias observer_agent=./observer/bin/observer_agent.bash
                 observer_agent --version
 
-                export BUILD_NAMESPACE="tobs-k8s-group"
+                export BUILD_NAMESPACE="tas-legacy-observability"
                 export BUILD_PROJECT=${BUILD_PROJECT}
                 export BUILD_ID=${BUILD_ID}
                 export BRANCH_DIR=metric-store-release
@@ -423,7 +423,7 @@ jobs:
                   export GITHUB_REPOSITORY="cloudfoundry/metric-store-release"
                   export GITHUB_REF="refs/heads/master"
                   export FQDN="runway-ci-srp.eng.vmware.com"
-                  export NM="tobs-k8s-group"
+                  export NM="tas-legacy-observability"
                 popd
 
                 export JAVA_HOME=/build/toolchain/lin64/jdk-1.8.0_191
@@ -431,7 +431,7 @@ jobs:
                 alias observer_agent=./observer/bin/observer_agent.bash
                 observer_agent --version
 
-                export BUILD_NAMESPACE="tobs-k8s-group"
+                export BUILD_NAMESPACE="tas-legacy-observability"
                 export BUILD_PROJECT=${BUILD_PROJECT}
                 export BUILD_ID=${BUILD_ID}
                 export BRANCH_DIR=metric-store-release

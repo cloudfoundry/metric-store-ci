@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "fly -t runway-ms login -c https://runway-ci-sfo.eng.vmware.com/ -n phoenix-metric-store\n\n"
+echo "fly -t tpe-observability login -c https://tpe-concourse-rock.acc.broadcom.net/ -n tas-legacy-observability\n\n"
 set -e
 
 RUNWAY=0
@@ -165,8 +165,8 @@ function find_pipeline {
 
     config_path=${pipeline_dir}${pipeline}
 
-    TARGET="${TARGET:-runway-ms}"
-    TEAM="${TEAM:-phoenix-metric-store}"
+    TARGET="${TARGET:-tpe-observability}"
+    TEAM="${TEAM:-tas-legacy-observability}"
 
     pipeline_name=$(echo "${pipeline}" | sed 's/\//-/g' | sed 's/.yml//' | sed 's/.erb//')
 }
