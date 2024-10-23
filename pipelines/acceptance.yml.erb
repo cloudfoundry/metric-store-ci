@@ -46,18 +46,6 @@ resources:
     repository: tas-cve
     user: pivotal
 
-- name: cf-deployment
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/cf-deployment
-    branch: main
-
-- name: cf-deployment-concourse-tasks
-  type: git
-  source:
-    uri: https://github.com/cloudfoundry/cf-deployment-concourse-tasks
-    branch: v10.14.0 # bump to latest
-
 - name: cf-deployment-concourse-tasks-image
   type: docker-image
   source:
@@ -65,13 +53,6 @@ resources:
     tag: latest
     username: ((metric-store.jfrog-svc-username))
     password: ((metric-store.jfrog-svc-password))
-
-- name: denver-locks
-  type: git
-  source:
-    uri: git@github.com:pivotal-cf/denver-locks.git
-    branch: master
-    private_key: ((metric-store.denver_locks_deploy_key))
 
 - name: metric-store-ci
   type: git
@@ -159,11 +140,6 @@ resources:
   type: git
   source:
     uri: https://github.com/loggregator/bumper
-
-- name: grafana-boshrelease
-  type: git
-  source:
-    uri: https://github.com/vito/grafana-boshrelease
 
 - name: concourse-tasks
   type: git
@@ -327,173 +303,6 @@ jobs:
     - put: metric-store-dev-release-version
       params: { file: bosh-new-dev-release-version/version }
 
-- name: cf-deploy
-  serial_groups: [cf-deploy]
-  plan:
-  - in_parallel:
-    - get: metric-store-ci
-    - get: bbl-state
-      resource: denver-locks
-    - get: cf-deployment
-    - get: cf-deployment-concourse-tasks
-    - get: cf-deployment-concourse-tasks-image
-  - in_parallel:
-    - do:
-      - get: metric-store-develop
-        passed: ["create-dev-release"]
-      - get: metric-store-dev-release
-        trigger: true
-        passed: ["create-dev-release"]
-      - task: upload-metric-store-release
-        file: metric-store-ci/tasks/upload-dev-release/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          bosh-release-tarball: metric-store-dev-release
-        params:
-          BBL_STATE_DIR: ((metric-store.bbl_state_dir))
-    - do:
-      - get: grafana-boshrelease
-      - task: upload-grafana-release
-        file: metric-store-ci/tasks/upload-release-from-resource/task.yml
-        image: cf-deployment-concourse-tasks-image
-        input_mapping:
-          release-dir: grafana-boshrelease
-        params:
-          BBL_STATE_DIR: ((metric-store.bbl_state_dir))
-
-  - task: copy-ops-files
-    image: cf-deployment-concourse-tasks-image
-    config:
-      platform: linux
-      inputs:
-      - name: bbl-state
-      - name: cf-deployment
-      - name: metric-store-ci
-      - name: metric-store-develop
-      outputs:
-      - name: ops-files
-      params:
-        ENV_NAME: ((env_name))
-        SYS_DOMAIN: ((sys_domain))
-      run:
-        path: /bin/bash
-        args:
-        - "-c"
-        - |
-          set -e
-
-          cp cf-deployment/operations/use-compiled-releases.yml ops-files
-          cp cf-deployment/operations/scale-to-one-az.yml ops-files
-          cp cf-deployment/operations/experimental/add-metric-store.yml ops-files
-          cp metric-store-ci/ops-files/grafana-in-cf.yml ops-files
-          cp metric-store-ci/ops-files/alertmanager-metric-store.yml ops-files
-          cp metric-store-ci/ops-files/metric-store-in-cf.yml ops-files
-          cp metric-store-ci/ops-files/bosh-speed.yml ops-files
-          cp metric-store-ci/ops-files/test-clients.yml ops-files
-          cp metric-store-ci/ops-files/metrics-certs-in-cf.yml ops-files
-
-          cat > ops-files/add-blackbox-client.yml <<EOF
-            - type: replace
-              path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/logcache-metrics-datadog-forwarder?
-              value:
-                authorities: logs.admin
-                authorized-grant-types: client_credentials
-                scope: logs.admin
-                secret: "((yuzu_datadog_forwarder_password))"
-          EOF
-
-  - task: upload-stemcell
-    file: cf-deployment-concourse-tasks/bosh-upload-stemcell-from-cf-deployment/task.yml
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-  - task: cf-deploy
-    file: cf-deployment-concourse-tasks/bosh-deploy/task.yml
-    input_mapping:
-      vars-files: bbl-state
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      SYSTEM_DOMAIN: ((sys_domain))
-      OPS_FILES: |
-        use-compiled-releases.yml
-        scale-to-one-az.yml
-        test-clients.yml
-        bosh-speed.yml
-        add-metric-store.yml
-        metric-store-in-cf.yml
-        alertmanager-metric-store.yml
-        grafana-in-cf.yml
-        metrics-certs-in-cf.yml
-        add-blackbox-client.yml
-  - task: cleanup
-    file: cf-deployment-concourse-tasks/bosh-cleanup/task.yml
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-  - task: create-test-space
-    image: cf-deployment-concourse-tasks-image
-    file: metric-store-ci/tasks/create-org-and-space/task.yml
-    params:
-      BBL_STATE_DIR: ((bbl_state_dir))
-      ORG: test
-      SPACE: test
-      SYSTEM_DOMAIN: ((sys_domain))
-
-- name: blackbox-deploy
-  serial: true
-  plan:
-  - in_parallel:
-    - get: cf-deployment-concourse-tasks
-    - get: cf-deployment-concourse-tasks-image
-    - get: metric-store-dev-release
-      passed: [cf-deploy]
-      trigger: true
-    - get: metric-store-develop
-      passed: [cf-deploy]
-    - get: metric-store-ci
-    - get: bbl-state
-      resource: denver-locks
-  - task: metric-store-blackbox-deploy
-    image: cf-deployment-concourse-tasks-image
-    config:
-      platform: linux
-      inputs:
-      - name: cf-deployment-concourse-tasks
-      - name: metric-store-dev-release
-      - name: metric-store-develop
-      - name: metric-store-ci
-      - name: bbl-state
-      params:
-        BBL_STATE_DIR: ((bbl_state_dir))
-        # TODO: change me
-        DEPLOYMENT_NAME: metric-store-blackbox
-        #DATADOG_API_KEY: ((datadog_api_key))
-      run:
-        path: bash
-        args:
-        - -c
-        - |
-          #!/bin/bash
-          set -eux
-
-          source cf-deployment-concourse-tasks/shared-functions
-
-          setup_bosh_env_vars
-
-          cat > blackbox-creds.yml <<EOF
-            - type: replace
-              path: /instance_groups/name=metric-store-blackbox/jobs/name=metric-store-blackbox/properties/cf_blackbox?
-              value:
-                enabled: true
-                metric_store_address: https://metric-store.((sys_domain))
-                client_id: "((pws_datadog_forwarder_client.username))"
-                client_secret: "((pws_datadog_forwarder_client.password))"
-          EOF
-
-          bosh \
-            deploy metric-store-ci/deployments/blackbox/yuzu.yml \
-            -o blackbox-creds.yml \
-            --deployment "$DEPLOYMENT_NAME" \
-            --non-interactive
-
 - name: bake-tile
   plan:
     - in_parallel:
@@ -569,7 +378,7 @@ jobs:
       resource: "<%= env_version %>-env"
       params:
         action: create
-        duration: 12h
+        duration: 3h
         resource: "<%= env_version %>-env"
       timeout: 12h
   - task: upload-and-config
