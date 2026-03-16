@@ -1,6 +1,10 @@
 ---
 platform: linux
 
+stemcell_criteria:
+  os: ubuntu-jammy
+  version: "1.8"
+
 inputs:
   - name: metric-store-ci
   - name: pivnet-metadata
@@ -15,6 +19,7 @@ outputs:
 
 params:
   TILE_NAME: metric-store
+  STEMCELL_VERSION: "1.8"
 
 run:
   path: metric-store-ci/tasks/tile_bake_final/task

@@ -15,7 +15,6 @@ for release in cf-routing-release bpm-release; do
   mv ${release}/release.tgz releases/${release}-"$(cat ${release}/version)".tgz
 done
 
-STEMCELL_VERSION=$(cat stemcell/version)
 echo "Using stemcell ${STEMCELL_VERSION} ..."
 
 mkdir -p baked-tile
